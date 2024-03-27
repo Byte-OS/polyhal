@@ -10,7 +10,7 @@ mod timer;
 use alloc::vec::Vec;
 pub use boards::*;
 pub use consts::*;
-pub use context::*;
+pub use context::TrapFrame;
 pub use entry::switch_to_kernel_page_table;
 use fdt::Fdt;
 pub use interrupt::{enable_external_irq, enable_irq, disable_irq, init_interrupt, run_user_task};
@@ -34,7 +34,7 @@ pub(crate) fn rust_main(hartid: usize, device_tree: usize) {
     percpu::set_local_thread_pointer(hartid);
     CPU_ID.write_current(hartid);
 
-    allocator::init();
+    ArchInterface::init_allocator();
 
     ArchInterface::init_logging();
 

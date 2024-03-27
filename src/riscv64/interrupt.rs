@@ -1,10 +1,10 @@
 use core::arch::{asm, global_asm};
 
 use riscv::register::{
-    scause::{self, Exception, Interrupt, Trap}, sie, sstatus, stval
+    scause::{self, Exception, Interrupt, Trap}, sie, stval
 };
 
-use crate::{add_irq, console_putchar, riscv64::context::Context, TrapType, VIRT_ADDR_START};
+use crate::{add_irq, riscv64::context::TrapFrame, TrapType, VIRT_ADDR_START};
 
 use super::timer;
 
@@ -99,12 +99,11 @@ pub fn init_interrupt() {
 
 // 内核中断回调
 #[no_mangle]
-fn kernel_callback(context: &mut Context) -> TrapType {
-    console_putchar(b'3');
+fn kernel_callback(context: &mut TrapFrame) -> TrapType {
     let scause = scause::read();
     let stval = stval::read();
     debug!(
-        "中断发生: {:#x} {:?}  stval {:#x}  sepc: {:#x}",
+        "int occurs: {:#x} {:?}  stval {:#x}  sepc: {:#x}",
         scause.bits(),
         scause.cause(),
         stval,
@@ -180,7 +179,7 @@ pub unsafe extern "C" fn kernelvec() {
 
 #[naked]
 #[no_mangle]
-extern "C" fn user_restore(context: *mut Context) {
+extern "C" fn user_restore(context: *mut TrapFrame) {
     unsafe {
         asm!(
             r"
@@ -276,7 +275,7 @@ pub unsafe extern "C" fn uservec() {
 }
 
 /// Return Some(()) if it was interrupt by syscall, otherwise None.
-pub fn run_user_task(context: &mut Context) -> Option<()> {
+pub fn run_user_task(context: &mut TrapFrame) -> Option<()> {
     user_restore(context);
     match kernel_callback(context) {
         TrapType::UserEnvCall => Some(()),

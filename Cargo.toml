@@ -13,7 +13,6 @@ fdt = "0.1.5"
 bitflags = "2.0.2"
 cfg-if = "1.0.0"
 crate_interface = { git = "https://github.com/Byte-OS/crate_interface.git" }
-allocator = { path = "../crates/allocator" }
 percpu = { git = "https://github.com/Byte-OS/percpu.git"}
 
 [target.'cfg(target_arch = "riscv64")'.dependencies]

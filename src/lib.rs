@@ -50,7 +50,7 @@ pub use addr::*;
 pub use api::*;
 
 #[derive(Debug)]
-pub enum ContextArgs {
+pub enum TrapFrameArgs {
     SEPC,
     RA,
     SP,
@@ -82,7 +82,7 @@ pub enum MapPageSize {
 }
 
 const STACK_SIZE: usize = 0x8_0000;
-const CONTEXT_SIZE: usize = size_of::<Context>();
+const CONTEXT_SIZE: usize = size_of::<TrapFrame>();
 
 #[link_section = ".bss.stack"]
 static mut BOOT_STACK: [u8; STACK_SIZE] = [0; STACK_SIZE];

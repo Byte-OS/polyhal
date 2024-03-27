@@ -1,11 +1,13 @@
 use fdt::node::FdtNode;
 
-use crate::{Context, PhysPage, TrapType};
+use crate::{TrapFrame, PhysPage, TrapType};
 
 #[crate_interface::def_interface]
 pub trait ArchInterface {
+    /// Init allocator
+    fn init_allocator();
     /// kernel interrupt
-    fn kernel_interrupt(ctx: &mut Context, trap_type: TrapType);
+    fn kernel_interrupt(ctx: &mut TrapFrame, trap_type: TrapType);
     /// init log
     fn init_logging();
     /// add a memory region

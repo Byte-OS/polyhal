@@ -1,6 +1,6 @@
 use fdt::node::FdtNode;
 
-use crate::{TrapFrame, PhysPage, TrapType};
+use crate::{PhysPage, TrapFrame, TrapType};
 
 #[crate_interface::def_interface]
 pub trait ArchInterface {

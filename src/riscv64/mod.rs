@@ -3,6 +3,8 @@ mod consts;
 mod context;
 mod entry;
 mod interrupt;
+#[cfg(feature = "kcontext")]
+mod kcontext;
 mod page_table;
 mod sbi;
 mod timer;
@@ -13,10 +15,13 @@ pub use consts::*;
 pub use context::TrapFrame;
 pub use entry::switch_to_kernel_page_table;
 use fdt::Fdt;
-pub use interrupt::{enable_external_irq, enable_irq, disable_irq, init_interrupt, run_user_task};
+pub use interrupt::{disable_irq, enable_external_irq, enable_irq, init_interrupt, run_user_task};
 pub use page_table::*;
 pub use sbi::*;
 pub use timer::*;
+
+#[cfg(feature = "kcontext")]
+pub use kcontext::{KContext, context_switch};
 
 use riscv::register::{satp, sstatus};
 
@@ -89,7 +94,9 @@ pub(crate) fn rust_main(hartid: usize, device_tree: usize) {
     let page_table = PageTable(crate::PhysAddr(satp::read().ppn() << 12));
 
     (0..cpu_num).into_iter().for_each(|cpu| {
-        if cpu == CPU_ID.read_current() { return };
+        if cpu == CPU_ID.read_current() {
+            return;
+        };
 
         // PERCPU DATA ADDRESS RANGE END
         let cpu_addr_end = MULTI_CORE_AREA + (cpu + 1) * MULTI_CORE_AREA_SIZE;

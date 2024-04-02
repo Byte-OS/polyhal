@@ -106,37 +106,6 @@ pub fn init_interrupt() {
         core::arch::asm!("break 2");
     }
     tlb_init(tlb_fill as _);
-    info!("tlb_fill addr: {:#x}", tlb_fill as usize);
-    let pwcl = pwcl::read().raw();
-    info!("PTEWitdth: {}", pwcl >> 30);
-    info!(
-        "PTBase: {}, witdh: {}",
-        (pwcl >> 0) & 0x1f,
-        (pwcl >> 5) & 0x1f
-    );
-    info!(
-        "Dir1Base: {}, witdh: {}",
-        (pwcl >> 10) & 0x1f,
-        (pwcl >> 15) & 0x1f
-    );
-    info!(
-        "Dir2Base: {}, witdh: {}",
-        (pwcl >> 20) & 0x1f,
-        (pwcl >> 25) & 0x1f
-    );
-    let pwch = pwch::read().raw();
-    info!(
-        "Dir3Base: {}, witdh: {}",
-        (pwch >> 0) & 0x3f,
-        (pwch >> 6) & 0x3f
-    );
-    info!(
-        "Dir4Base: {}, witdh: {}",
-        (pwch >> 12) & 0x3f,
-        (pwch >> 18) & 0x3f
-    );
-
-    enable_irq();
 }
 
 #[naked]

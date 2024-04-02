@@ -179,7 +179,6 @@ impl PageTable {
 
     #[inline]
     pub fn map(&self, ppn: PhysPage, vpn: VirtPage, flags: MappingFlags, _level: usize) {
-        info!("map: {:?} @ {:?}   {:?}", vpn, ppn, flags);
         *self.get_mut_entry(vpn) = PTE::from_addr(ppn.into(), flags.into());
         flush_tlb(Some(vpn.into()))
     }
@@ -201,7 +200,7 @@ impl PageTable {
     }
 
     pub(crate) fn release(&self) {
-        for root_pte in get_pte_list(self.0)[..0x199]
+        for root_pte in get_pte_list(self.0)[..0x99]
             .iter()
             .filter(|x| x.is_valid())
         {

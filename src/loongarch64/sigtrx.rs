@@ -26,7 +26,6 @@ pub fn init() {
             MappingFlags::URX.into(),
         );
         TRX_STEP[1][0] = PTE(TRX_STEP.as_ptr() as usize & !VIRT_ADDR_START);
-        // TRX_STEP[1][0] = PTE::from_addr(PhysAddr::((TRX_STEP[0][0]) as usize & !VIRT_ADDR_START), PTEFlags::V);
     }
 }
 

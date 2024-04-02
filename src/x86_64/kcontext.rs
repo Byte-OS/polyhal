@@ -128,17 +128,49 @@ pub unsafe extern "C" fn context_switch_pt(
     pt_token: PageTable,
 ) {
     core::arch::asm!(
+        // consume the return address(rip) in the stack
+        // for consistency with context_switch.
+        // and save page table to r9
+        "
+            pop     r8
+            mov     r9, rdx
+        ",
         // Save Kernel Context.
         "
-            
+            mov     [rdi + 0 * 8], rsp
+            mov     [rdi + 2 * 8], rbx
+            mov     [rdi + 3 * 8], rbp
+            mov     [rdi + 4 * 8], r12
+            mov     [rdi + 5 * 8], r13
+            mov     [rdi + 6 * 8], r14
+            mov     [rdi + 7 * 8], r15
+            mov     [rdi + 8 * 8], r8     # save old rip to stack
+
+            mov     ecx, 0xC0000100
+            rdmsr
+            mov     [rdi + 1*8],    eax   # push fabase
+            mov     [rdi + 1*8+4],  edx
         ",
         // Switch to new page table.
         "
-            mov     cr3,   rdx
+            mov     cr3,   r9
         ",
         // Restore Kernel Context.
         "
+            mov     ecx, 0xC0000100
+            mov     eax, [rsi + 1*8]
+            mov     edx, [rsi + 1*8+4]
+            wrmsr                         # pop fsbase
+            mov     rsp, [rsi + 0 * 8]
+            mov     rbx, [rsi + 2 * 8]
+            mov     rbp, [rsi + 3 * 8]
+            mov     r12, [rsi + 4 * 8]
+            mov     r13, [rsi + 5 * 8]
+            mov     r14, [rsi + 6 * 8]
+            mov     r15, [rsi + 7 * 8]
+            mov     r8,  [rsi + 8 * 8]
             
+            push    r8
             ret
         ",
         options(noreturn)

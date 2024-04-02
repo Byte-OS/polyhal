@@ -389,7 +389,10 @@ pub fn run_user_task(context: &mut TrapFrame) -> Option<()> {
     context.fx_area.save();
 
     match context.vector {
-        SYSCALL_VECTOR => Some(()),
+        SYSCALL_VECTOR => {
+            ArchInterface::kernel_interrupt(context, TrapType::UserEnvCall);
+            Some(())
+        },
         _ => {
             kernel_callback(context);
             None

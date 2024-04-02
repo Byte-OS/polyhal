@@ -15,43 +15,28 @@ extern crate log;
 
 mod addr;
 mod api;
-// mod pte;
-// pub use pte::MappingFlags;
-#[cfg(target_arch = "riscv64")]
-mod riscv64;
-
+pub mod consts;
+pub mod pagetable;
 use core::mem::size_of;
 
 use alloc::vec::Vec;
-#[cfg(target_arch = "riscv64")]
-pub use riscv64::*;
 
-pub use percpu::*;
+use consts::STACK_SIZE;
+pub use percpu;
 
-#[cfg(target_arch = "x86_64")]
-mod x86_64;
+#[cfg_attr(target_arch = "riscv64", path = "riscv64/mod.rs")]
+#[cfg_attr(target_arch = "aarch64", path = "aarch64/mod.rs")]
+#[cfg_attr(target_arch = "x86_64", path = "x86_64/mod.rs")]
+#[cfg_attr(target_arch = "loongarch64", path = "loongarch64/mod.rs")]
+mod currrent_arch;
 
-#[cfg(target_arch = "x86_64")]
-pub use x86_64::*;
-
-#[cfg(target_arch = "aarch64")]
-mod aarch64;
-
-#[cfg(target_arch = "aarch64")]
-pub use aarch64::*;
-
-#[cfg(target_arch = "loongarch64")]
-mod loongarch64;
-
-#[cfg(target_arch = "loongarch64")]
-pub use loongarch64::*;
+pub use currrent_arch::*;
 
 pub use addr::*;
 pub use api::*;
 
-
 /// Kernel Context Arg Type.
-/// 
+///
 /// Using this by Index and IndexMut trait bound on KContext.
 #[derive(Debug)]
 #[cfg(feature = "kcontext")]
@@ -61,7 +46,7 @@ pub enum KContextArgs {
     /// Kernel Thread Pointer
     KTP,
     /// Kernel Program Counter
-    KPC
+    KPC,
 }
 
 #[derive(Debug)]
@@ -89,15 +74,6 @@ pub enum TrapType {
     InstructionPageFault(usize),
     IllegalInstruction(usize),
 }
-
-pub enum MapPageSize {
-    Page4k,
-    Page2m,
-    Page1G,
-}
-
-const STACK_SIZE: usize = 0x8_0000;
-const CONTEXT_SIZE: usize = size_of::<TrapFrame>();
 
 #[link_section = ".bss.stack"]
 static mut BOOT_STACK: [u8; STACK_SIZE] = [0; STACK_SIZE];
@@ -128,26 +104,5 @@ pub fn clear_bss() {
             (_ebss as usize - _sbss as usize) / size_of::<u128>(),
         )
         .fill(0);
-    }
-}
-
-bitflags::bitflags! {
-    #[derive(Debug, Clone, Copy, PartialEq, Eq, PartialOrd, Ord, Hash)]
-    pub struct MappingFlags: u64 {
-        const None = 0;
-        const U = 1 << 0;
-        const R = 1 << 1;
-        const W = 1 << 2;
-        const X = 1 << 3;
-        const A = 1 << 4;
-        const D = 1 << 5;
-        const G = 1 << 6;
-        const Device = 1 << 7;
-        const Cache = 1 << 8;
-
-        const RWX = Self::R.bits() | Self::W.bits() | Self::X.bits();
-        const URW = Self::U.bits() | Self::R.bits() | Self::W.bits();
-        const URX = Self::U.bits() | Self::R.bits() | Self::X.bits();
-        const URWX = Self::URW.bits() | Self::X.bits();
     }
 }

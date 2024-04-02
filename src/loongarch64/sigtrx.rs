@@ -1,4 +1,4 @@
-use crate::{MappingFlags, PAGE_ITEM_COUNT, PAGE_SIZE, PTE, VIRT_ADDR_START};
+use crate::{pagetable::MappingFlags, PAGE_ITEM_COUNT, PAGE_SIZE, PTE, VIRT_ADDR_START};
 
 /// 汇编入口函数
 ///

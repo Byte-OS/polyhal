@@ -13,19 +13,22 @@ use alloc::vec::Vec;
 pub use boards::*;
 pub use consts::*;
 pub use context::TrapFrame;
-pub use entry::switch_to_kernel_page_table;
+pub use entry::{kernel_page_table, switch_to_kernel_page_table};
 use fdt::Fdt;
-pub use interrupt::{disable_irq, enable_external_irq, enable_irq, init_interrupt, run_user_task};
+pub use interrupt::{
+    disable_irq, enable_external_irq, enable_irq, init_interrupt, run_user_task,
+    run_user_task_forever,
+};
 pub use page_table::*;
 pub use sbi::*;
 pub use timer::*;
 
 #[cfg(feature = "kcontext")]
-pub use kcontext::{KContext, context_switch};
+pub use kcontext::{context_switch, context_switch_pt, read_current_tp, KContext};
 
-use riscv::register::{satp, sstatus};
+use riscv::register::sstatus;
 
-use crate::{ArchInterface, MappingFlags, VirtPage};
+use crate::{pagetable::MappingFlags, ArchInterface, VirtPage};
 
 use self::entry::secondary_start;
 
@@ -90,8 +93,7 @@ pub(crate) fn rust_main(hartid: usize, device_tree: usize) {
 
     drop(dt_buf);
 
-    //
-    let page_table = PageTable(crate::PhysAddr(satp::read().ppn() << 12));
+    let page_table = PageTable::current();
 
     (0..cpu_num).into_iter().for_each(|cpu| {
         if cpu == CPU_ID.read_current() {
@@ -121,8 +123,6 @@ pub(crate) fn rust_main(hartid: usize, device_tree: usize) {
             warn!("hart {} Startting failed", cpu)
         }
     });
-
-    drop(page_table);
 
     crate::ArchInterface::main(hartid);
     shutdown();

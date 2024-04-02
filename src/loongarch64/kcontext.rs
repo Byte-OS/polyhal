@@ -15,9 +15,8 @@ pub struct KContext {
     ksp: usize,
     /// Kernel Thread Pointer
     ktp: usize,
-    /// Kernel S regs, s0 - s11, just callee-saved registers
-    /// just used in the context_switch function.
-    _sregs: [usize; 12],
+    /// Kernel Static registers, r22 - r31 (r22 is s9, s0 - s8)
+    _sregs: [usize; 10],
     /// Kernel Program Counter, Will return to this address.
     kpc: usize,
 }
@@ -28,7 +27,7 @@ impl KContext {
         Self {
             ksp: 0,
             ktp: 0,
-            _sregs: [0; 12],
+            _sregs: [0; 10],
             kpc: 0,
         }
     }
@@ -94,39 +93,35 @@ pub unsafe extern "C" fn context_switch(from: *mut KContext, to: *const KContext
     core::arch::asm!(
         // Save Kernel Context.
         "
-            sd      sp, 0*8(a0)
-            sd      tp, 1*8(a0)
-            sd      s0, 2*8(a0)
-            sd      s1, 3*8(a0)
-            sd      s2, 4*8(a0)
-            sd      s3, 5*8(a0)
-            sd      s4, 6*8(a0)
-            sd      s5, 7*8(a0)
-            sd      s6, 8*8(a0)
-            sd      s7, 9*8(a0)
-            sd      s8, 10*8(a0)
-            sd      s9, 11*8(a0)
-            sd      s10, 12*8(a0)
-            sd      s11, 13*8(a0)
-            sd      ra, 14*8(a0)
+            st.d      $sp, $a0,  0*8
+            st.d      $tp, $a0,  1*8
+            st.d      $s9, $a0,  2*8
+            st.d      $s0, $a0,  3*8
+            st.d      $s1, $a0,  4*8
+            st.d      $s2, $a0,  5*8
+            st.d      $s3, $a0,  6*8
+            st.d      $s4, $a0,  7*8
+            st.d      $s5, $a0,  8*8
+            st.d      $s6, $a0,  9*8
+            st.d      $s7, $a0, 10*8
+            st.d      $s8, $a0, 11*8
+            st.d      $ra, $a0, 12*8
         ",
         // Restore Kernel Context.
         "
-            ld      sp, 0*8(a1)
-            ld      tp, 1*8(a1)
-            ld      s0, 2*8(a1)
-            ld      s1, 3*8(a1)
-            ld      s2, 4*8(a1)
-            ld      s3, 5*8(a1)
-            ld      s4, 6*8(a1)
-            ld      s5, 7*8(a1)
-            ld      s6, 8*8(a1)
-            ld      s7, 9*8(a1)
-            ld      s8, 10*8(a1)
-            ld      s9, 11*8(a1)
-            ld      s10, 12*8(a1)
-            ld      s11, 13*8(a1)
-            ld      ra, 14*8(a1)
+            ld.d      $sp, $a1,  0*8
+            ld.d      $tp, $a1,  1*8
+            ld.d      $s9, $a1,  2*8
+            ld.d      $s0, $a1,  3*8
+            ld.d      $s1, $a1,  4*8
+            ld.d      $s2, $a1,  5*8
+            ld.d      $s3, $a1,  6*8
+            ld.d      $s4, $a1,  7*8
+            ld.d      $s5, $a1,  8*8
+            ld.d      $s6, $a1,  9*8
+            ld.d      $s7, $a1, 10*8
+            ld.d      $s8, $a1, 11*8
+            ld.d      $ra, $a1, 12*8
             ret
         ",
         options(noreturn)
@@ -145,47 +140,42 @@ pub unsafe extern "C" fn context_switch_pt(
     core::arch::asm!(
         // Save Kernel Context.
         "
-            sd      sp, 0*8(a0)
-            sd      tp, 1*8(a0)
-            sd      s0, 2*8(a0)
-            sd      s1, 3*8(a0)
-            sd      s2, 4*8(a0)
-            sd      s3, 5*8(a0)
-            sd      s4, 6*8(a0)
-            sd      s5, 7*8(a0)
-            sd      s6, 8*8(a0)
-            sd      s7, 9*8(a0)
-            sd      s8, 10*8(a0)
-            sd      s9, 11*8(a0)
-            sd      s10, 12*8(a0)
-            sd      s11, 13*8(a0)
-            sd      ra, 14*8(a0)
+            st.d      $sp, $a0,  0*8
+            st.d      $tp, $a0,  1*8
+            st.d      $s9, $a0,  2*8
+            st.d      $s0, $a0,  3*8
+            st.d      $s1, $a0,  4*8
+            st.d      $s2, $a0,  5*8
+            st.d      $s3, $a0,  6*8
+            st.d      $s4, $a0,  7*8
+            st.d      $s5, $a0,  8*8
+            st.d      $s6, $a0,  9*8
+            st.d      $s7, $a0, 10*8
+            st.d      $s8, $a0, 11*8
+            st.d      $ra, $a0, 12*8
         ",
         // Switch to new page table.
+        // Write PageTable to pgdl(CSR 0x19)
         "
-            srli    a2,   a2, 12
-            li      a3,   8 << 60
-            or      a2,   a2, a3
-            csrw    satp, a2
-            sfence.vma
+            csrwr     $a2, 0x19
+            dbar      0
+            invtlb    0x00, $r0, $r0
         ",
         // Restore Kernel Context.
         "
-            ld      sp, 0*8(a1)
-            ld      tp, 1*8(a1)
-            ld      s0, 2*8(a1)
-            ld      s1, 3*8(a1)
-            ld      s2, 4*8(a1)
-            ld      s3, 5*8(a1)
-            ld      s4, 6*8(a1)
-            ld      s5, 7*8(a1)
-            ld      s6, 8*8(a1)
-            ld      s7, 9*8(a1)
-            ld      s8, 10*8(a1)
-            ld      s9, 11*8(a1)
-            ld      s10, 12*8(a1)
-            ld      s11, 13*8(a1)
-            ld      ra, 14*8(a1)
+            ld.d      $sp, $a1,  0*8
+            ld.d      $tp, $a1,  1*8
+            ld.d      $s9, $a1,  2*8
+            ld.d      $s0, $a1,  3*8
+            ld.d      $s1, $a1,  4*8
+            ld.d      $s2, $a1,  5*8
+            ld.d      $s3, $a1,  6*8
+            ld.d      $s4, $a1,  7*8
+            ld.d      $s5, $a1,  8*8
+            ld.d      $s6, $a1,  9*8
+            ld.d      $s7, $a1, 10*8
+            ld.d      $s8, $a1, 11*8
+            ld.d      $ra, $a1, 12*8
             ret
         ",
         options(noreturn)
@@ -197,7 +187,7 @@ pub extern "C" fn read_current_tp() -> usize {
     unsafe {
         asm!(
             "
-                mv      a0, tp
+                move    $a0, $tp
                 ret
             ",
             options(noreturn)

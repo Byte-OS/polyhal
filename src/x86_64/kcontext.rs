@@ -1,7 +1,6 @@
-use core::{
-    arch::asm,
-    ops::{Index, IndexMut},
-};
+use core::ops::{Index, IndexMut};
+
+use x86_64::registers::model_specific::FsBase;
 
 use crate::{KContextArgs, PageTable};
 
@@ -15,9 +14,18 @@ pub struct KContext {
     ksp: usize,
     /// Kernel Thread Pointer
     ktp: usize,
-    /// Kernel S regs, s0 - s11, just callee-saved registers
-    /// just used in the context_switch function.
-    _sregs: [usize; 12],
+    // Callee saved register
+    rbx: usize,
+    // Callee saved register
+    rbp: usize,
+    // Callee saved register
+    r12: usize,
+    // Callee saved register
+    r13: usize,
+    // Callee saved register
+    r14: usize,
+    // Callee saved register
+    r15: usize,
     /// Kernel Program Counter, Will return to this address.
     kpc: usize,
 }
@@ -28,7 +36,12 @@ impl KContext {
         Self {
             ksp: 0,
             ktp: 0,
-            _sregs: [0; 12],
+            rbx: 0,
+            rbp: 0,
+            r12: 0,
+            r13: 0,
+            r14: 0,
+            r15: 0,
             kpc: 0,
         }
     }
@@ -94,39 +107,11 @@ pub unsafe extern "C" fn context_switch(from: *mut KContext, to: *const KContext
     core::arch::asm!(
         // Save Kernel Context.
         "
-            sd      sp, 0*8(a0)
-            sd      tp, 1*8(a0)
-            sd      s0, 2*8(a0)
-            sd      s1, 3*8(a0)
-            sd      s2, 4*8(a0)
-            sd      s3, 5*8(a0)
-            sd      s4, 6*8(a0)
-            sd      s5, 7*8(a0)
-            sd      s6, 8*8(a0)
-            sd      s7, 9*8(a0)
-            sd      s8, 10*8(a0)
-            sd      s9, 11*8(a0)
-            sd      s10, 12*8(a0)
-            sd      s11, 13*8(a0)
-            sd      ra, 14*8(a0)
+            
         ",
         // Restore Kernel Context.
         "
-            ld      sp, 0*8(a1)
-            ld      tp, 1*8(a1)
-            ld      s0, 2*8(a1)
-            ld      s1, 3*8(a1)
-            ld      s2, 4*8(a1)
-            ld      s3, 5*8(a1)
-            ld      s4, 6*8(a1)
-            ld      s5, 7*8(a1)
-            ld      s6, 8*8(a1)
-            ld      s7, 9*8(a1)
-            ld      s8, 10*8(a1)
-            ld      s9, 11*8(a1)
-            ld      s10, 12*8(a1)
-            ld      s11, 13*8(a1)
-            ld      ra, 14*8(a1)
+            
             ret
         ",
         options(noreturn)
@@ -145,62 +130,23 @@ pub unsafe extern "C" fn context_switch_pt(
     core::arch::asm!(
         // Save Kernel Context.
         "
-            sd      sp, 0*8(a0)
-            sd      tp, 1*8(a0)
-            sd      s0, 2*8(a0)
-            sd      s1, 3*8(a0)
-            sd      s2, 4*8(a0)
-            sd      s3, 5*8(a0)
-            sd      s4, 6*8(a0)
-            sd      s5, 7*8(a0)
-            sd      s6, 8*8(a0)
-            sd      s7, 9*8(a0)
-            sd      s8, 10*8(a0)
-            sd      s9, 11*8(a0)
-            sd      s10, 12*8(a0)
-            sd      s11, 13*8(a0)
-            sd      ra, 14*8(a0)
+            
         ",
         // Switch to new page table.
         "
-            srli    a2,   a2, 12
-            li      a3,   8 << 60
-            or      a2,   a2, a3
-            csrw    satp, a2
-            sfence.vma
+            mov     cr3,   rdx
         ",
         // Restore Kernel Context.
         "
-            ld      sp, 0*8(a1)
-            ld      tp, 1*8(a1)
-            ld      s0, 2*8(a1)
-            ld      s1, 3*8(a1)
-            ld      s2, 4*8(a1)
-            ld      s3, 5*8(a1)
-            ld      s4, 6*8(a1)
-            ld      s5, 7*8(a1)
-            ld      s6, 8*8(a1)
-            ld      s7, 9*8(a1)
-            ld      s8, 10*8(a1)
-            ld      s9, 11*8(a1)
-            ld      s10, 12*8(a1)
-            ld      s11, 13*8(a1)
-            ld      ra, 14*8(a1)
+            
             ret
         ",
         options(noreturn)
     )
 }
 
-#[naked]
-pub extern "C" fn read_current_tp() -> usize {
-    unsafe {
-        asm!(
-            "
-                mv      a0, tp
-                ret
-            ",
-            options(noreturn)
-        )
-    }
+/// Read thread pointer currently.
+#[inline]
+pub fn read_current_tp() -> usize {
+    FsBase::read().as_u64() as _
 }

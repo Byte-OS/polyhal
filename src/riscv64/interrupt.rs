@@ -5,7 +5,7 @@ use riscv::register::{
     sie, stval,
 };
 
-use crate::{add_irq, riscv64::context::TrapFrame, TrapType, VIRT_ADDR_START};
+use crate::{add_irq, TrapFrame, TrapType, VIRT_ADDR_START};
 
 use super::timer;
 
@@ -83,7 +83,7 @@ static USER_RSP: usize = 0;
 
 // 设置中断
 pub fn init_interrupt() {
-    crate::riscv64::page_table::sigtrx::init();
+    crate::currrent_arch::page_table::sigtrx::init();
     // 输出内核信息
 
     unsafe {
@@ -103,13 +103,13 @@ pub fn init_interrupt() {
 fn kernel_callback(context: &mut TrapFrame) -> TrapType {
     let scause = scause::read();
     let stval = stval::read();
-    debug!(
-        "int occurs: {:#x} {:?}  stval {:#x}  sepc: {:#x}",
-        scause.bits(),
-        scause.cause(),
-        stval,
-        context.sepc
-    );
+    // debug!(
+    //     "int occurs: {:#x} {:?}  stval {:#x}  sepc: {:#x}",
+    //     scause.bits(),
+    //     scause.cause(),
+    //     stval,
+    //     context.sepc
+    // );
     let trap_type = match scause.cause() {
         // 中断异常
         Trap::Exception(Exception::Breakpoint) => {
@@ -173,7 +173,7 @@ pub unsafe extern "C" fn kernelvec() {
             LOAD_GENERAL_REGS
             sret
         ",
-        cx_size = const crate::CONTEXT_SIZE,
+        cx_size = const crate::consts::TRAPFRAME_SIZE,
         options(noreturn)
     )
 }
@@ -281,6 +281,13 @@ pub fn run_user_task(context: &mut TrapFrame) -> Option<()> {
     match kernel_callback(context) {
         TrapType::UserEnvCall => Some(()),
         _ => None,
+    }
+}
+
+pub fn run_user_task_forever(context: &mut TrapFrame) -> ! {
+    loop {
+        user_restore(context);
+        kernel_callback(context);
     }
 }
 

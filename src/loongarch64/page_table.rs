@@ -200,10 +200,7 @@ impl PageTable {
     }
 
     pub(crate) fn release(&self) {
-        for root_pte in get_pte_list(self.0)[..0x99]
-            .iter()
-            .filter(|x| x.is_valid())
-        {
+        for root_pte in get_pte_list(self.0)[..0x99].iter().filter(|x| x.is_valid()) {
             get_pte_list(root_pte.addr())
                 .iter()
                 .filter(|x| x.is_valid())

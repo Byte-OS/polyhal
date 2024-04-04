@@ -178,6 +178,11 @@ pub fn enable_irq() {
 }
 
 #[inline(always)]
+pub fn disable_irq() {
+    crmd::set_ie(false);
+}
+
+#[inline(always)]
 pub fn enable_external_irq() {
     // unsafe {
     //     sie::set_sext();

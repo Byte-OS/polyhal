@@ -194,7 +194,6 @@ impl PageTable {
 
     #[inline]
     pub fn change(&self) {
-        debug!("change ttbr0 to :{:#x}", self.0.addr());
         TTBR0_EL1.set((self.0.addr() & 0xFFFF_FFFF_F000) as _);
         flush_tlb(None)
     }

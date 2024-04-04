@@ -392,7 +392,7 @@ pub fn run_user_task(context: &mut TrapFrame) -> Option<()> {
         SYSCALL_VECTOR => {
             ArchInterface::kernel_interrupt(context, TrapType::UserEnvCall);
             Some(())
-        },
+        }
         _ => {
             kernel_callback(context);
             None
@@ -406,7 +406,7 @@ pub fn enable_irq() {
     unsafe { asm!("sti") }
 }
 
-pub fn close_irq() {
+pub fn disable_irq() {
     unsafe { asm!("cli") }
 }
 

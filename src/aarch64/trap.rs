@@ -167,6 +167,11 @@ pub fn enable_irq() {
 }
 
 #[inline(always)]
+pub fn disable_irq() {
+    unsafe { asm!("msr daifset, #2") };
+}
+
+#[inline(always)]
 pub fn enable_external_irq() {
     // unsafe {
     //     sie::set_sext();

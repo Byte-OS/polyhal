@@ -1,6 +1,6 @@
 use loongarch64::register::pgdl;
 
-use crate::pagetable::{pn_index, pn_offest, MappingFlags};
+use crate::pagetable::{pn_index, pn_offest, MappingFlags, PageTable, TLB};
 use crate::{ArchInterface, PhysAddr, PhysPage, VirtAddr, VirtPage, PAGE_ITEM_COUNT};
 
 use super::sigtrx::get_trx_mapping;
@@ -116,10 +116,6 @@ pub fn get_pte_list(paddr: PhysAddr) -> &'static mut [PTE] {
     unsafe { core::slice::from_raw_parts_mut(paddr.get_mut_ptr::<PTE>(), PAGE_ITEM_COUNT) }
 }
 
-#[repr(C)]
-#[derive(Debug, Clone, Copy)]
-pub struct PageTable(pub(crate) PhysAddr);
-
 impl PageTable {
     #[inline]
     pub fn restore(&self) {
@@ -147,13 +143,13 @@ impl PageTable {
             });
         self.0.slice_mut_with_len::<PTE>(0x200)[0x100] = PTE(get_trx_mapping());
 
-        flush_tlb(None);
+        TLB::flush_all();
     }
 
     #[inline]
     pub fn change(&self) {
         pgdl::set_base(self.0.addr());
-        flush_tlb(None);
+        TLB::flush_all();
     }
 
     #[inline]
@@ -180,13 +176,13 @@ impl PageTable {
     #[inline]
     pub fn map(&self, ppn: PhysPage, vpn: VirtPage, flags: MappingFlags, _level: usize) {
         *self.get_mut_entry(vpn) = PTE::from_addr(ppn.into(), flags.into());
-        flush_tlb(Some(vpn.into()))
+        TLB::flush_vaddr(vpn.into());
     }
 
     #[inline]
     pub fn unmap(&self, vpn: VirtPage) {
         *self.get_mut_entry(vpn) = PTE(0);
-        flush_tlb(Some(vpn.into()))
+        TLB::flush_vaddr(vpn.into());
     }
 
     #[inline]
@@ -211,13 +207,26 @@ impl PageTable {
     }
 }
 
-#[inline]
-pub fn flush_tlb(vaddr: Option<VirtAddr>) {
-    if let Some(vaddr) = vaddr {
+/// TLB operations
+impl TLB {
+    /// flush the TLB entry by VirtualAddress
+    /// just use it directly
+    ///
+    /// TLB::flush_vaddr(arg0); // arg0 is the virtual address(VirtAddr)
+    #[inline]
+    pub fn flush_vaddr(vaddr: VirtAddr) {
         unsafe {
             core::arch::asm!("dbar 0; invtlb 0x05, $r0, {reg}", reg = in(reg) vaddr.0);
         }
-    } else {
+    }
+
+    /// flush all tlb entry
+    ///
+    /// how to use ?
+    /// just
+    /// TLB::flush_all();
+    #[inline]
+    pub fn flush_all() {
         unsafe {
             core::arch::asm!("dbar 0; invtlb 0x00, $r0, $r0");
         }

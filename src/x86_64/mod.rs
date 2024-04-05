@@ -19,11 +19,9 @@ pub use interrupt::*;
 #[cfg(feature = "kcontext")]
 pub use kcontext::{context_switch, context_switch_pt, read_current_tp, KContext};
 pub use multiboot::kernel_page_table;
-pub use page_table::*;
 use raw_cpuid::CpuId;
 pub use uart::*;
 
-use x86::tlb;
 use x86_64::{
     instructions::port::PortWriteOnly,
     registers::{
@@ -32,7 +30,7 @@ use x86_64::{
     },
 };
 
-use crate::{currrent_arch::multiboot::use_multiboot, ArchInterface, VirtAddr};
+use crate::{currrent_arch::multiboot::use_multiboot, ArchInterface};
 
 #[percpu::def_percpu]
 static CPU_ID: usize = 1;
@@ -111,13 +109,4 @@ fn rust_tmp_main(magic: usize, mboot_ptr: usize) {
     crate::ArchInterface::main(0);
 
     shutdown()
-}
-
-#[inline]
-pub fn flush_tlb(vaddr: Option<VirtAddr>) {
-    if let Some(vaddr) = vaddr {
-        unsafe { tlb::flush(vaddr.into()) }
-    } else {
-        unsafe { tlb::flush_all() }
-    }
 }

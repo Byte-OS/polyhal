@@ -28,7 +28,10 @@ pub use kcontext::{context_switch, context_switch_pt, read_current_tp, KContext}
 
 use riscv::register::sstatus;
 
-use crate::{pagetable::MappingFlags, ArchInterface, VirtPage};
+use crate::{
+    pagetable::{MappingFlags, PageTable},
+    ArchInterface, VirtPage,
+};
 
 use self::entry::secondary_start;
 

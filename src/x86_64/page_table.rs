@@ -1,12 +1,15 @@
 use alloc::sync::Arc;
-use x86::bits64::paging::{
-    pd_index, pdpt_index, pml4_index, pt_index, PDEntry, PDFlags, PDPTEntry, PDPTFlags, PML4Entry,
-    PML4Flags, PTEntry, PTFlags, PAGE_SIZE_ENTRIES,
+use x86::{
+    bits64::paging::{
+        pd_index, pdpt_index, pml4_index, pt_index, PDEntry, PDFlags, PDPTEntry, PDPTFlags,
+        PML4Entry, PML4Flags, PTEntry, PTFlags, PAGE_SIZE_ENTRIES,
+    },
+    tlb,
 };
 
 use crate::{
-    flush_tlb, pagetable::MappingFlags, ArchInterface, PhysAddr, PhysPage, VirtAddr, VirtPage,
-    PAGE_SIZE, VIRT_ADDR_START,
+    pagetable::{MappingFlags, PageTable, TLB},
+    ArchInterface, PhysAddr, PhysPage, VirtAddr, VirtPage, PAGE_SIZE, VIRT_ADDR_START,
 };
 
 impl From<MappingFlags> for PTFlags {
@@ -52,10 +55,6 @@ impl Into<MappingFlags> for PTFlags {
         res
     }
 }
-
-#[repr(C)]
-#[derive(Debug, Clone, Copy)]
-pub struct PageTable(pub(crate) PhysAddr);
 
 impl PageTable {
     pub fn alloc() -> Arc<Self> {
@@ -106,8 +105,7 @@ impl PageTable {
         }
         let pml4 = self.0.slice_mut_with_len::<PML4Entry>(PAGE_SIZE_ENTRIES);
         pml4[0x1ff] = PML4Entry((_kernel_mapping_pdpt as u64 - VIRT_ADDR_START as u64) | 0x3);
-        // mfence();
-        flush_tlb(None);
+        TLB::flush_all();
     }
 
     #[inline]
@@ -159,13 +157,13 @@ impl PageTable {
     #[inline]
     pub fn map(&self, ppn: PhysPage, vpn: VirtPage, flags: MappingFlags, _level: usize) {
         *self.get_entry(vpn) = PTEntry::new(ppn.to_addr().into(), flags.into());
-        flush_tlb(Some(vpn.into()))
+        TLB::flush_vaddr(vpn.into());
     }
 
     #[inline]
     pub fn unmap(&self, vpn: VirtPage) {
         *self.get_entry(vpn) = PTEntry(0);
-        flush_tlb(Some(vpn.into()))
+        TLB::flush_vaddr(vpn.into());
     }
 
     #[inline]
@@ -197,5 +195,27 @@ impl PageTable {
     pub(crate) fn release(&self) {
         self.restore();
         ArchInterface::frame_unalloc(self.0.into());
+    }
+}
+
+/// TLB operations
+impl TLB {
+    /// flush the TLB entry by VirtualAddress
+    /// just use it directly
+    ///
+    /// TLB::flush_vaddr(arg0); // arg0 is the virtual address(VirtAddr)
+    #[inline]
+    pub fn flush_vaddr(vaddr: VirtAddr) {
+        unsafe { tlb::flush(vaddr.into()) }
+    }
+
+    /// flush all tlb entry
+    ///
+    /// how to use ?
+    /// just
+    /// TLB::flush_all();
+    #[inline]
+    pub fn flush_all() {
+        unsafe { tlb::flush_all() }
     }
 }

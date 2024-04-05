@@ -1,6 +1,6 @@
 use core::ops::Deref;
 
-use crate::{ArchInterface, PageTable, VirtAddr, VirtPage};
+use crate::{ArchInterface, PhysAddr, VirtAddr, VirtPage};
 
 bitflags::bitflags! {
     /// Mapping flags for page table.
@@ -35,6 +35,28 @@ bitflags::bitflags! {
         const URWX = Self::URW.bits() | Self::X.bits();
     }
 }
+
+/// Page Table
+///
+/// This is just the page table defination.
+/// The implementation of the page table in the specific architecture mod.
+/// Such as:
+/// x86_64/page_table.rs
+/// riscv64/page_table/sv39.rs
+/// aarch64/page_table.rs
+/// loongarch64/page_table.rs
+#[repr(C)]
+#[derive(Debug, Clone, Copy)]
+pub struct PageTable(pub(crate) PhysAddr);
+
+/// TLB Operation set.
+/// Such as flush_vaddr, flush_all.
+/// Just use it in the fn.
+///
+/// TLB::flush_vaddr(arg0);  arg0 should be VirtAddr
+/// or flush all tlb entry.
+/// TLB::flush_all();
+pub struct TLB;
 
 /// Page Table Wrapper
 ///

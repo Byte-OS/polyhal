@@ -5,16 +5,29 @@ use core::arch::riscv64::sfence_vma;
 
 pub use sv39::*;
 
-use crate::VirtAddr;
+use crate::{pagetable::TLB, VirtAddr};
 
-#[inline]
-pub fn flush_tlb(vaddr: Option<VirtAddr>) {
-    unsafe {
-        if let Some(vaddr) = vaddr {
-            // TIPS: flush tlb, tlb addr: 0-47: ppn, otherwise tlb asid
-            sfence_vma(vaddr.addr(), 0);
-        } else {
-            // flush the entire TLB
+/// TLB operations
+impl TLB {
+    /// flush the TLB entry by VirtualAddress
+    /// just use it directly
+    ///
+    /// TLB::flush_vaddr(arg0); // arg0 is the virtual address(VirtAddr)
+    #[inline]
+    pub fn flush_vaddr(vaddr: VirtAddr) {
+        unsafe {
+            sfence_vma(vaddr.0, 0);
+        }
+    }
+
+    /// flush all tlb entry
+    ///
+    /// how to use ?
+    /// just
+    /// TLB::flush_all();
+    #[inline]
+    pub fn flush_all() {
+        unsafe {
             riscv::asm::sfence_vma_all();
         }
     }

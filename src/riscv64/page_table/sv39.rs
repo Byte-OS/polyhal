@@ -2,10 +2,10 @@ use bitflags::bitflags;
 use riscv::register::satp;
 
 use crate::currrent_arch::entry::PAGE_TABLE;
-use crate::pagetable::{pn_index, pn_offest};
+use crate::pagetable::{pn_index, pn_offest, PageTable, TLB};
 use crate::{
-    flush_tlb, pagetable::MappingFlags, sigtrx::get_trx_mapping, ArchInterface, PhysAddr, PhysPage,
-    VirtAddr, VirtPage, PAGE_ITEM_COUNT, VIRT_ADDR_START,
+    pagetable::MappingFlags, sigtrx::get_trx_mapping, ArchInterface, PhysAddr, PhysPage, VirtAddr,
+    VirtPage, PAGE_ITEM_COUNT, VIRT_ADDR_START,
 };
 
 pub fn map_kernel(vpn: VirtPage, flags: MappingFlags) {
@@ -190,10 +190,6 @@ pub fn get_pte_list(paddr: PhysAddr) -> &'static mut [PTE] {
     unsafe { core::slice::from_raw_parts_mut(paddr.get_mut_ptr::<PTE>(), PAGE_ITEM_COUNT) }
 }
 
-#[repr(C)]
-#[derive(Debug, Clone, Copy)]
-pub struct PageTable(pub(crate) PhysAddr);
-
 impl PageTable {
     pub fn current() -> Self {
         Self(PhysAddr(satp::read().ppn() << 12))
@@ -219,7 +215,7 @@ impl PageTable {
     pub fn change(&self) {
         // Write page table entry for
         satp::write((8 << 60) | (self.0 .0 >> 12));
-        flush_tlb(None);
+        TLB::flush_all();
     }
 
     #[inline]
@@ -240,7 +236,7 @@ impl PageTable {
         }
 
         pte_list[pn_index(vpn, 0)] = PTE::from_ppn(ppn.0, flags.into());
-        flush_tlb(Some(vpn.into()))
+        TLB::flush_vaddr(vpn.into());
     }
 
     #[inline]
@@ -256,7 +252,7 @@ impl PageTable {
         }
 
         pte_list[pn_index(vpn, 0)] = PTE::new();
-        flush_tlb(Some(vpn.into()))
+        TLB::flush_vaddr(vpn.into());
     }
 
     #[inline]

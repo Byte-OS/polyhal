@@ -1,4 +1,4 @@
-use crate::PTEFlags;
+use crate::{pagetable::TLB, PTEFlags};
 use aarch64_cpu::{asm, asm::barrier, registers::*};
 
 // use page_table_entry::aarch64::{MemAttr, A64PTE};
@@ -76,7 +76,7 @@ unsafe fn init_mmu() {
     TTBR1_EL1.set(root_paddr);
 
     // Flush the entire TLB
-    super::page_table::flush_tlb(None);
+    TLB::flush_all();
 
     // Enable the MMU and turn on I-cache and D-cache
     SCTLR_EL1.modify(SCTLR_EL1::M::Enable + SCTLR_EL1::C::Cacheable + SCTLR_EL1::I::Cacheable);

@@ -1,5 +1,6 @@
 use crate::currrent_arch::rust_tmp_main;
-use crate::{PageTable, BOOT_STACK, STACK_SIZE};
+use crate::pagetable::PageTable;
+use crate::{BOOT_STACK, STACK_SIZE};
 use core::arch::global_asm;
 use core::{mem, slice};
 use multiboot::information::{MemoryManagement, Multiboot, PAddr};

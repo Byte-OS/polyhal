@@ -27,6 +27,7 @@ pub use psci::system_off as shutdown;
 pub use timer::{get_time, time_to_usec};
 pub use trap::{disable_irq, enable_external_irq, enable_irq, init_interrupt, run_user_task};
 
+use crate::pagetable::PageTable;
 use crate::{clear_bss, ArchInterface};
 
 pub fn rust_tmp_main(hart_id: usize, device_tree: usize) {

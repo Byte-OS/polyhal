@@ -1,7 +1,7 @@
 use aarch64_cpu::registers::{Writeable, TTBR0_EL1};
 
 use crate::{
-    pagetable::{pn_index, pn_offest, MappingFlags},
+    pagetable::{pn_index, pn_offest, MappingFlags, PageTable, TLB},
     ArchInterface, PhysAddr, PhysPage, VirtAddr, VirtPage, PAGE_ITEM_COUNT, PAGE_SIZE,
 };
 
@@ -162,10 +162,6 @@ pub fn get_pte_list(paddr: PhysAddr) -> &'static mut [PTE] {
     unsafe { core::slice::from_raw_parts_mut(paddr.get_mut_ptr::<PTE>(), PAGE_ITEM_COUNT) }
 }
 
-#[derive(Debug, Clone, Copy)]
-#[repr(C)]
-pub struct PageTable(pub(crate) PhysAddr);
-
 impl PageTable {
     #[inline]
     pub fn restore(&self) {
@@ -189,13 +185,13 @@ impl PageTable {
                     drop_l2(x.to_ppn().into())
                 }
             });
-        flush_tlb(None)
+        TLB::flush_all();
     }
 
     #[inline]
     pub fn change(&self) {
         TTBR0_EL1.set((self.0.addr() & 0xFFFF_FFFF_F000) as _);
-        flush_tlb(None)
+        TLB::flush_all();
     }
 
     pub fn get_mut_entry(&self, vpn: VirtPage) -> &mut PTE {
@@ -223,13 +219,13 @@ impl PageTable {
     #[inline]
     pub fn map(&self, ppn: PhysPage, vpn: VirtPage, flags: MappingFlags, _level: usize) {
         *self.get_mut_entry(vpn) = PTE::from_ppn(ppn.0, flags.into());
-        flush_tlb(Some(vpn.into()))
+        TLB::flush_vaddr(vpn.into());
     }
 
     #[inline]
     pub fn unmap(&self, vpn: VirtPage) {
         *self.get_mut_entry(vpn) = PTE(0);
-        flush_tlb(Some(vpn.into()));
+        TLB::flush_vaddr(vpn.into());
     }
 
     #[inline]
@@ -296,15 +292,33 @@ impl PageTable {
     }
 }
 
-#[inline]
-pub fn flush_tlb(vaddr: Option<VirtAddr>) {
-    unsafe {
-        if let Some(vaddr) = vaddr {
-            // TIPS: flush tlb, tlb addr: 0-47: ppn, otherwise tlb asid
-            core::arch::asm!("tlbi vaale1is, {}; dsb sy; isb", in(reg) ((vaddr.0 >> 12) & 0xFFFF_FFFF_FFFF))
-        } else {
-            // flush the entire TLB
-            core::arch::asm!("tlbi vmalle1; dsb sy; isb")
+/// TLB operations
+impl TLB {
+    /// flush the TLB entry by VirtualAddress
+    /// just use it directly
+    ///
+    /// TLB::flush_vaddr(arg0); // arg0 is the virtual address(VirtAddr)
+    #[inline]
+    pub fn flush_vaddr(vaddr: VirtAddr) {
+        unsafe {
+            core::arch::asm!(
+                "
+                    tlbi vaale1is, {}
+                    dsb sy
+                    isb
+                ", 
+                in(reg) ((vaddr.0 >> 12) & 0xFFFF_FFFF_FFFF)
+            )
         }
+    }
+
+    /// flush all tlb entry
+    ///
+    /// how to use ?
+    /// just
+    /// TLB::flush_all();
+    #[inline]
+    pub fn flush_all() {
+        unsafe { core::arch::asm!("tlbi vmalle1; dsb sy; isb") }
     }
 }

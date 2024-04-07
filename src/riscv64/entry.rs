@@ -1,12 +1,12 @@
 use core::arch::riscv64::sfence_vma_all;
 
-use crate::pagetable::PageTable;
+use crate::pagetable::{PageTable, PTE};
+use crate::PTEFlags;
 use crate::VIRT_ADDR_START;
-use crate::{PTEFlags, PAGE_ITEM_COUNT, PTE};
 
 #[link_section = ".data.prepage.entry"]
-pub(crate) static mut PAGE_TABLE: [PTE; PAGE_ITEM_COUNT] = {
-    let mut arr: [PTE; PAGE_ITEM_COUNT] = [PTE::new(); PAGE_ITEM_COUNT];
+pub(crate) static mut PAGE_TABLE: [PTE; PageTable::PTE_NUM_IN_PAGE] = {
+    let mut arr: [PTE; PageTable::PTE_NUM_IN_PAGE] = [PTE(0); PageTable::PTE_NUM_IN_PAGE];
     // 初始化页表信息
     // 0x00000000_80000000 -> 0x80000000 (1G)
     // 高半核

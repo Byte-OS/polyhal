@@ -2,7 +2,7 @@ use core::arch::{asm, global_asm};
 
 use loongarch64::register::estat::{self, Exception, Trap};
 use loongarch64::register::{
-    badv, crmd, ecfg, eentry, pwch, pwcl, stlbps, ticlr, tlbidx, tlbrehi, tlbrentry,
+    badv, ecfg, eentry, prmd, pwch, pwcl, stlbps, ticlr, tlbidx, tlbrehi, tlbrentry,
 };
 
 use crate::{ArchInterface, TrapType};
@@ -174,12 +174,14 @@ pub extern "C" fn user_restore(context: *mut TrapFrame) {
 #[allow(dead_code)]
 #[inline(always)]
 pub fn enable_irq() {
-    crmd::set_ie(true);
+    // crmd::set_ie(true);
+    prmd::set_pie(true);
 }
 
 #[inline(always)]
 pub fn disable_irq() {
-    crmd::set_ie(false);
+    // crmd::set_ie(false);
+    prmd::set_pie(false);
 }
 
 #[inline(always)]

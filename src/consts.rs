@@ -8,3 +8,9 @@ pub const STACK_SIZE: usize = 0x8_0000;
 
 /// The size of the trap frame(diffent in each architecture.).
 pub const TRAPFRAME_SIZE: usize = size_of::<TrapFrame>();
+
+macro_rules! bit {
+    ($x:expr) => {
+        1 << $x
+    };
+}

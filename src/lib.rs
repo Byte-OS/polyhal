@@ -15,6 +15,7 @@ extern crate log;
 
 mod addr;
 mod api;
+#[macro_use]
 pub mod consts;
 pub mod pagetable;
 use core::mem::size_of;
@@ -22,6 +23,7 @@ use core::mem::size_of;
 use alloc::vec::Vec;
 
 use consts::STACK_SIZE;
+use pagetable::PageTable;
 pub use percpu;
 
 #[cfg_attr(target_arch = "riscv64", path = "riscv64/mod.rs")]
@@ -34,6 +36,9 @@ pub use currrent_arch::*;
 
 pub use addr::*;
 pub use api::*;
+
+pub const PAGE_SIZE: usize = PageTable::PAGE_SIZE;
+pub const USER_VADDR_END: usize = PageTable::USER_VADDR_END;
 
 /// Kernel Context Arg Type.
 ///

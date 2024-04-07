@@ -1,29 +1,31 @@
 use core::ops::Deref;
 
-use crate::{ArchInterface, PhysAddr, VirtAddr, VirtPage};
+use crate::{ArchInterface, PhysAddr, PhysPage, VirtAddr, VirtPage};
 
 bitflags::bitflags! {
     /// Mapping flags for page table.
     #[derive(Debug, Clone, Copy, PartialEq, Eq, PartialOrd, Ord, Hash)]
     pub struct MappingFlags: u64 {
+        /// Persent
+        const P = bit!(0);
         /// User Accessable Flag
-        const U = 1 << 0;
+        const U = bit!(1);
         /// Readable Flag
-        const R = 1 << 1;
+        const R = bit!(2);
         /// Writeable Flag
-        const W = 1 << 2;
+        const W = bit!(3);
         /// Executeable Flag
-        const X = 1 << 3;
+        const X = bit!(4);
         /// Accessed Flag
-        const A = 1 << 4;
+        const A = bit!(5);
         /// Dirty Flag, indicating that the page was written
-        const D = 1 << 5;
+        const D = bit!(6);
         /// Global Flag
-        const G = 1 << 6;
+        const G = bit!(7);
         /// Device Flag, indicating that the page was used for device memory
-        const Device = 1 << 7;
+        const Device = bit!(8);
         /// Cache Flag, indicating that the page will be cached
-        const Cache = 1 << 8;
+        const Cache = bit!(9);
 
         /// Read | Write | Executeable Flags
         const RWX = Self::R.bits() | Self::W.bits() | Self::X.bits();
@@ -35,6 +37,23 @@ bitflags::bitflags! {
         const URWX = Self::URW.bits() | Self::X.bits();
     }
 }
+
+/// This structure indicates size of the page that will be mapped.
+///
+/// TODO: Support More Page Size, 16KB or 32KB
+/// Just support 4KB right now.
+#[derive(Debug)]
+pub enum MappingSize {
+    Page4KB,
+    // Page2MB,
+    // Page1GB,
+}
+
+/// Page table entry structure
+///
+/// Just define here. Should implement functions in specific architectures.
+#[derive(Copy, Clone, Debug)]
+pub struct PTE(pub usize);
 
 /// Page Table
 ///
@@ -48,6 +67,161 @@ bitflags::bitflags! {
 #[repr(C)]
 #[derive(Debug, Clone, Copy)]
 pub struct PageTable(pub(crate) PhysAddr);
+
+impl PageTable {
+    /// Get the page table list through the physical address
+    #[inline]
+    pub fn get_pte_list(paddr: PhysAddr) -> &'static mut [PTE] {
+        paddr.slice_mut_with_len::<PTE>(Self::PTE_NUM_IN_PAGE)
+    }
+
+    pub fn map_page(&self, vpn: VirtPage, ppn: PhysPage, flags: MappingFlags, _size: MappingSize) {
+        assert!(
+            vpn.to_addr() <= Self::USER_VADDR_END,
+            "You only should use the address limited by user"
+        );
+        assert!(Self::PAGE_LEVEL >= 3, "Just level >= 3 supported currently");
+        let mut pte_list = Self::get_pte_list(self.0);
+        if Self::PAGE_LEVEL == 4 {
+            let pte = &mut pte_list[vpn.pn_index(3)];
+            if !pte.is_valid() {
+                *pte = PTE::new_table(ArchInterface::frame_alloc_persist());
+            }
+            pte_list = Self::get_pte_list(pte.address());
+        }
+        // level 3
+        {
+            let pte = &mut pte_list[vpn.pn_index(2)];
+            if !pte.is_valid() {
+                *pte = PTE::new_table(ArchInterface::frame_alloc_persist());
+            }
+            pte_list = Self::get_pte_list(pte.address());
+        }
+        // level 2
+        {
+            let pte = &mut pte_list[vpn.pn_index(1)];
+            if !pte.is_valid() {
+                *pte = PTE::new_table(ArchInterface::frame_alloc_persist());
+            }
+            pte_list = Self::get_pte_list(pte.address());
+        }
+        // level 1, map page
+        pte_list[vpn.pn_index(0)] = PTE::new_page(ppn, flags.into());
+        TLB::flush_vaddr(vpn.into());
+    }
+
+    pub fn map_kernel(
+        &self,
+        vpn: VirtPage,
+        _ppn: PhysPage,
+        _flags: MappingFlags,
+        _size: MappingSize,
+    ) {
+        assert!(
+            vpn.to_addr() >= Self::KERNEL_VADDR_START,
+            "Virt page should greater than Self::KERNEL_VADDR_START"
+        );
+    }
+
+    pub fn unmap_page(&self, vpn: VirtPage) {
+        let mut pte_list = Self::get_pte_list(self.0);
+        if Self::PAGE_LEVEL == 4 {
+            let pte = &mut pte_list[vpn.pn_index(3)];
+            if !pte.is_table() {
+                return;
+            };
+            pte_list = Self::get_pte_list(pte.address());
+        }
+        // level 3
+        {
+            let pte = &mut pte_list[vpn.pn_index(2)];
+            if !pte.is_table() {
+                return;
+            };
+            pte_list = Self::get_pte_list(pte.address());
+        }
+        // level 2
+        {
+            let pte = &mut pte_list[vpn.pn_index(1)];
+            if !pte.is_table() {
+                return;
+            };
+            pte_list = Self::get_pte_list(pte.address());
+        }
+        // level 1, map page
+        pte_list[vpn.pn_index(0)] = PTE(0);
+        TLB::flush_vaddr(vpn.into());
+    }
+
+    pub fn translate(&self, vaddr: VirtAddr) -> Option<(PhysAddr, MappingFlags)> {
+        let vpn: VirtPage = vaddr.into();
+        let mut pte_list = Self::get_pte_list(self.0);
+        if Self::PAGE_LEVEL == 4 {
+            let pte = &mut pte_list[vpn.pn_index(3)];
+            if !pte.is_table() {
+                return None;
+            }
+            pte_list = Self::get_pte_list(pte.address());
+        }
+        // level 3
+        {
+            let pte = &mut pte_list[vpn.pn_index(2)];
+            if !pte.is_table() {
+                return None;
+            }
+            pte_list = Self::get_pte_list(pte.address());
+        }
+        // level 2
+        {
+            let pte = &mut pte_list[vpn.pn_index(1)];
+            if !pte.is_table() {
+                return None;
+            }
+            pte_list = Self::get_pte_list(pte.address());
+        }
+        // level 1, map page
+        let pte = pte_list[vpn.pn_index(0)];
+        Some((
+            PhysAddr(pte.address().0 + vaddr.pn_offest(0)),
+            pte.flags().into(),
+        ))
+    }
+
+    pub fn release(&self) {
+        let drop_l2 = |pte_list: &[PTE]| {
+            pte_list.iter().for_each(|x| {
+                if x.is_table() {
+                    ArchInterface::frame_unalloc(x.address().into());
+                }
+            });
+        };
+        let drop_l3 = |pte_list: &[PTE]| {
+            pte_list.iter().for_each(|x| {
+                if x.is_table() {
+                    drop_l2(Self::get_pte_list(x.address()));
+                    ArchInterface::frame_unalloc(x.address().into());
+                }
+            });
+        };
+        let drop_l4 = |pte_list: &[PTE]| {
+            pte_list.iter().for_each(|x| {
+                if x.is_table() {
+                    drop_l3(Self::get_pte_list(x.address()));
+                    ArchInterface::frame_unalloc(x.address().into());
+                }
+            });
+        };
+
+        // Drop all sub page table entry and clear root page.
+        let pte_list = &mut Self::get_pte_list(self.0)[..Self::GLOBAL_ROOT_PTE_RANGE];
+        if Self::PAGE_LEVEL == 4 {
+            drop_l4(pte_list);
+        } else {
+            drop_l3(pte_list);
+        }
+        pte_list.fill(PTE(0));
+    }
+}
 
 /// TLB Operation set.
 /// Such as flush_vaddr, flush_all.
@@ -103,17 +277,8 @@ pub enum MapPageSize {
 impl Drop for PageTableWrapper {
     fn drop(&mut self) {
         self.0.release();
+        ArchInterface::frame_unalloc(self.0 .0.into());
     }
-}
-
-/// Get n level page table index of the given virtual address
-pub fn pn_index(vpn: VirtPage, n: usize) -> usize {
-    (vpn.0 >> 9 * n) & 0x1ff
-}
-
-/// Get n level page table offset of the given virtual address
-pub fn pn_offest(vaddr: VirtAddr, n: usize) -> usize {
-    vaddr.0 % (1 << (12 + 9 * n))
 }
 
 #[cfg(test)]

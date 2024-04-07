@@ -1,28 +1,11 @@
 use bitflags::bitflags;
 use riscv::register::satp;
 
-use crate::currrent_arch::entry::PAGE_TABLE;
-use crate::pagetable::{pn_index, pn_offest, PageTable, TLB};
-use crate::{
-    pagetable::MappingFlags, sigtrx::get_trx_mapping, ArchInterface, PhysAddr, PhysPage, VirtAddr,
-    VirtPage, PAGE_ITEM_COUNT, VIRT_ADDR_START,
-};
-
-pub fn map_kernel(vpn: VirtPage, flags: MappingFlags) {
-    let ppn = ArchInterface::frame_alloc_persist();
-    let page_table = PageTable(crate::PhysAddr(satp::read().ppn() << 12));
-    page_table.map(ppn, vpn, flags, 3);
-}
-
-#[derive(Copy, Clone, Debug)]
-pub struct PTE(usize);
+use crate::pagetable::{PageTable, PTE, TLB};
+use crate::{pagetable::MappingFlags, sigtrx::get_trx_mapping, PhysAddr, PhysPage};
+use crate::{VirtAddr, VirtPage};
 
 impl PTE {
-    #[inline]
-    pub const fn new() -> Self {
-        Self(0)
-    }
-
     #[inline]
     pub const fn from_ppn(ppn: usize, flags: PTEFlags) -> Self {
         // let flags = flags.union(PTEFlags::D);
@@ -60,16 +43,6 @@ impl PTE {
     }
 
     #[inline]
-    pub const fn to_ppn(&self) -> PhysPage {
-        PhysPage((self.0 >> 10) & ((1 << 29) - 1))
-    }
-
-    #[inline]
-    pub fn set(&mut self, ppn: usize, flags: PTEFlags) {
-        self.0 = (ppn << 10) | flags.bits() as usize;
-    }
-
-    #[inline]
     pub const fn flags(&self) -> PTEFlags {
         PTEFlags::from_bits_truncate((self.0 & 0xff) as u64)
     }
@@ -92,36 +65,51 @@ impl PTE {
     }
 
     #[inline]
-    pub fn is_leaf(&self) -> bool {
+    pub(crate) fn is_table(&self) -> bool {
         return self.flags().contains(PTEFlags::V)
             && !(self.flags().contains(PTEFlags::R)
                 || self.flags().contains(PTEFlags::W)
                 || self.flags().contains(PTEFlags::X));
+    }
+
+    #[inline]
+    pub(crate) fn new_table(ppn: PhysPage) -> Self {
+        Self((ppn.0 << 10) | (PTEFlags::V).bits() as usize)
+    }
+
+    #[inline]
+    pub(crate) fn new_page(ppn: PhysPage, flags: PTEFlags) -> Self {
+        Self((ppn.0 << 10) | flags.bits() as usize)
+    }
+
+    #[inline]
+    pub(crate) fn address(&self) -> PhysAddr {
+        PhysAddr((self.0 << 2) & 0xFFFF_FFFF_F000)
     }
 }
 
 bitflags! {
     #[derive(Debug, Clone, Copy, PartialEq, Eq, PartialOrd, Ord, Hash)]
     pub struct PTEFlags: u64 {
-        const V = 1 << 0;
-        const R = 1 << 1;
-        const W = 1 << 2;
-        const X = 1 << 3;
-        const U = 1 << 4;
-        const G = 1 << 5;
-        const A = 1 << 6;
-        const D = 1 << 7;
+        const V = bit!(0);
+        const R = bit!(1);
+        const W = bit!(2);
+        const X = bit!(3);
+        const U = bit!(4);
+        const G = bit!(5);
+        const A = bit!(6);
+        const D = bit!(7);
 
         #[cfg(c906)]
-        const SO = 1 << 63;
+        const SO = bit!(63);
         #[cfg(c906)]
-        const C = 1 << 62;
+        const C = bit!(62);
         #[cfg(c906)]
-        const B = 1 << 61;
+        const B = bit!(61);
         #[cfg(c906)]
-        const K = 1 << 60;
+        const K = bit!(60);
         #[cfg(c906)]
-        const SE = 1 << 59;
+        const SE = bit!(59);
 
         const VRWX  = Self::V.bits() | Self::R.bits() | Self::W.bits() | Self::X.bits();
         const ADUVRX = Self::A.bits() | Self::D.bits() | Self::U.bits() | Self::V.bits() | Self::R.bits() | Self::X.bits();
@@ -162,6 +150,9 @@ impl From<MappingFlags> for PTEFlags {
 impl From<PTEFlags> for MappingFlags {
     fn from(value: PTEFlags) -> Self {
         let mut mapping_flags = MappingFlags::empty();
+        if value.contains(PTEFlags::V) {
+            mapping_flags |= MappingFlags::P;
+        }
         if value.contains(PTEFlags::R) {
             mapping_flags |= MappingFlags::R;
         }
@@ -185,23 +176,24 @@ impl From<PTEFlags> for MappingFlags {
     }
 }
 
-#[inline]
-pub fn get_pte_list(paddr: PhysAddr) -> &'static mut [PTE] {
-    unsafe { core::slice::from_raw_parts_mut(paddr.get_mut_ptr::<PTE>(), PAGE_ITEM_COUNT) }
-}
-
 impl PageTable {
+    /// The size of the page for this platform.
+    pub(crate) const PAGE_SIZE: usize = 0x1000;
+    pub(crate) const PAGE_LEVEL: usize = 3;
+    pub(crate) const PTE_NUM_IN_PAGE: usize = 0x200;
+    pub(crate) const GLOBAL_ROOT_PTE_RANGE: usize = 0x100;
+    pub(crate) const VADDR_BITS: usize = 39;
+    pub(crate) const USER_VADDR_END: usize = (1 << Self::VADDR_BITS) - 1;
+    pub(crate) const KERNEL_VADDR_START: usize = !Self::USER_VADDR_END;
+
     pub fn current() -> Self {
         Self(PhysAddr(satp::read().ppn() << 12))
     }
 
-    pub fn token(&self) -> usize {
-        (8 << 60) | (self.0 .0 >> 12)
-    }
-
     #[inline]
     pub fn restore(&self) {
-        let arr = get_pte_list(self.0);
+        self.release();
+        let arr = Self::get_pte_list(self.0);
         arr[0x100] = PTE::from_addr(0x0000_0000, PTEFlags::ADGVRWX);
         arr[0x101] = PTE::from_addr(0x4000_0000, PTEFlags::ADGVRWX);
         arr[0x102] = PTE::from_addr(0x8000_0000, PTEFlags::ADGVRWX);
@@ -217,93 +209,20 @@ impl PageTable {
         satp::write((8 << 60) | (self.0 .0 >> 12));
         TLB::flush_all();
     }
+}
 
+impl VirtPage {
+    /// Get n level page table index of the given virtual address
     #[inline]
-    pub fn map(&self, ppn: PhysPage, vpn: VirtPage, flags: MappingFlags, level: usize) {
-        // TODO: Add huge page support.
-        let mut pte_list = get_pte_list(self.0);
-        for i in (1..level).rev() {
-            let pte = &mut pte_list[pn_index(vpn, i)];
-            if i == 0 {
-                break;
-            }
-            if !pte.is_valid() {
-                *pte = PTE::from_ppn(ArchInterface::frame_alloc_persist().0, PTEFlags::V);
-            }
-
-            // page_table = PageTable(pte.to_ppn().into());
-            pte_list = get_pte_list(pte.to_ppn().into());
-        }
-
-        pte_list[pn_index(vpn, 0)] = PTE::from_ppn(ppn.0, flags.into());
-        TLB::flush_vaddr(vpn.into());
-    }
-
-    #[inline]
-    pub fn unmap(&self, vpn: VirtPage) {
-        // TODO: Add huge page support.
-        let mut pte_list = get_pte_list(self.0);
-        for i in (1..3).rev() {
-            let pte = &mut pte_list[pn_index(vpn, i)];
-            if !pte.is_valid() {
-                return;
-            }
-            pte_list = get_pte_list(pte.to_ppn().into());
-        }
-
-        pte_list[pn_index(vpn, 0)] = PTE::new();
-        TLB::flush_vaddr(vpn.into());
-    }
-
-    #[inline]
-    pub fn translate(&self, vaddr: VirtAddr) -> Option<(PhysAddr, MappingFlags)> {
-        let l3_pte = &get_pte_list(self.0)[pn_index(vaddr.into(), 2)];
-        if !l3_pte.flags().contains(PTEFlags::V) {
-            return None;
-        };
-        if l3_pte.is_huge() {
-            return Some((
-                PhysAddr(l3_pte.to_ppn().to_addr() | pn_offest(vaddr, 2)),
-                l3_pte.flags().into(),
-            ));
-        }
-
-        let l2_pte = get_pte_list(l3_pte.to_ppn().into())[pn_index(vaddr.into(), 1)];
-        if !l2_pte.flags().contains(PTEFlags::V) {
-            return None;
-        };
-        if l2_pte.is_huge() {
-            return Some((
-                PhysAddr(l2_pte.to_ppn().to_addr() | pn_offest(vaddr, 1)),
-                l2_pte.flags().into(),
-            ));
-        }
-
-        let l1_pte = get_pte_list(l2_pte.to_ppn().into())[pn_index(vaddr.into(), 0)];
-        if !l1_pte.flags().contains(PTEFlags::V) {
-            return None;
-        };
-        Some((
-            PhysAddr(l1_pte.to_ppn().to_addr() | pn_offest(vaddr, 0)),
-            l1_pte.flags().into(),
-        ))
+    pub fn pn_index(&self, n: usize) -> usize {
+        (self.0 >> 9 * n) & 0x1ff
     }
 }
 
-impl PageTable {
-    pub(crate) fn release(&self) {
-        unsafe {
-            if self.0.addr() == (PAGE_TABLE.as_ptr() as usize & !VIRT_ADDR_START) {
-                return;
-            }
-        }
-        for root_pte in get_pte_list(self.0)[..0x100].iter().filter(|x| x.is_leaf()) {
-            get_pte_list(root_pte.to_ppn().into())
-                .iter()
-                .filter(|x| x.is_leaf())
-                .for_each(|x| ArchInterface::frame_unalloc(x.to_ppn()));
-            ArchInterface::frame_unalloc(root_pte.to_ppn());
-        }
-        ArchInterface::frame_unalloc(self.0.into());
+impl VirtAddr {
+    /// Get n level page table offset of the given virtual address
+    #[inline]
+    pub fn pn_offest(&self, n: usize) -> usize {
+        self.0 % (1 << (12 + 9 * n))
     }
 }

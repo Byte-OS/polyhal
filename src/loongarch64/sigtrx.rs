@@ -1,4 +1,7 @@
-use crate::{pagetable::MappingFlags, PAGE_ITEM_COUNT, PAGE_SIZE, PTE, VIRT_ADDR_START};
+use crate::{
+    pagetable::{MappingFlags, PageTable, PTE},
+    PAGE_SIZE, VIRT_ADDR_START,
+};
 
 /// 汇编入口函数
 ///
@@ -17,7 +20,8 @@ unsafe extern "C" fn _sigreturn() -> ! {
 }
 
 #[link_section = ".data.prepage.trx1"]
-static mut TRX_STEP: [[PTE; PAGE_ITEM_COUNT]; 2] = [[PTE::new(); PAGE_ITEM_COUNT]; 2];
+static mut TRX_STEP: [[PTE; PageTable::PTE_NUM_IN_PAGE]; 2] =
+    [[PTE(0); PageTable::PTE_NUM_IN_PAGE]; 2];
 
 pub fn init() {
     unsafe {

@@ -12,6 +12,7 @@ use crate::{TrapFrame, TrapType};
 ///
 /// eg: in kernel/src/main.rs
 ///
+/// ```rust
 /// #[crate_interface::impl_interface]
 /// impl ArchInterface for ArchInterfaceImpl {
 ///     /// Init allocator
@@ -33,6 +34,7 @@ use crate::{TrapFrame, TrapType};
 ///     /// Try to add device through FdtNode
 ///     fn try_to_add_device(_fdt_node: &FdtNode) {}
 /// }
+/// ```
 
 #[crate_interface::def_interface]
 pub trait ArchInterface {

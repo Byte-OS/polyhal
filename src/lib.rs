@@ -9,9 +9,41 @@
 #![cfg_attr(target_arch = "aarch64", feature(const_option))]
 
 /// This is a crate to help you supporting multiple platforms.
-/// ```rust
 ///
+/// If you want to use this crate, you should implement the following trait in your code.
+///
+/// ```rust
+/// use arch::api::ArchInterface;
+///
+/// pub struct ArchInterfaceImpl;
+///
+/// #[crate_interface::impl_interface]
+/// impl ArchInterface for ArchInterfaceImpl {
+///     /// Init allocator
+///     fn init_allocator() {}
+///     /// kernel interrupt
+///     fn kernel_interrupt(ctx: &mut TrapFrame, trap_type: TrapType) {}
+///     /// init log
+///     fn init_logging() {}
+///     /// add a memory region
+///     fn add_memory_region(start: usize, end: usize) {}
+///     /// kernel main function, entry point.
+///     fn main(hartid: usize) {}
+///     /// Alloc a persistent memory page.
+///     fn frame_alloc_persist() -> PhysPage {}
+///     /// Unalloc a persistent memory page
+///     fn frame_unalloc(ppn: PhysPage) {}
+///     /// Preprare drivers.
+///     fn prepare_drivers() {}
+///     /// Try to add device through FdtNode
+///     fn try_to_add_device(_fdt_node: &FdtNode) {}
+/// }
 /// ```
+///
+/// The main(hardid: usize) is the entry point.
+///
+/// You can find details in the example.
+///
 extern crate alloc;
 
 #[macro_use]

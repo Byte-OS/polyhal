@@ -23,6 +23,7 @@ pub mod api;
 pub mod consts;
 pub mod irq;
 pub mod pagetable;
+pub mod time;
 use core::mem::size_of;
 
 use alloc::vec::Vec;

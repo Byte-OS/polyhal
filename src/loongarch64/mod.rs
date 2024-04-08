@@ -16,7 +16,6 @@ pub use context::TrapFrame;
 pub use kcontext::{context_switch, context_switch_pt, read_current_tp, KContext};
 use loongarch64::register::euen;
 pub use page_table::*;
-pub use timer::{get_time, time_to_usec};
 pub use trap::{disable_irq, enable_external_irq, enable_irq, init_interrupt, run_user_task};
 
 use crate::api::ArchInterface;

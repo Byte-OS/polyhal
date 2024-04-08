@@ -1,11 +1,20 @@
 use raw_cpuid::CpuId;
 
-static mut INIT_TICK: u64 = 0;
-static mut CPU_FREQ_MHZ: u64 = 4000;
+use crate::time::Time;
 
-/// Converts hardware ticks to nanoseconds.
-pub fn ticks_to_nanos(ticks: u64) -> u64 {
-    ticks * 1_000 / unsafe { CPU_FREQ_MHZ }
+static mut INIT_TICK: usize = 0;
+static mut CPU_FREQ_MHZ: usize = 4000_000_000;
+
+impl Time {
+    #[inline]
+    pub fn get_freq() -> usize {
+        unsafe { CPU_FREQ_MHZ }
+    }
+
+    #[inline]
+    pub fn now() -> Self {
+        Self(unsafe { core::arch::x86_64::_rdtsc() as _ })
+    }
 }
 
 pub(super) fn init_early() {
@@ -18,11 +27,11 @@ pub(super) fn init_early() {
         debug!("freq: {}", freq);
         if freq > 0 {
             info!("Got TSC frequency by CPUID: {} MHz", freq);
-            unsafe { CPU_FREQ_MHZ = freq as u64 }
+            unsafe { CPU_FREQ_MHZ = freq as _ }
         }
     }
 
-    unsafe { INIT_TICK = core::arch::x86_64::_rdtsc() };
+    unsafe { INIT_TICK = core::arch::x86_64::_rdtsc() as _ };
     debug!("INIT_TICK: {}", unsafe { INIT_TICK });
 
     unsafe {

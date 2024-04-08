@@ -3,15 +3,19 @@
 use aarch64_cpu::registers::{CNTFRQ_EL0, CNTPCT_EL0, CNTP_CTL_EL0, CNTP_TVAL_EL0};
 use tock_registers::interfaces::{Readable, Writeable};
 
-/// Returns the current clock time in hardware ticks.
-#[inline]
-pub fn get_time() -> usize {
-    CNTPCT_EL0.get() as _
-}
+use crate::time::Time;
 
-#[inline]
-pub fn time_to_usec(ts: usize) -> usize {
-    ts * 1000_000 / CNTFRQ_EL0.get() as usize
+impl Time {
+    #[inline]
+    pub fn get_freq() -> usize {
+        CNTFRQ_EL0.get() as _
+    }
+
+    /// Returns the current clock time in hardware ticks.
+    #[inline]
+    pub fn now() -> Self {
+        Self(CNTPCT_EL0.get() as _)
+    }
 }
 
 pub fn set_next_timer() {

@@ -7,15 +7,17 @@ use spin::Lazy;
 // static mut FREQ: usize = 0;
 static FREQ: Lazy<usize> = Lazy::new(|| get_timer_freq());
 
-/// Returns the current clock time in hardware ticks.
-#[inline]
-pub fn get_time() -> usize {
-    Time::read()
-}
+impl crate::time::Time {
+    #[inline]
+    pub fn get_freq() -> usize {
+        *FREQ
+    }
 
-#[inline]
-pub fn time_to_usec(ts: usize) -> usize {
-    ts * 1000_000 / *FREQ
+    /// Returns the current clock time in hardware ticks.
+    #[inline]
+    pub fn now() -> Self {
+        Self(Time::read())
+    }
 }
 
 pub fn init_timer() {

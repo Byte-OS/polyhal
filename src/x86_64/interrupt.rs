@@ -16,7 +16,6 @@ use crate::{currrent_arch::gdt::GdtStruct, TrapFrame, TrapType};
 
 use super::apic::vectors::APIC_TIMER_VECTOR;
 use super::context::FxsaveArea;
-use super::time::ticks_to_nanos;
 
 global_asm!(
     r"
@@ -421,12 +420,4 @@ pub fn enable_external_irq() {
 pub fn init_interrupt() {
     // Test break point.
     unsafe { core::arch::asm!("int 3") }
-}
-
-pub fn time_to_usec(ticks: usize) -> usize {
-    (ticks_to_nanos(ticks as _) / 1000) as _
-}
-
-pub fn get_time() -> usize {
-    unsafe { core::arch::x86_64::_rdtsc() as _ }
 }

@@ -1,32 +1,25 @@
+use crate::currrent_arch::boards::CLOCK_FREQ;
+use crate::set_timer;
+use crate::time::Time;
 use riscv::register::{sie, time};
 
-use crate::set_timer;
+impl Time {
+    #[inline]
+    pub fn get_freq() -> usize {
+        CLOCK_FREQ
+    }
 
-pub use crate::currrent_arch::boards::CLOCK_FREQ;
-const TICKS_PER_SEC: usize = 100;
-const USEC_PER_SEC: usize = 1000_000;
-const NSEC_PER_SEC: usize = 1000_000_000;
-
-#[inline]
-pub fn get_time() -> usize {
-    time::read()
-}
-
-#[inline]
-pub fn time_to_usec(t: usize) -> usize {
-    t / (CLOCK_FREQ / USEC_PER_SEC)
-}
-
-#[inline]
-pub fn time_to_nsec(t: usize) -> usize {
-    t * NSEC_PER_SEC / CLOCK_FREQ
+    #[inline]
+    pub fn now() -> Self {
+        Self(time::read())
+    }
 }
 
 // 设置下一次时钟中断触发时间
 #[inline]
 pub fn set_next_timeout() {
     // 调用sbi设置定时器
-    set_timer(time::read() + CLOCK_FREQ / TICKS_PER_SEC);
+    set_timer(time::read() + CLOCK_FREQ / 100);
 }
 
 pub fn init() {

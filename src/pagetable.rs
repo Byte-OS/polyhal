@@ -76,6 +76,13 @@ impl PageTable {
         paddr.slice_mut_with_len::<PTE>(Self::PTE_NUM_IN_PAGE)
     }
 
+    /// Mapping a page to specific virtual page (user space address).
+    ///
+    /// Ensure that PageTable is which you want to map.
+    /// vpn: Virtual page will be mapped.
+    /// ppn: Physical page.
+    /// flags: Mapping flags, include Read, Write, Execute and so on.
+    /// size: MappingSize. Just support 4KB page currently.
     pub fn map_page(&self, vpn: VirtPage, ppn: PhysPage, flags: MappingFlags, _size: MappingSize) {
         assert!(
             vpn.to_addr() <= Self::USER_VADDR_END,
@@ -111,6 +118,16 @@ impl PageTable {
         TLB::flush_vaddr(vpn.into());
     }
 
+    /// Mapping a page to specific address(kernel space address).
+    ///
+    /// TODO: This method is not implemented.
+    /// TIPS: If we mapped to kernel, the page will be shared between different pagetable.
+    ///
+    /// Ensure that PageTable is which you want to map.
+    /// vpn: Virtual page will be mapped.
+    /// ppn: Physical page.
+    /// flags: Mapping flags, include Read, Write, Execute and so on.
+    /// size: MappingSize. Just support 4KB page currently.    
     pub fn map_kernel(
         &self,
         vpn: VirtPage,
@@ -124,6 +141,10 @@ impl PageTable {
         );
     }
 
+    /// Unmap a page from specific virtual page (user space address).
+    ///
+    /// Ensure the virtual page is exists.
+    /// vpn: Virtual address.
     pub fn unmap_page(&self, vpn: VirtPage) {
         let mut pte_list = Self::get_pte_list(self.0);
         if Self::PAGE_LEVEL == 4 {
@@ -154,6 +175,10 @@ impl PageTable {
         TLB::flush_vaddr(vpn.into());
     }
 
+    /// Translate a virtual adress to a physical address and mapping flags.
+    ///
+    /// Return None if the vaddr isn't mapped.
+    /// vpn: The virtual address will be translated.
     pub fn translate(&self, vaddr: VirtAddr) -> Option<(PhysAddr, MappingFlags)> {
         let vpn: VirtPage = vaddr.into();
         let mut pte_list = Self::get_pte_list(self.0);
@@ -188,6 +213,11 @@ impl PageTable {
         ))
     }
 
+    /// Release the page table entry.
+    ///
+    /// The page table entry in the user space address will be released.
+    /// [Page Table Wikipedia](https://en.wikipedia.org/wiki/Page_table).
+    /// You don't need to care about this if you just want to use.
     pub fn release(&self) {
         let drop_l2 = |pte_list: &[PTE]| {
             pte_list.iter().for_each(|x| {

@@ -24,7 +24,6 @@ pub use kcontext::{context_switch, context_switch_pt, read_current_tp, KContext}
 pub use page_table::*;
 pub use pl011::{console_getchar, console_putchar};
 pub use psci::system_off as shutdown;
-pub use timer::{get_time, time_to_usec};
 pub use trap::{disable_irq, enable_external_irq, enable_irq, init_interrupt, run_user_task};
 
 use crate::api::ArchInterface;

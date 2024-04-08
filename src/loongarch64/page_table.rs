@@ -25,7 +25,7 @@ impl PTE {
 
     #[inline]
     pub fn address(&self) -> PhysAddr {
-        PhysAddr(self.0 & 0xffff_ffff_f000)
+        PhysAddr((self.0) & 0xffff_ffff_f000)
     }
 
     #[inline]
@@ -51,9 +51,9 @@ impl From<MappingFlags> for PTEFlags {
             flags |= PTEFlags::W | PTEFlags::D;
         }
 
-        if !value.contains(MappingFlags::X) {
-            flags |= PTEFlags::NX;
-        }
+        // if !value.contains(MappingFlags::X) {
+        //     flags |= PTEFlags::NX;
+        // }
 
         if value.contains(MappingFlags::U) {
             flags |= PTEFlags::PLV_USER;
@@ -73,9 +73,9 @@ impl Into<MappingFlags> for PTEFlags {
             flags |= MappingFlags::D;
         }
 
-        if !self.contains(PTEFlags::NX) {
-            flags |= MappingFlags::X;
-        }
+        // if !self.contains(PTEFlags::NX) {
+        //     flags |= MappingFlags::X;
+        // }
 
         if self.contains(PTEFlags::PLV_USER) {
             flags |= MappingFlags::U;
@@ -108,6 +108,8 @@ bitflags::bitflags! {
         /// Page is not readable.
         const NR = bit!(11);
         /// Page is not executable.
+        /// FIXME: Is it just for a huge page?
+        /// Linux related url: https://github.com/torvalds/linux/blob/master/arch/loongarch/include/asm/pgtable-bits.h
         const NX = bit!(12);
         /// Whether the privilege Level is restricted. When RPLV is 0, the PTE
         /// can be accessed by any program with privilege Level highter than PLV.
@@ -120,7 +122,7 @@ impl PageTable {
     pub(crate) const PAGE_SIZE: usize = 0x1000;
     pub(crate) const PAGE_LEVEL: usize = 3;
     pub(crate) const PTE_NUM_IN_PAGE: usize = 0x200;
-    pub(crate) const GLOBAL_ROOT_PTE_RANGE: usize = 0x200;
+    pub(crate) const GLOBAL_ROOT_PTE_RANGE: usize = 0x100;
     pub(crate) const VADDR_BITS: usize = 39;
     pub(crate) const USER_VADDR_END: usize = (1 << Self::VADDR_BITS) - 1;
     pub(crate) const KERNEL_VADDR_START: usize = !Self::USER_VADDR_END;

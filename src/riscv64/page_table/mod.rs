@@ -5,7 +5,8 @@ use core::arch::riscv64::sfence_vma;
 
 pub use sv39::*;
 
-use crate::{pagetable::TLB, VirtAddr};
+use crate::addr::VirtAddr;
+use crate::pagetable::TLB;
 
 /// TLB operations
 impl TLB {

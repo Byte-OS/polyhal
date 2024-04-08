@@ -8,15 +8,20 @@
 #![cfg_attr(target_arch = "riscv64", feature(riscv_ext_intrinsics))]
 #![cfg_attr(target_arch = "aarch64", feature(const_option))]
 
+/// This is a crate to help you supporting multiple platforms.
+/// ```rust
+///
+/// ```
 extern crate alloc;
 
 #[macro_use]
 extern crate log;
 
-mod addr;
-mod api;
+pub mod addr;
+pub mod api;
 #[macro_use]
 pub mod consts;
+pub mod irq;
 pub mod pagetable;
 use core::mem::size_of;
 
@@ -33,9 +38,6 @@ pub use percpu;
 mod currrent_arch;
 
 pub use currrent_arch::*;
-
-pub use addr::*;
-pub use api::*;
 
 pub const PAGE_SIZE: usize = PageTable::PAGE_SIZE;
 pub const USER_VADDR_END: usize = PageTable::USER_VADDR_END;

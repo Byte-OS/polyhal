@@ -30,7 +30,7 @@ use x86_64::{
     },
 };
 
-use crate::{currrent_arch::multiboot::use_multiboot, ArchInterface};
+use crate::{api::ArchInterface, currrent_arch::multiboot::use_multiboot};
 
 #[percpu::def_percpu]
 static CPU_ID: usize = 1;
@@ -99,14 +99,14 @@ fn rust_tmp_main(magic: usize, mboot_ptr: usize) {
                 .for_each(|x| {
                     let start = x.base_address() as usize | VIRT_ADDR_START;
                     let end = x.length() as usize | VIRT_ADDR_START;
-                    crate::ArchInterface::add_memory_region(start, end);
+                    ArchInterface::add_memory_region(start, end);
                 });
         }
     }
 
     ArchInterface::prepare_drivers();
 
-    crate::ArchInterface::main(0);
+    ArchInterface::main(0);
 
     shutdown()
 }

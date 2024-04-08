@@ -4,8 +4,9 @@ use aarch64_cpu::registers::{Writeable, ESR_EL1, FAR_EL1, VBAR_EL1};
 use tock_registers::interfaces::Readable;
 
 use crate::{
+    api::ArchInterface,
     currrent_arch::{gic::handle_irq, timer::set_next_timer},
-    ArchInterface, TrapType,
+    TrapType,
 };
 
 use super::TrapFrame;

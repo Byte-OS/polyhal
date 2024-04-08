@@ -1,7 +1,9 @@
 use loongarch64::register::pgdl;
 
-use crate::pagetable::{MappingFlags, PageTable, PTE, TLB};
-use crate::{PhysAddr, PhysPage, VirtAddr, VirtPage};
+use crate::{
+    addr::{PhysAddr, PhysPage, VirtAddr, VirtPage},
+    pagetable::{MappingFlags, PageTable, PTE, TLB},
+};
 
 use super::sigtrx::get_trx_mapping;
 

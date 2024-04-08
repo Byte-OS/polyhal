@@ -119,7 +119,7 @@ pub fn switch_to_kernel_page_table() {
 }
 
 pub fn kernel_page_table() -> PageTable {
-    PageTable(crate::PhysAddr(unsafe {
+    PageTable(crate::addr::PhysAddr(unsafe {
         PAGE_TABLE.as_ptr() as usize & !VIRT_ADDR_START
     }))
 }

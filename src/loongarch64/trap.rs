@@ -5,7 +5,8 @@ use loongarch64::register::{
     badv, ecfg, eentry, prmd, pwch, pwcl, stlbps, ticlr, tlbidx, tlbrehi, tlbrentry,
 };
 
-use crate::{ArchInterface, TrapType};
+use crate::api::ArchInterface;
+use crate::TrapType;
 
 use super::TrapFrame;
 

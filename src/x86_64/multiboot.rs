@@ -78,7 +78,7 @@ pub fn kernel_page_table() -> PageTable {
     extern "C" {
         fn _kernel_page_table();
     }
-    PageTable(crate::PhysAddr(
+    PageTable(crate::addr::PhysAddr(
         _kernel_page_table as usize - VIRT_ADDR_START,
     ))
 }

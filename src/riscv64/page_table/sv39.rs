@@ -1,9 +1,9 @@
 use bitflags::bitflags;
 use riscv::register::satp;
 
+use crate::addr::{PhysAddr, PhysPage, VirtAddr, VirtPage};
 use crate::pagetable::{PageTable, PTE, TLB};
-use crate::{pagetable::MappingFlags, sigtrx::get_trx_mapping, PhysAddr, PhysPage};
-use crate::{VirtAddr, VirtPage};
+use crate::{pagetable::MappingFlags, sigtrx::get_trx_mapping};
 
 impl PTE {
     #[inline]

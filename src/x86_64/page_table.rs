@@ -2,9 +2,10 @@ use bitflags::bitflags;
 
 use x86::tlb;
 
+use crate::addr::{PhysAddr, PhysPage, VirtAddr, VirtPage};
 use crate::{
     pagetable::{MappingFlags, PageTable, PTE, TLB},
-    PhysAddr, PhysPage, VirtAddr, VirtPage, VIRT_ADDR_START,
+    VIRT_ADDR_START,
 };
 
 bitflags! {

@@ -19,7 +19,8 @@ pub use page_table::*;
 pub use timer::{get_time, time_to_usec};
 pub use trap::{disable_irq, enable_external_irq, enable_irq, init_interrupt, run_user_task};
 
-use crate::{clear_bss, ArchInterface};
+use crate::api::ArchInterface;
+use crate::clear_bss;
 
 pub fn rust_tmp_main(hart_id: usize) {
     clear_bss();

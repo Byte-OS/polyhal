@@ -1,6 +1,7 @@
 use fdt::node::FdtNode;
 
-use crate::{PhysPage, TrapFrame, TrapType};
+use crate::addr::PhysPage;
+use crate::{TrapFrame, TrapType};
 
 /// ArchInterface
 ///

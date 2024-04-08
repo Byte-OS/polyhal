@@ -27,8 +27,9 @@ pub use psci::system_off as shutdown;
 pub use timer::{get_time, time_to_usec};
 pub use trap::{disable_irq, enable_external_irq, enable_irq, init_interrupt, run_user_task};
 
+use crate::api::ArchInterface;
+use crate::clear_bss;
 use crate::pagetable::PageTable;
-use crate::{clear_bss, ArchInterface};
 
 pub fn rust_tmp_main(hart_id: usize, device_tree: usize) {
     clear_bss();
@@ -90,5 +91,5 @@ pub fn rust_tmp_main(hart_id: usize, device_tree: usize) {
 }
 
 pub fn kernel_page_table() -> PageTable {
-    PageTable(crate::PhysAddr(TTBR0_EL1.get_baddr() as _))
+    PageTable(crate::addr::PhysAddr(TTBR0_EL1.get_baddr() as _))
 }

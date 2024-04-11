@@ -97,37 +97,36 @@ pub(crate) fn rust_main(hartid: usize, device_tree: usize) {
 
     drop(dt_buf);
 
-    // let page_table = PageTable::current();
+    let page_table = PageTable::current();
 
-    // (0..cpu_num).into_iter().for_each(|cpu| {
-    //     if cpu == CPU_ID.read_current() {
-    //         return;
-    //     };
+    (0..cpu_num).into_iter().for_each(|cpu| {
+        if cpu == CPU_ID.read_current() {
+            return;
+        };
 
-    //     // PERCPU DATA ADDRESS RANGE END
-    //     let cpu_addr_end = MULTI_CORE_AREA + (cpu + 1) * MULTI_CORE_AREA_SIZE;
-    //     let aux_core_func = (secondary_start as usize) & (!VIRT_ADDR_START);
+        // PERCPU DATA ADDRESS RANGE END
+        let cpu_addr_end = MULTI_CORE_AREA + (cpu + 1) * MULTI_CORE_AREA_SIZE;
+        let aux_core_func = (secondary_start as usize) & (!VIRT_ADDR_START);
 
-    //     // Ready to build multi core area.
-    //     // default stack size is 512K
-    //     for i in 0..128 {
-    //         page_table.map_kernel(
-    //             VirtPage::from_addr(cpu_addr_end - i * PAGE_SIZE - 1),
-    //             ArchInterface::frame_alloc_persist(),
-    //             MappingFlags::RWX | MappingFlags::G,
-    //             MappingSize::Page4KB,
-    //         )
-    //     }
+        // Ready to build multi core area.
+        // default stack size is 512K
+        for i in 0..128 {
+            page_table.map_kernel(
+                VirtPage::from_addr(cpu_addr_end - i * PageTable::PAGE_SIZE - 1),
+                ArchInterface::frame_alloc_persist(),
+                MappingFlags::RWX | MappingFlags::G,
+                MappingSize::Page4KB,
+            )
+        }
 
-    //     info!("secondary addr: {:#x}", secondary_start as usize);
-    //     let ret = sbi_rt::hart_start(cpu, aux_core_func, cpu_addr_end);
-    //     if ret.is_ok() {
-    //         info!("hart {} Startting successfully", cpu);
-    //     } else {
-    //         warn!("hart {} Startting failed", cpu)
-    //     }
-    // });
-
+        info!("secondary addr: {:#x}", secondary_start as usize);
+        let ret = sbi_rt::hart_start(cpu, aux_core_func, cpu_addr_end);
+        if ret.is_ok() {
+            info!("hart {} Startting successfully", cpu);
+        } else {
+            warn!("hart {} Startting failed", cpu)
+        }
+    });
     crate::api::ArchInterface::main(hartid);
     shutdown();
 }

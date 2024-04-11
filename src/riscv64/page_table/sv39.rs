@@ -2,6 +2,7 @@ use bitflags::bitflags;
 use riscv::register::satp;
 
 use crate::addr::{PhysAddr, PhysPage, VirtAddr, VirtPage};
+use crate::kernel_page_table;
 use crate::pagetable::{PageTable, PTE, TLB};
 use crate::{pagetable::MappingFlags, sigtrx::get_trx_mapping};
 
@@ -186,19 +187,27 @@ impl PageTable {
     pub(crate) const USER_VADDR_END: usize = (1 << Self::VADDR_BITS) - 1;
     pub(crate) const KERNEL_VADDR_START: usize = !Self::USER_VADDR_END;
 
+    #[inline]
     pub fn current() -> Self {
         Self(PhysAddr(satp::read().ppn() << 12))
     }
 
     #[inline]
+    pub fn kernel_pte_entry(&self) -> PhysAddr {
+        self.0
+    }
+
+    #[inline]
     pub fn restore(&self) {
         self.release();
+        let kernel_arr = Self::get_pte_list(kernel_page_table().0);
         let arr = Self::get_pte_list(self.0);
-        arr[0x100] = PTE::from_addr(0x0000_0000, PTEFlags::ADGVRWX);
-        arr[0x101] = PTE::from_addr(0x4000_0000, PTEFlags::ADGVRWX);
-        arr[0x102] = PTE::from_addr(0x8000_0000, PTEFlags::ADGVRWX);
-        arr[0x104] = PTE::from_addr(get_trx_mapping(), PTEFlags::V);
-        arr[0x106] = PTE::from_addr(0x8000_0000, PTEFlags::ADGVRWX);
+        arr[0x100..].copy_from_slice(&kernel_arr[0x100..]);
+        // arr[0x100] = PTE::from_addr(0x0000_0000, PTEFlags::ADGVRWX);
+        // arr[0x101] = PTE::from_addr(0x4000_0000, PTEFlags::ADGVRWX);
+        // arr[0x102] = PTE::from_addr(0x8000_0000, PTEFlags::ADGVRWX);
+        // arr[0x104] = PTE::from_addr(get_trx_mapping(), PTEFlags::V);
+        // arr[0x106] = PTE::from_addr(0x8000_0000, PTEFlags::ADGVRWX);
         // arr[0..0x100].fill(PTE::from_addr(0, PTEFlags::empty()));
         arr[0..0x100].fill(PTE(0));
     }

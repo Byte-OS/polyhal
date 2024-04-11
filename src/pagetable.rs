@@ -128,17 +128,47 @@ impl PageTable {
     /// ppn: Physical page.
     /// flags: Mapping flags, include Read, Write, Execute and so on.
     /// size: MappingSize. Just support 4KB page currently.    
+    /// 
+    /// How to implement shared.
     pub fn map_kernel(
         &self,
         vpn: VirtPage,
-        _ppn: PhysPage,
-        _flags: MappingFlags,
+        ppn: PhysPage,
+        flags: MappingFlags,
         _size: MappingSize,
     ) {
         assert!(
             vpn.to_addr() >= Self::KERNEL_VADDR_START,
             "Virt page should greater than Self::KERNEL_VADDR_START"
         );
+        assert!(Self::PAGE_LEVEL >= 3, "Just level >= 3 supported currently");
+        let mut pte_list = Self::get_pte_list(self.0);
+        if Self::PAGE_LEVEL == 4 {
+            let pte = &mut pte_list[vpn.pn_index(3)];
+            if !pte.is_valid() {
+                *pte = PTE::new_table(ArchInterface::frame_alloc_persist());
+            }
+            pte_list = Self::get_pte_list(pte.address());
+        }
+        // level 3
+        {
+            let pte = &mut pte_list[vpn.pn_index(2)];
+            if !pte.is_valid() {
+                *pte = PTE::new_table(ArchInterface::frame_alloc_persist());
+            }
+            pte_list = Self::get_pte_list(pte.address());
+        }
+        // level 2
+        {
+            let pte = &mut pte_list[vpn.pn_index(1)];
+            if !pte.is_valid() {
+                *pte = PTE::new_table(ArchInterface::frame_alloc_persist());
+            }
+            pte_list = Self::get_pte_list(pte.address());
+        }
+        // level 1, map page
+        pte_list[vpn.pn_index(0)] = PTE::new_page(ppn, flags.into());
+        TLB::flush_vaddr(vpn.into());
     }
 
     /// Unmap a page from specific virtual page (user space address).

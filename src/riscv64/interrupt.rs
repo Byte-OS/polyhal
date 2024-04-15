@@ -2,7 +2,7 @@ use core::arch::{asm, global_asm};
 
 use riscv::register::{
     scause::{self, Exception, Interrupt, Trap},
-    sie, stval,
+    sie, stval, stvec,
 };
 
 use crate::{add_irq, TrapFrame, TrapType, VIRT_ADDR_START};
@@ -87,11 +87,8 @@ pub fn init_interrupt() {
     // 输出内核信息
 
     unsafe {
-        asm!("csrw stvec, a0", in("a0") kernelvec as usize);
-
-        // 测试
-        info!("测试 ebreak exception");
-        asm!("ebreak");
+        stvec::write(kernelvec as usize, stvec::TrapMode::Direct);
+        // asm!("csrw stvec, a0", in("a0") kernelvec as usize);
     }
 
     // 初始化定时器

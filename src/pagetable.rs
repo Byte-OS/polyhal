@@ -128,7 +128,7 @@ impl PageTable {
     /// ppn: Physical page.
     /// flags: Mapping flags, include Read, Write, Execute and so on.
     /// size: MappingSize. Just support 4KB page currently.    
-    /// 
+    ///
     /// How to implement shared.
     pub fn map_kernel(
         &self,

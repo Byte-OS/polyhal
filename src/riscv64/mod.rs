@@ -95,11 +95,11 @@ pub(crate) fn rust_main(hartid: usize, device_tree: usize) {
 
     #[cfg(feature = "multicore")]
     {
+        use self::entry::secondary_start;
         use crate::{
             addr::VirtPage,
             pagetable::{MappingFlags, MappingSize, PageTable},
         };
-        use self::entry::secondary_start;
 
         let page_table = PageTable::current();
 
@@ -132,7 +132,7 @@ pub(crate) fn rust_main(hartid: usize, device_tree: usize) {
             }
         });
     }
-    
+
     crate::api::ArchInterface::main(hartid);
     shutdown();
 }

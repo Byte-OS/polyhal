@@ -9,32 +9,24 @@ mod sigtrx;
 mod timer;
 mod trap;
 
-pub use console::{console_getchar, console_putchar};
+use alloc::vec::Vec;
 pub use consts::*;
 pub use context::TrapFrame;
 #[cfg(feature = "kcontext")]
 pub use kcontext::{context_switch, context_switch_pt, read_current_tp, KContext};
 use loongarch64::register::euen;
-pub use page_table::*;
+pub use page_table::kernel_page_table;
 pub use trap::{disable_irq, enable_external_irq, enable_irq, init_interrupt, run_user_task};
 
 use crate::api::ArchInterface;
-use crate::clear_bss;
+use crate::{clear_bss, DTB_BIN, MEM_AREA};
 
 pub fn rust_tmp_main(hart_id: usize) {
     clear_bss();
-    ArchInterface::init_logging();
-    ArchInterface::init_allocator();
     trap::set_trap_vector_base();
     sigtrx::init();
 
-    ArchInterface::add_memory_region(
-        VIRT_ADDR_START | 0x9000_0000,
-        VIRT_ADDR_START | (0x9000_0000 + 0x2000_0000),
-    );
     info!("hart_id: {}", hart_id);
-
-    ArchInterface::prepare_drivers();
 
     // Enable floating point
     euen::set_fpe(true);
@@ -50,4 +42,13 @@ pub fn shutdown() -> ! {
     loop {
         unsafe { loongarch64::asm::idle() };
     }
+}
+
+pub(crate) fn arch_init() {
+    DTB_BIN.init_by(Vec::new());
+    MEM_AREA.init_by({
+        let mut mem_area = Vec::new();
+        mem_area.push((VIRT_ADDR_START | 0x9000_0000, 0x2000_0000));
+        mem_area
+    });
 }

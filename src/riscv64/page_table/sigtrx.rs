@@ -1,7 +1,9 @@
 use crate::{
     pagetable::{PageTable, PTE},
-    PTEFlags, VIRT_ADDR_START,
+    VIRT_ADDR_START,
 };
+
+use super::PTEFlags;
 
 /// 汇编入口函数
 ///

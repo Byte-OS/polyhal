@@ -1,7 +1,7 @@
 use core::ops::Deref;
 
 use crate::addr::{PhysAddr, PhysPage, VirtAddr, VirtPage};
-use crate::api::ArchInterface;
+use crate::api::{frame_alloc, frame_dealloc};
 
 bitflags::bitflags! {
     /// Mapping flags for page table.
@@ -93,7 +93,7 @@ impl PageTable {
         if Self::PAGE_LEVEL == 4 {
             let pte = &mut pte_list[vpn.pn_index(3)];
             if !pte.is_valid() {
-                *pte = PTE::new_table(ArchInterface::frame_alloc_persist());
+                *pte = PTE::new_table(frame_alloc());
             }
             pte_list = Self::get_pte_list(pte.address());
         }
@@ -101,7 +101,7 @@ impl PageTable {
         {
             let pte = &mut pte_list[vpn.pn_index(2)];
             if !pte.is_valid() {
-                *pte = PTE::new_table(ArchInterface::frame_alloc_persist());
+                *pte = PTE::new_table(frame_alloc());
             }
             pte_list = Self::get_pte_list(pte.address());
         }
@@ -109,7 +109,7 @@ impl PageTable {
         {
             let pte = &mut pte_list[vpn.pn_index(1)];
             if !pte.is_valid() {
-                *pte = PTE::new_table(ArchInterface::frame_alloc_persist());
+                *pte = PTE::new_table(frame_alloc());
             }
             pte_list = Self::get_pte_list(pte.address());
         }
@@ -146,7 +146,7 @@ impl PageTable {
         if Self::PAGE_LEVEL == 4 {
             let pte = &mut pte_list[vpn.pn_index(3)];
             if !pte.is_valid() {
-                *pte = PTE::new_table(ArchInterface::frame_alloc_persist());
+                *pte = PTE::new_table(frame_alloc());
             }
             pte_list = Self::get_pte_list(pte.address());
         }
@@ -154,7 +154,7 @@ impl PageTable {
         {
             let pte = &mut pte_list[vpn.pn_index(2)];
             if !pte.is_valid() {
-                *pte = PTE::new_table(ArchInterface::frame_alloc_persist());
+                *pte = PTE::new_table(frame_alloc());
             }
             pte_list = Self::get_pte_list(pte.address());
         }
@@ -162,7 +162,7 @@ impl PageTable {
         {
             let pte = &mut pte_list[vpn.pn_index(1)];
             if !pte.is_valid() {
-                *pte = PTE::new_table(ArchInterface::frame_alloc_persist());
+                *pte = PTE::new_table(frame_alloc());
             }
             pte_list = Self::get_pte_list(pte.address());
         }
@@ -252,7 +252,7 @@ impl PageTable {
         let drop_l2 = |pte_list: &[PTE]| {
             pte_list.iter().for_each(|x| {
                 if x.is_table() {
-                    ArchInterface::frame_unalloc(x.address().into());
+                    frame_dealloc(x.address().into());
                 }
             });
         };
@@ -260,7 +260,7 @@ impl PageTable {
             pte_list.iter().for_each(|x| {
                 if x.is_table() {
                     drop_l2(Self::get_pte_list(x.address()));
-                    ArchInterface::frame_unalloc(x.address().into());
+                    frame_dealloc(x.address().into());
                 }
             });
         };
@@ -268,7 +268,7 @@ impl PageTable {
             pte_list.iter().for_each(|x| {
                 if x.is_table() {
                     drop_l3(Self::get_pte_list(x.address()));
-                    ArchInterface::frame_unalloc(x.address().into());
+                    frame_dealloc(x.address().into());
                 }
             });
         };
@@ -315,7 +315,7 @@ impl Deref for PageTableWrapper {
 impl PageTableWrapper {
     #[inline]
     pub fn alloc() -> Self {
-        let pt = PageTable(ArchInterface::frame_alloc_persist().into());
+        let pt = PageTable(frame_alloc().into());
         pt.restore();
         Self(pt)
     }
@@ -338,7 +338,7 @@ pub enum MapPageSize {
 impl Drop for PageTableWrapper {
     fn drop(&mut self) {
         self.0.release();
-        ArchInterface::frame_unalloc(self.0 .0.into());
+        frame_dealloc(self.0 .0.into());
     }
 }
 

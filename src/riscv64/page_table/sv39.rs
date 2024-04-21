@@ -3,8 +3,10 @@ use riscv::register::satp;
 
 use crate::addr::{PhysAddr, PhysPage, VirtAddr, VirtPage};
 use crate::kernel_page_table;
+use crate::pagetable::MappingFlags;
 use crate::pagetable::{PageTable, PTE, TLB};
-use crate::{pagetable::MappingFlags, sigtrx::get_trx_mapping};
+
+use super::sigtrx::get_trx_mapping;
 
 impl PTE {
     #[inline]

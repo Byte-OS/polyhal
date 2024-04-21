@@ -1,7 +1,8 @@
 use crate::currrent_arch::boards::CLOCK_FREQ;
-use crate::set_timer;
 use crate::time::Time;
 use riscv::register::{sie, time};
+
+use super::set_timer;
 
 impl Time {
     #[inline]

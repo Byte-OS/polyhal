@@ -2,7 +2,7 @@ use core::fmt::Write;
 
 use spin::Mutex;
 
-use crate::VIRT_ADDR_START;
+use crate::{debug::DebugConsole, VIRT_ADDR_START};
 
 const UART_ADDR: usize = 0x01FE001E0 | VIRT_ADDR_START;
 
@@ -54,12 +54,15 @@ impl Write for Uart {
     }
 }
 
-/// Writes a byte to the console.
-pub fn console_putchar(c: u8) {
-    COM1.lock().putchar(c)
-}
+impl DebugConsole {
+    /// Writes a byte to the console.
+    pub fn putchar(ch: u8) {
+        COM1.lock().putchar(ch)
+    }
 
-/// read a byte, return -1 if nothing exists.
-pub fn console_getchar() -> Option<u8> {
-    COM1.lock().getchar()
+    /// read a byte, return -1 if nothing exists.
+    #[inline]
+    pub fn getchar() -> Option<u8> {
+        COM1.lock().getchar()
+    }
 }

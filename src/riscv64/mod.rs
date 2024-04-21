@@ -9,8 +9,9 @@ mod page_table;
 mod sbi;
 mod timer;
 
+use core::slice;
+
 use alloc::vec::Vec;
-pub use boards::*;
 pub use consts::*;
 pub use context::TrapFrame;
 pub use entry::{kernel_page_table, switch_to_kernel_page_table};
@@ -19,19 +20,22 @@ pub use interrupt::{
     disable_irq, enable_external_irq, enable_irq, init_interrupt, run_user_task,
     run_user_task_forever,
 };
-pub use page_table::*;
-pub use sbi::*;
-pub use timer::*;
+use page_table::*;
+use sbi::*;
+
+pub use sbi::shutdown;
 
 #[cfg(feature = "kcontext")]
 pub use kcontext::{context_switch, context_switch_pt, read_current_tp, KContext};
 
 use riscv::register::sstatus;
 
-use crate::api::ArchInterface;
+use crate::{api::frame_alloc, once::LazyInit, CPU_NUM, DTB_BIN, MEM_AREA};
 
 #[percpu::def_percpu]
 static CPU_ID: usize = 0;
+
+static DTB_PTR: LazyInit<usize> = LazyInit::new();
 
 pub(crate) fn rust_main(hartid: usize, device_tree: usize) {
     crate::clear_bss();
@@ -40,48 +44,9 @@ pub(crate) fn rust_main(hartid: usize, device_tree: usize) {
     percpu::set_local_thread_pointer(hartid);
     CPU_ID.write_current(hartid);
 
-    ArchInterface::init_allocator();
-
-    ArchInterface::init_logging();
-
     interrupt::init_interrupt();
 
-    let mut cpu_num = 0;
-    let (hartid, device_tree) = boards::init_device(hartid, device_tree);
-
-    let mut dt_buf = Vec::new();
-    if device_tree != 0 {
-        let fdt = unsafe { Fdt::from_ptr(device_tree as *const u8).unwrap() };
-
-        dt_buf.extend_from_slice(unsafe {
-            core::slice::from_raw_parts(device_tree as *const u8, fdt.total_size())
-        });
-
-        cpu_num = fdt.cpus().count();
-
-        info!("There has {} CPU(s)", fdt.cpus().count());
-
-        fdt.memory().regions().for_each(|x| {
-            info!(
-                "memory region {:#X} - {:#X}",
-                x.starting_address as usize,
-                x.starting_address as usize + x.size.unwrap()
-            );
-
-            ArchInterface::add_memory_region(
-                x.starting_address as usize | VIRT_ADDR_START,
-                (x.starting_address as usize + x.size.unwrap()) | VIRT_ADDR_START,
-            );
-        });
-    }
-
-    ArchInterface::prepare_drivers();
-
-    if let Ok(fdt) = Fdt::new(&dt_buf) {
-        for node in fdt.all_nodes() {
-            ArchInterface::try_to_add_device(&node);
-        }
-    }
+    let (hartid, device_tree) = boards::init_device(hartid, device_tree | VIRT_ADDR_START);
 
     // 开启 SUM
     unsafe {
@@ -89,9 +54,12 @@ pub(crate) fn rust_main(hartid: usize, device_tree: usize) {
         sstatus::set_fs(sstatus::FS::Dirty);
     }
 
-    drop(dt_buf);
+    CPU_NUM.init_by(match unsafe { Fdt::from_ptr(device_tree as *const u8) } {
+        Ok(fdt) => fdt.cpus().count(),
+        Err(_) => 1,
+    });
 
-    info!("Platform: {} cpus", cpu_num);
+    DTB_PTR.init_by(device_tree);
 
     #[cfg(feature = "multicore")]
     {
@@ -103,7 +71,7 @@ pub(crate) fn rust_main(hartid: usize, device_tree: usize) {
 
         let page_table = PageTable::current();
 
-        (0..cpu_num).into_iter().for_each(|cpu| {
+        (0..*CPU_NUM).into_iter().for_each(|cpu| {
             if cpu == CPU_ID.read_current() {
                 return;
             };
@@ -117,7 +85,7 @@ pub(crate) fn rust_main(hartid: usize, device_tree: usize) {
             for i in 0..128 {
                 page_table.map_kernel(
                     VirtPage::from_addr(cpu_addr_end - i * PageTable::PAGE_SIZE - 1),
-                    ArchInterface::frame_alloc_persist(),
+                    frame_alloc(),
                     MappingFlags::RWX | MappingFlags::G,
                     MappingSize::Page4KB,
                 )
@@ -157,4 +125,33 @@ pub fn wfi() {
 
 pub fn hart_id() -> usize {
     CPU_ID.read_current()
+}
+
+pub fn arch_init() {
+    let mut buffer = Vec::new();
+    if let Ok(fdt) = unsafe { Fdt::from_ptr(*DTB_PTR as *const u8) } {
+        unsafe {
+            buffer.extend_from_slice(slice::from_raw_parts(
+                *DTB_PTR as *const u8,
+                fdt.total_size(),
+            ));
+        }
+    }
+    DTB_BIN.init_by(buffer);
+    if let Ok(fdt) = Fdt::new(&DTB_BIN) {
+        info!("There has {} CPU(s)", fdt.cpus().count());
+        let mut mem_area = Vec::new();
+        fdt.memory().regions().for_each(|x| {
+            info!(
+                "memory region {:#X} - {:#X}",
+                x.starting_address as usize,
+                x.starting_address as usize + x.size.unwrap()
+            );
+            mem_area.push((
+                x.starting_address as usize | VIRT_ADDR_START,
+                x.size.unwrap_or(0),
+            ));
+        });
+        MEM_AREA.init_by(mem_area);
+    }
 }

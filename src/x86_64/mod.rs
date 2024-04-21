@@ -13,6 +13,7 @@ mod time;
 mod uart;
 
 use ::multiboot::information::MemoryType;
+use alloc::vec::Vec;
 pub use consts::*;
 pub use context::TrapFrame;
 pub use interrupt::*;
@@ -30,25 +31,27 @@ use x86_64::{
     },
 };
 
-use crate::{api::ArchInterface, currrent_arch::multiboot::use_multiboot};
+use crate::{
+    api::ArchInterface, currrent_arch::multiboot::use_multiboot, once::LazyInit, CPU_NUM, DTB_BIN,
+    MEM_AREA,
+};
 
 #[percpu::def_percpu]
 static CPU_ID: usize = 1;
 
 pub fn shutdown() -> ! {
     unsafe { PortWriteOnly::new(0x604).write(0x2000u16) };
-
     loop {}
 }
+
+static MBOOT_PTR: LazyInit<usize> = LazyInit::new();
 
 fn rust_tmp_main(magic: usize, mboot_ptr: usize) {
     crate::clear_bss();
     idt::init();
     apic::init();
     sigtrx::init();
-    ArchInterface::init_logging();
     // Init allocator
-    ArchInterface::init_allocator();
     percpu::init(1);
     percpu::set_local_thread_pointer(0);
     gdt::init();
@@ -70,6 +73,9 @@ fn rust_tmp_main(magic: usize, mboot_ptr: usize) {
         }
     });
 
+    // TODO: This is will be fixed with ACPI support
+    CPU_NUM.init_by(1);
+
     info!(
         "TEST CPU ID: {}  ptr: {:#x}",
         CPU_ID.read_current(),
@@ -84,13 +90,23 @@ fn rust_tmp_main(magic: usize, mboot_ptr: usize) {
 
     info!("magic: {:#x}, mboot_ptr: {:#x}", magic, mboot_ptr);
 
-    if let Some(mboot) = use_multiboot(mboot_ptr as _) {
+    MBOOT_PTR.init_by(mboot_ptr);
+
+    ArchInterface::main(0);
+
+    shutdown()
+}
+
+pub fn arch_init() {
+    DTB_BIN.init_by(Vec::new());
+    if let Some(mboot) = use_multiboot(*MBOOT_PTR as _) {
         mboot
             .boot_loader_name()
             .inspect(|x| info!("bootloader: {}", x));
         mboot
             .command_line()
             .inspect(|x| info!("command_line: {}", x));
+        let mut mem_area = Vec::new();
         if mboot.has_memory_map() {
             mboot
                 .memory_regions()
@@ -98,15 +114,11 @@ fn rust_tmp_main(magic: usize, mboot_ptr: usize) {
                 .filter(|x| x.memory_type() == MemoryType::Available)
                 .for_each(|x| {
                     let start = x.base_address() as usize | VIRT_ADDR_START;
-                    let end = x.length() as usize | VIRT_ADDR_START;
-                    ArchInterface::add_memory_region(start, end);
+                    let size = x.length() as usize;
+                    // ArchInterface::add_memory_region(start, end);
+                    mem_area.push((start, size));
                 });
         }
+        MEM_AREA.init_by(mem_area);
     }
-
-    ArchInterface::prepare_drivers();
-
-    ArchInterface::main(0);
-
-    shutdown()
 }

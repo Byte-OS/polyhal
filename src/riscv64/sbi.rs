@@ -6,6 +6,8 @@ use core::arch::asm;
 
 use sbi_rt::{NoReason, Shutdown};
 
+use crate::debug::DebugConsole;
+
 const SBI_SET_TIMER: usize = 0;
 const SBI_CONSOLE_PUT_CHAR: usize = 1;
 const SBI_CONSOLE_GET_CHAR: usize = 2;
@@ -35,21 +37,21 @@ pub fn set_timer(time: usize) {
     sbi_rt::set_timer(time as _);
 }
 
-/// 输出一个字符到屏幕
-#[inline]
-#[allow(deprecated)]
-pub fn console_putchar(ch: u8) {
-    sbi_rt::legacy::console_putchar(ch as _);
-}
+impl DebugConsole {
+    #[inline]
+    #[allow(deprecated)]
+    pub fn putchar(ch: u8) {
+        sbi_rt::legacy::console_putchar(ch as _);
+    }
 
-/// 获取输入
-#[inline]
-#[allow(deprecated)]
-pub fn console_getchar() -> Option<u8> {
-    let c = sbi_rt::legacy::console_getchar() as u8;
-    match c == u8::MAX {
-        true => None,
-        _ => Some(c),
+    #[inline]
+    #[allow(deprecated)]
+    pub fn getchar() -> Option<u8> {
+        let c = sbi_rt::legacy::console_getchar() as u8;
+        match c == u8::MAX {
+            true => None,
+            _ => Some(c),
+        }
     }
 }
 

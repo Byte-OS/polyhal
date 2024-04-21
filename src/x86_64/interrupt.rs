@@ -8,7 +8,6 @@ use x86_64::VirtAddr;
 
 use x86::{controlregs::cr2, irq::*};
 
-use crate::api::ArchInterface;
 use crate::consts::TRAPFRAME_SIZE;
 use crate::currrent_arch::gdt::set_tss_kernel_sp;
 use crate::SYSCALL_VECTOR;
@@ -108,7 +107,7 @@ fn kernel_callback(context: &mut TrapFrame) {
             );
         }
     };
-    ArchInterface::kernel_interrupt(context, trap_type);
+    unsafe { crate::api::_interrupt_for_arch(context, trap_type) };
     unsafe { super::apic::local_apic().end_of_interrupt() };
 }
 
@@ -390,7 +389,7 @@ pub fn run_user_task(context: &mut TrapFrame) -> Option<()> {
 
     match context.vector {
         SYSCALL_VECTOR => {
-            ArchInterface::kernel_interrupt(context, TrapType::UserEnvCall);
+            unsafe { crate::api::_interrupt_for_arch(context, TrapType::UserEnvCall) };
             Some(())
         }
         _ => {

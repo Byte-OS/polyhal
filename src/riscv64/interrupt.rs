@@ -142,7 +142,7 @@ fn kernel_callback(context: &mut TrapFrame) -> TrapType {
             panic!("未知中断: {:#x?}", context);
         }
     };
-    crate::api::ArchInterface::kernel_interrupt(context, trap_type);
+    unsafe { crate::api::_interrupt_for_arch(context, trap_type) };
     trap_type
 }
 

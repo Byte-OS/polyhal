@@ -1,31 +1,9 @@
 use crate::addr::PhysPage;
 use crate::{TrapFrame, TrapType, PAGE_ALLOC};
 
-/// ArchInterface
-///
-/// This trait indicates the interface was should be implemented
-/// from the kernel layer.
-///
-/// You need to implement the interface manually.
-///
-/// eg: in kernel/src/main.rs
-///
-/// ```rust
-/// #[crate_interface::impl_interface]
-/// impl ArchInterface for ArchInterfaceImpl {
-///     /// kernel interrupt
-///     fn kernel_interrupt(ctx: &mut TrapFrame, trap_type: TrapType) {}
-///     /// kernel main function, entry point.
-///     fn main(hartid: usize) {}
-/// }
-/// ```
-
-#[crate_interface::def_interface]
-pub trait ArchInterface {
-    /// kernel interrupt
-    fn kernel_interrupt(ctx: &mut TrapFrame, trap_type: TrapType);
-    /// kernel main function, entry point.
-    fn main(hartid: usize);
+extern "Rust" {
+    pub fn _main_for_arch(hartid: usize);
+    pub fn _interrupt_for_arch(ctx: &mut TrapFrame, trap_type: TrapType);
 }
 
 /// alloc a persistent memory page

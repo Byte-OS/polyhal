@@ -18,7 +18,6 @@ use loongarch64::register::euen;
 pub use page_table::kernel_page_table;
 pub use trap::{disable_irq, enable_external_irq, enable_irq, init_interrupt, run_user_task};
 
-use crate::api::ArchInterface;
 use crate::{clear_bss, DTB_BIN, MEM_AREA};
 
 pub fn rust_tmp_main(hart_id: usize) {
@@ -32,7 +31,7 @@ pub fn rust_tmp_main(hart_id: usize) {
     euen::set_fpe(true);
     timer::init_timer();
 
-    ArchInterface::main(0);
+    unsafe { crate::api::_main_for_arch(hart_id) };
 
     shutdown();
 }

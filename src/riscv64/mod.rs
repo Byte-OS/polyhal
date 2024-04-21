@@ -101,7 +101,7 @@ pub(crate) fn rust_main(hartid: usize, device_tree: usize) {
         });
     }
 
-    crate::api::ArchInterface::main(hartid);
+    unsafe { crate::api::_main_for_arch(hartid) };
     shutdown();
 }
 
@@ -110,7 +110,7 @@ pub(crate) extern "C" fn rust_secondary_main(hartid: usize) {
     CPU_ID.write_current(hartid);
 
     info!("secondary hart {} started", hartid);
-    crate::api::ArchInterface::main(hartid);
+    unsafe { crate::api::_main_for_arch(hartid) };
     shutdown();
 }
 

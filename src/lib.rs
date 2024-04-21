@@ -77,6 +77,8 @@ mod currrent_arch;
 
 pub use currrent_arch::*;
 
+pub use arch_macro::{arch_entry, arch_interrupt};
+
 pub const PAGE_SIZE: usize = PageTable::PAGE_SIZE;
 pub const USER_VADDR_END: usize = PageTable::USER_VADDR_END;
 

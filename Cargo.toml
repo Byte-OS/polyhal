@@ -16,8 +16,8 @@ log = "0.4"
 fdt = "0.1.5"
 bitflags = "2.0.2"
 cfg-if = "1.0.0"
-crate_interface = { git = "https://github.com/Byte-OS/crate_interface.git" }
 percpu = { git = "https://github.com/Byte-OS/percpu.git"}
+arch-macro = { path = "arch-macro" }
 
 [target.'cfg(target_arch = "riscv64")'.dependencies]
 riscv = { git = "https://github.com/rcore-os/riscv", features = ["inline-asm"] }

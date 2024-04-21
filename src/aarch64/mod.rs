@@ -27,7 +27,6 @@ pub use page_table::*;
 pub use psci::system_off as shutdown;
 pub use trap::{disable_irq, enable_external_irq, enable_irq, init_interrupt, run_user_task};
 
-use crate::api::ArchInterface;
 use crate::once::LazyInit;
 use crate::pagetable::PageTable;
 use crate::{clear_bss, DTB_BIN, MEM_AREA};
@@ -49,7 +48,7 @@ pub fn rust_tmp_main(hart_id: usize, device_tree: usize) {
     barrier::isb(barrier::SY);
 
     // Enter to kernel entry point(`main` function).
-    ArchInterface::main(hart_id);
+    unsafe { crate::api::_main_for_arch(hart_id) };
 
     shutdown();
 }

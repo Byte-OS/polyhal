@@ -4,7 +4,6 @@ use aarch64_cpu::registers::{Writeable, ESR_EL1, FAR_EL1, VBAR_EL1};
 use tock_registers::interfaces::Readable;
 
 use crate::{
-    api::ArchInterface,
     currrent_arch::{gic::handle_irq, timer::set_next_timer},
     TrapType,
 };
@@ -88,7 +87,7 @@ fn handle_exception(tf: &mut TrapFrame, kind: TrapKind, source: TrapSource) -> T
             );
         }
     };
-    ArchInterface::kernel_interrupt(tf, trap_type);
+    unsafe { crate::api::_interrupt_for_arch(tf, trap_type) };
     trap_type
 }
 

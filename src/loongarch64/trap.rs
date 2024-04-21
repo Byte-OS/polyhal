@@ -5,7 +5,6 @@ use loongarch64::register::{
     badv, ecfg, eentry, prmd, pwch, pwcl, stlbps, ticlr, tlbidx, tlbrehi, tlbrentry,
 };
 
-use crate::api::ArchInterface;
 use crate::TrapType;
 
 use super::TrapFrame;
@@ -349,6 +348,7 @@ fn loongarch64_trap_handler(tf: &mut TrapFrame) -> TrapType {
             );
         }
     };
-    ArchInterface::kernel_interrupt(tf, trap_type);
+    // ArchInterface::kernel_interrupt(tf, trap_type);
+    unsafe { crate::api::_interrupt_for_arch(tf, trap_type) };
     trap_type
 }

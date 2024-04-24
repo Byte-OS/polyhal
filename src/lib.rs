@@ -55,6 +55,8 @@ pub mod api;
 pub mod consts;
 pub mod debug;
 pub mod irq;
+#[cfg(feature = "multicore")]
+pub mod multicore;
 pub mod once;
 pub mod pagetable;
 pub mod time;

@@ -30,7 +30,7 @@ pub use kcontext::{context_switch, context_switch_pt, read_current_tp, KContext}
 
 use riscv::register::sstatus;
 
-use crate::{api::frame_alloc, once::LazyInit, CPU_NUM, DTB_BIN, MEM_AREA};
+use crate::{api::frame_alloc, multicore::MultiCore, once::LazyInit, CPU_NUM, DTB_BIN, MEM_AREA};
 
 #[percpu::def_percpu]
 static CPU_ID: usize = 0;
@@ -61,46 +61,6 @@ pub(crate) fn rust_main(hartid: usize, device_tree: usize) {
 
     DTB_PTR.init_by(device_tree);
 
-    #[cfg(feature = "multicore")]
-    {
-        use self::entry::secondary_start;
-        use crate::{
-            addr::VirtPage,
-            pagetable::{MappingFlags, MappingSize, PageTable},
-        };
-
-        let page_table = PageTable::current();
-
-        (0..*CPU_NUM).into_iter().for_each(|cpu| {
-            if cpu == CPU_ID.read_current() {
-                return;
-            };
-
-            // PERCPU DATA ADDRESS RANGE END
-            let cpu_addr_end = MULTI_CORE_AREA + (cpu + 1) * MULTI_CORE_AREA_SIZE;
-            let aux_core_func = (secondary_start as usize) & (!VIRT_ADDR_START);
-
-            // Ready to build multi core area.
-            // default stack size is 512K
-            for i in 0..128 {
-                page_table.map_kernel(
-                    VirtPage::from_addr(cpu_addr_end - i * PageTable::PAGE_SIZE - 1),
-                    frame_alloc(),
-                    MappingFlags::RWX | MappingFlags::G,
-                    MappingSize::Page4KB,
-                )
-            }
-
-            info!("secondary addr: {:#x}", secondary_start as usize);
-            let ret = sbi_rt::hart_start(cpu, aux_core_func, cpu_addr_end);
-            if ret.is_ok() {
-                info!("hart {} Startting successfully", cpu);
-            } else {
-                warn!("hart {} Startting failed", cpu)
-            }
-        });
-    }
-
     unsafe { crate::api::_main_for_arch(hartid) };
     shutdown();
 }
@@ -108,6 +68,15 @@ pub(crate) fn rust_main(hartid: usize, device_tree: usize) {
 pub(crate) extern "C" fn rust_secondary_main(hartid: usize) {
     percpu::set_local_thread_pointer(hartid);
     CPU_ID.write_current(hartid);
+
+    interrupt::init_interrupt();
+
+    let (hartid, _device_tree) = boards::init_device(hartid, 0);
+
+    unsafe {
+        // 开启浮点运算
+        sstatus::set_fs(sstatus::FS::Dirty);
+    }
 
     info!("secondary hart {} started", hartid);
     unsafe { crate::api::_main_for_arch(hartid) };
@@ -153,5 +122,49 @@ pub fn arch_init() {
             ));
         });
         MEM_AREA.init_by(mem_area);
+    }
+}
+
+#[cfg(feature = "multicore")]
+/// Implement the function for multicore
+impl MultiCore {
+    /// initialize the multicore.
+    pub fn boot_all() {
+        use self::entry::secondary_start;
+        use crate::{
+            addr::VirtPage,
+            pagetable::{MappingFlags, MappingSize, PageTable},
+        };
+
+        let page_table = PageTable::current();
+
+        (0..*CPU_NUM).into_iter().for_each(|cpu| {
+            if cpu == CPU_ID.read_current() {
+                return;
+            };
+
+            // PERCPU DATA ADDRESS RANGE END
+            let cpu_addr_end = MULTI_CORE_AREA + (cpu + 1) * MULTI_CORE_AREA_SIZE;
+            let aux_core_func = (secondary_start as usize) & (!VIRT_ADDR_START);
+
+            // Ready to build multi core area.
+            // default stack size is 512K
+            for i in 0..128 {
+                page_table.map_kernel(
+                    VirtPage::from_addr(cpu_addr_end - i * PageTable::PAGE_SIZE - 1),
+                    frame_alloc(),
+                    MappingFlags::RWX | MappingFlags::G,
+                    MappingSize::Page4KB,
+                )
+            }
+
+            info!("secondary addr: {:#x}", secondary_start as usize);
+            let ret = sbi_rt::hart_start(cpu, aux_core_func, cpu_addr_end);
+            if ret.is_ok() {
+                info!("hart {} Startting successfully", cpu);
+            } else {
+                warn!("hart {} Startting failed", cpu)
+            }
+        });
     }
 }

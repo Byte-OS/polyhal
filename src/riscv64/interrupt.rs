@@ -300,7 +300,6 @@ pub fn enable_irq() {
 #[inline(always)]
 pub fn disable_irq() {
     unsafe {
-        // sstatus::clear_sie();
         sie::clear_sext();
         sie::clear_ssoft();
     }

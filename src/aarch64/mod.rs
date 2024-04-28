@@ -13,7 +13,7 @@ mod trap;
 
 use core::slice;
 
-use aarch64_cpu::registers::{Writeable, TTBR0_EL1};
+use aarch64_cpu::registers::{Readable, Writeable, MPIDR_EL1, TTBR0_EL1};
 use aarch64_cpu::{asm::barrier, registers::CPACR_EL1};
 use alloc::vec::Vec;
 pub use consts::*;
@@ -27,9 +27,10 @@ pub use page_table::*;
 pub use psci::system_off as shutdown;
 pub use trap::{disable_irq, enable_external_irq, enable_irq, init_interrupt, run_user_task};
 
+use crate::multicore::MultiCore;
 use crate::once::LazyInit;
 use crate::pagetable::PageTable;
-use crate::{clear_bss, DTB_BIN, MEM_AREA};
+use crate::{clear_bss, CPU_NUM, DTB_BIN, MEM_AREA};
 
 static DTB_PTR: LazyInit<usize> = LazyInit::new();
 
@@ -43,6 +44,12 @@ pub fn rust_tmp_main(hart_id: usize, device_tree: usize) {
 
     DTB_PTR.init_by(device_tree | VIRT_ADDR_START);
 
+    if let Ok(fdt) = unsafe { Fdt::from_ptr(*DTB_PTR as *const u8) } {
+        CPU_NUM.init_by(fdt.cpus().count());
+    } else {
+        CPU_NUM.init_by(1);
+    }
+
     // Enable Floating Point Feature.
     CPACR_EL1.write(CPACR_EL1::FPEN::TrapNothing);
     barrier::isb(barrier::SY);
@@ -55,6 +62,11 @@ pub fn rust_tmp_main(hart_id: usize, device_tree: usize) {
 
 pub fn kernel_page_table() -> PageTable {
     PageTable(crate::addr::PhysAddr(TTBR0_EL1.get_baddr() as _))
+}
+
+#[inline]
+pub fn hart_id() -> usize {
+    MPIDR_EL1.read(MPIDR_EL1::Aff0) as _
 }
 
 pub(crate) fn arch_init() {
@@ -83,5 +95,13 @@ pub(crate) fn arch_init() {
             ));
         });
         MEM_AREA.init_by(mem_area);
+    }
+}
+
+#[cfg(feature = "multicore")]
+impl MultiCore {
+    /// Boot application cores
+    pub fn boot_all() {
+        
     }
 }

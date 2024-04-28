@@ -136,6 +136,11 @@ impl PageTable {
     }
 
     #[inline]
+    pub fn current() -> Self {
+        Self(PhysAddr(pgdl::read().base()))
+    }
+
+    #[inline]
     pub fn change(&self) {
         pgdl::set_base(self.0.addr());
         TLB::flush_all();

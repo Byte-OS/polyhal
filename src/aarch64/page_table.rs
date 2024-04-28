@@ -173,6 +173,11 @@ impl PageTable {
     pub(crate) const KERNEL_VADDR_START: usize = !Self::USER_VADDR_END;
 
     #[inline]
+    pub fn current() -> Self {
+        Self(PhysAddr(TTBR0_EL1.get_baddr() as _))
+    }
+
+    #[inline]
     pub fn restore(&self) {
         self.release();
         TLB::flush_all();

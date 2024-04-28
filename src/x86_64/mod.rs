@@ -31,7 +31,7 @@ use x86_64::{
     },
 };
 
-use crate::{currrent_arch::multiboot::use_multiboot, once::LazyInit, CPU_NUM, DTB_BIN, MEM_AREA};
+use crate::{currrent_arch::multiboot::use_multiboot, multicore::MultiCore, once::LazyInit, CPU_NUM, DTB_BIN, MEM_AREA};
 
 #[percpu::def_percpu]
 static CPU_ID: usize = 1;
@@ -118,4 +118,16 @@ pub fn arch_init() {
         }
         MEM_AREA.init_by(mem_area);
     }
+}
+
+pub fn hart_id() -> usize {
+    match raw_cpuid::CpuId::new().get_feature_info() {
+        Some(finfo) => finfo.initial_local_apic_id() as usize,
+        None => 0,
+    }
+}
+
+#[cfg(feature = "multicore")]
+impl MultiCore {
+    pub fn boot_all() {}
 }

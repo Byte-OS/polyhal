@@ -1,6 +1,7 @@
 use bitflags::bitflags;
 
 use x86::tlb;
+use x86_64::registers::control::Cr3;
 
 use crate::addr::{PhysAddr, PhysPage, VirtAddr, VirtPage};
 use crate::{
@@ -92,7 +93,7 @@ impl PTE {
 
     #[inline]
     pub(crate) fn is_table(&self) -> bool {
-        self.flags().contains(PTEFlags::P)
+        self.flags().contains(PTEFlags::P) & !self.flags().contains(PTEFlags::PS)
     }
 
     #[inline]
@@ -136,6 +137,11 @@ impl PageTable {
         let pml4 = self.0.slice_mut_with_len::<PTE>(Self::PTE_NUM_IN_PAGE);
         pml4[0x1ff] = PTE((_kernel_mapping_pdpt as usize - VIRT_ADDR_START as usize) | 0x3);
         TLB::flush_all();
+    }
+
+    #[inline]
+    pub fn current() -> Self {
+        Self(PhysAddr(Cr3::read().0.start_address().as_u64() as usize))
     }
 
     #[inline]

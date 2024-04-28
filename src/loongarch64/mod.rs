@@ -18,7 +18,7 @@ use loongarch64::register::euen;
 pub use page_table::kernel_page_table;
 pub use trap::{disable_irq, enable_external_irq, enable_irq, init_interrupt, run_user_task};
 
-use crate::{clear_bss, DTB_BIN, MEM_AREA};
+use crate::{clear_bss, multicore::MultiCore, CPU_NUM, DTB_BIN, MEM_AREA};
 
 pub fn rust_tmp_main(hart_id: usize) {
     clear_bss();
@@ -30,6 +30,8 @@ pub fn rust_tmp_main(hart_id: usize) {
     // Enable floating point
     euen::set_fpe(true);
     timer::init_timer();
+
+    CPU_NUM.init_by(1);
 
     unsafe { crate::api::_main_for_arch(hart_id) };
 
@@ -50,4 +52,13 @@ pub(crate) fn arch_init() {
         mem_area.push((VIRT_ADDR_START | 0x9000_0000, 0x2000_0000));
         mem_area
     });
+}
+
+pub fn hart_id() -> usize {
+    loongarch64::register::cpuid::read().core_id()
+}
+
+#[cfg(feature = "multicore")]
+impl MultiCore {
+    pub fn boot_all() {}
 }

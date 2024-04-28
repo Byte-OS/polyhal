@@ -20,7 +20,6 @@ pub use interrupt::{
     disable_irq, enable_external_irq, enable_irq, init_interrupt, run_user_task,
     run_user_task_forever,
 };
-use page_table::*;
 use sbi::*;
 
 pub use sbi::shutdown;
@@ -128,7 +127,7 @@ pub fn arch_init() {
 #[cfg(feature = "multicore")]
 /// Implement the function for multicore
 impl MultiCore {
-    /// initialize the multicore.
+    /// Boot all application cores.
     pub fn boot_all() {
         use self::entry::secondary_start;
         use crate::{

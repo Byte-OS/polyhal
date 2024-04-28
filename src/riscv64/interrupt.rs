@@ -5,7 +5,7 @@ use riscv::register::{
     sie, stval, stvec,
 };
 
-use crate::{add_irq, TrapFrame, TrapType, VIRT_ADDR_START};
+use crate::{TrapFrame, TrapType, VIRT_ADDR_START};
 
 use super::timer;
 
@@ -123,7 +123,6 @@ fn kernel_callback(context: &mut TrapFrame) -> TrapType {
         // 时钟中断
         Trap::Interrupt(Interrupt::SupervisorTimer) => {
             timer::set_next_timeout();
-            add_irq(5);
             TrapType::Time
         }
         Trap::Exception(Exception::StorePageFault) => TrapType::StorePageFault(stval),

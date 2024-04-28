@@ -54,7 +54,7 @@ pub enum MappingSize {
 ///
 /// Just define here. Should implement functions in specific architectures.
 #[derive(Copy, Clone, Debug)]
-pub struct PTE(pub usize);
+pub(crate) struct PTE(pub usize);
 
 /// Page Table
 ///
@@ -72,7 +72,7 @@ pub struct PageTable(pub(crate) PhysAddr);
 impl PageTable {
     /// Get the page table list through the physical address
     #[inline]
-    pub fn get_pte_list(paddr: PhysAddr) -> &'static mut [PTE] {
+    pub(crate) fn get_pte_list(paddr: PhysAddr) -> &'static mut [PTE] {
         paddr.slice_mut_with_len::<PTE>(Self::PTE_NUM_IN_PAGE)
     }
 
@@ -288,9 +288,17 @@ impl PageTable {
 /// Such as flush_vaddr, flush_all.
 /// Just use it in the fn.
 ///
+/// there are some methods in the TLB implementation
+/// 
+/// ### Flush the tlb entry through the specific virtual address
+/// 
+/// ```rust
 /// TLB::flush_vaddr(arg0);  arg0 should be VirtAddr
-/// or flush all tlb entry.
+/// ```
+/// ### Flush all tlb entries
+/// ```rust
 /// TLB::flush_all();
+/// ```
 pub struct TLB;
 
 /// Page Table Wrapper
@@ -313,22 +321,14 @@ impl Deref for PageTableWrapper {
 ///
 /// This operation will restore the page table.
 impl PageTableWrapper {
+    /// Alloc a new PageTableWrapper with new page table root
+    /// This operation will copy kernel page table space from booting page table.
     #[inline]
     pub fn alloc() -> Self {
         let pt = PageTable(frame_alloc().into());
         pt.restore();
         Self(pt)
     }
-}
-
-/// Indicates the page size.
-pub enum MapPageSize {
-    /// 4k Page
-    Page4k,
-    /// 2M Page
-    Page2m,
-    /// 1G Page
-    Page1G,
 }
 
 /// Page Table Release.

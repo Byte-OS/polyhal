@@ -13,6 +13,9 @@ unsafe extern "C" fn _start() -> ! {
         lu52i.d     $t0, $t0, -1792     # CA, PLV0, 0x9000 xxxx xxxx xxxx
         csrwr       $t0, 0x181          # LOONGARCH_CSR_DMWIN1
 
+        csrrd       $t1, 0x20       # read cpu from csr
+        bnez        $t1, _start_secondary
+
         # Enable PG 
         li.w		$t0, 0xb0		# PLV=0, IE=0, PG=1
         csrwr		$t0, 0x0        # LOONGARCH_CSR_CRMD
@@ -26,12 +29,27 @@ unsafe extern "C" fn _start() -> ! {
         li.d        $t0, {boot_stack_size}
         add.d       $sp, $sp, $t0       # setup boot stack
         csrrd       $a0, 0x20           # cpuid
-        la.global $t0, {entry}
-        jirl $zero,$t0,0
+        la.global   $t0, {entry}
+        jirl        $zero,$t0,0
         ",
         boot_stack_size = const crate::STACK_SIZE,
         boot_stack = sym crate::BOOT_STACK,
         entry = sym super::rust_tmp_main,
+        options(noreturn),
+    )
+}
+
+/// The earliest entry point for the primary CPU.
+///
+/// We can't use bl to jump to higher address, so we use jirl to jump to higher address.
+#[naked]
+#[no_mangle]
+#[link_section = ".text.entry"]
+unsafe extern "C" fn _start_secondary() -> ! {
+    core::arch::asm!("
+        idle    1
+        b       _start_secondary
+        ",
         options(noreturn),
     )
 }

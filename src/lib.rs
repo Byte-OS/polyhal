@@ -77,6 +77,9 @@ pub use percpu;
 #[cfg_attr(target_arch = "loongarch64", path = "loongarch64/mod.rs")]
 mod currrent_arch;
 
+/// Trap Frame
+pub use currrent_arch::TrapFrame;
+
 pub use currrent_arch::*;
 
 pub use arch_macro::{arch_entry, arch_interrupt};
@@ -98,6 +101,9 @@ pub enum KContextArgs {
     KPC,
 }
 
+/// Trap Frame Arg Type
+/// 
+/// Using this by Index and IndexMut trait bound on TrapFrame
 #[derive(Debug)]
 pub enum TrapFrameArgs {
     SEPC,
@@ -127,22 +133,7 @@ pub enum TrapType {
 #[link_section = ".bss.stack"]
 static mut BOOT_STACK: [u8; STACK_SIZE] = [0; STACK_SIZE];
 
-static mut INT_RECORDS: Vec<usize> = Vec::new();
-
-pub fn add_irq(irq: usize) {
-    unsafe {
-        while INT_RECORDS.len() < 256 {
-            INT_RECORDS.push(0);
-        }
-        INT_RECORDS[irq] += 1;
-    }
-}
-
-pub fn get_int_records() -> Vec<usize> {
-    unsafe { INT_RECORDS.clone() }
-}
-
-pub fn clear_bss() {
+pub(crate) fn clear_bss() {
     extern "C" {
         fn _sbss();
         fn _ebss();

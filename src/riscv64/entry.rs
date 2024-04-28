@@ -3,7 +3,7 @@ use core::arch::riscv64::sfence_vma_all;
 use crate::pagetable::{PageTable, PTE};
 use crate::VIRT_ADDR_START;
 
-use super::PTEFlags;
+use super::page_table::PTEFlags;
 
 #[link_section = ".data.prepage.entry"]
 pub(crate) static mut PAGE_TABLE: [PTE; PageTable::PTE_NUM_IN_PAGE] = {

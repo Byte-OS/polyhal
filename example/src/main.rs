@@ -8,77 +8,71 @@ mod logging;
 
 use core::panic::PanicInfo;
 
-use arch::addr::PhysPage;
-use arch::{api::ArchInterface, TrapFrame, TrapType};
-use arch::{shutdown, TrapType::*};
-use crate_interface::impl_interface;
-use fdt::node::FdtNode;
+use frame::frame_alloc;
+use polyhal::addr::PhysPage;
+use polyhal::{get_mem_areas, PageAlloc, TrapFrame, TrapType};
+use polyhal::{shutdown, TrapType::*};
 
-pub struct ArchInterfaceImpl;
+pub struct PageAllocImpl;
 
-#[impl_interface]
-impl ArchInterface for ArchInterfaceImpl {
-    /// Init allocator
-    fn init_allocator() {
-        allocator::init_allocator();
+impl PageAlloc for PageAllocImpl {
+    fn alloc(&self) -> PhysPage {
+        frame_alloc()
     }
-    /// kernel interrupt
-    fn kernel_interrupt(ctx: &mut TrapFrame, trap_type: TrapType) {
-        // println!("trap_type @ {:x?} {:#x?}", trap_type, ctx);
-        match trap_type {
-            Breakpoint => return,
-            UserEnvCall => {
-                // jump to next instruction anyway
-                ctx.syscall_ok();
-                log::info!("Handle a syscall");
-            }
-            StorePageFault(_paddr) | LoadPageFault(_paddr) | InstructionPageFault(_paddr) => {
-                log::info!("page fault");
-            }
-            IllegalInstruction(_) => {
-                log::info!("illegal instruction");
-            }
-            Time => {
-                log::info!("Timer");
-            }
-            _ => {
-                log::warn!("unsuspended trap type: {:?}", trap_type);
-            }
-        }
-    }
-    /// init log
-    fn init_logging() {
-        logging::init(Some("trace"));
-        println!("init logging");
-    }
-    /// add a memory region
-    fn add_memory_region(start: usize, end: usize) {
-        println!("init memory region {:#x} - {:#x}", start, end);
-        frame::add_frame_range(start, end);
-    }
-    /// kernel main function, entry point.
-    fn main(hartid: usize) {
-        if hartid != 0 {
-            return;
-        }
-        println!("[kernel] Hello, world!");
-        arch::init_interrupt();
-        panic!("end of rust_main!");
-    }
-    /// Alloc a persistent memory page.
-    fn frame_alloc_persist() -> PhysPage {
-        frame::frame_alloc()
-    }
-    /// Unalloc a persistent memory page
-    fn frame_unalloc(ppn: PhysPage) {
+
+    fn dealloc(&self, ppn: PhysPage) {
         frame::frame_dealloc(ppn)
     }
-    /// Preprare drivers.
-    fn prepare_drivers() {
-        println!("prepare drivers");
+}
+
+/// kernel interrupt
+#[polyhal::arch_interrupt]
+fn kernel_interrupt(ctx: &mut TrapFrame, trap_type: TrapType) {
+    // println!("trap_type @ {:x?} {:#x?}", trap_type, ctx);
+    match trap_type {
+        Breakpoint => return,
+        UserEnvCall => {
+            // jump to next instruction anyway
+            ctx.syscall_ok();
+            log::info!("Handle a syscall");
+        }
+        StorePageFault(_paddr) | LoadPageFault(_paddr) | InstructionPageFault(_paddr) => {
+            log::info!("page fault");
+        }
+        IllegalInstruction(_) => {
+            log::info!("illegal instruction");
+        }
+        Time => {
+            log::info!("Timer");
+        }
+        _ => {
+            log::warn!("unsuspended trap type: {:?}", trap_type);
+        }
     }
-    /// Try to add device through FdtNode
-    fn try_to_add_device(_fdt_node: &FdtNode) {}
+}
+
+#[polyhal::arch_entry]
+/// kernel main function, entry point.
+fn main(hartid: usize) {
+    if hartid != 0 {
+        return;
+    }
+
+    println!("[kernel] Hello, world!");
+    allocator::init_allocator();
+    logging::init(Some("trace"));
+    println!("init logging");
+
+    // Init page alloc for polyhal
+    polyhal::init(&PageAllocImpl);
+
+    polyhal::init_interrupt();
+
+    get_mem_areas().into_iter().for_each(|(start, size)| {
+        println!("init memory region {:#x} - {:#x}", start, start + size);
+        frame::add_frame_range(start, start + size);
+    });
+    panic!("end of rust_main!");
 }
 
 #[panic_handler]

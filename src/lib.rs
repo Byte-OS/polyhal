@@ -2,48 +2,86 @@
 #![no_main]
 #![feature(naked_functions)]
 #![feature(asm_const)]
-#![feature(stdsimd)]
+// #![feature(stdsimd)]
 #![feature(const_mut_refs)]
 #![feature(const_slice_from_raw_parts_mut)]
 #![cfg_attr(target_arch = "riscv64", feature(riscv_ext_intrinsics))]
 #![cfg_attr(target_arch = "aarch64", feature(const_option))]
 
-/// This is a crate to help you supporting multiple platforms.
-///
-/// If you want to use this crate, you should implement the following trait in your code.
-///
-/// ```rust
-/// use arch::api::ArchInterface;
-///
-/// pub struct ArchInterfaceImpl;
-///
-/// #[crate_interface::impl_interface]
-/// impl ArchInterface for ArchInterfaceImpl {
-///     /// Init allocator
-///     fn init_allocator() {}
-///     /// kernel interrupt
-///     fn kernel_interrupt(ctx: &mut TrapFrame, trap_type: TrapType) {}
-///     /// init log
-///     fn init_logging() {}
-///     /// add a memory region
-///     fn add_memory_region(start: usize, end: usize) {}
-///     /// kernel main function, entry point.
-///     fn main(hartid: usize) {}
-///     /// Alloc a persistent memory page.
-///     fn frame_alloc_persist() -> PhysPage {}
-///     /// Unalloc a persistent memory page
-///     fn frame_unalloc(ppn: PhysPage) {}
-///     /// Preprare drivers.
-///     fn prepare_drivers() {}
-///     /// Try to add device through FdtNode
-///     fn try_to_add_device(_fdt_node: &FdtNode) {}
-/// }
-/// ```
-///
-/// The main(hardid: usize) is the entry point.
-///
-/// You can find details in the example.
-///
+//! This is a crate to help you supporting multiple platforms.
+//!
+//! If you want to use this crate, you should implement the following trait in your code.
+//!
+//! ```rust
+//! /// impl
+//! pub struct PageAllocImpl;
+//! 
+//! impl PageAlloc for PageAllocImpl {
+//!     fn alloc(&self) -> PhysPage {
+//!         frame_alloc()
+//!     }
+//! 
+//!     fn dealloc(&self, ppn: PhysPage) {
+//!         frame::frame_dealloc(ppn)
+//!     }
+//! }
+//! 
+//! /// kernel interrupt
+//! #[polyhal::arch_interrupt]
+//! fn kernel_interrupt(ctx: &mut TrapFrame, trap_type: TrapType) {
+//!     // println!("trap_type @ {:x?} {:#x?}", trap_type, ctx);
+//!     match trap_type {
+//!         Breakpoint => return,
+//!         UserEnvCall => {
+//!             // jump to next instruction anyway
+//!             ctx.syscall_ok();
+//!             log::info!("Handle a syscall");
+//!         }
+//!         StorePageFault(_paddr) | LoadPageFault(_paddr) | InstructionPageFault(_paddr) => {
+//!             log::info!("page fault");
+//!         }
+//!         IllegalInstruction(_) => {
+//!             log::info!("illegal instruction");
+//!         }
+//!         Time => {
+//!             log::info!("Timer");
+//!         }
+//!         _ => {
+//!             log::warn!("unsuspended trap type: {:?}", trap_type);
+//!         }
+//!     }
+//! }
+//! 
+//! #[polyhal::arch_entry]
+//! /// kernel main function, entry point.
+//! fn main(hartid: usize) {
+//!     if hartid != 0 {
+//!         return;
+//!     }
+//! 
+//!     println!("[kernel] Hello, world!");
+//!     allocator::init_allocator();
+//!     logging::init(Some("trace"));
+//!     println!("init logging");
+//! 
+//!     // Init page alloc for polyhal
+//!     polyhal::init(&PageAllocImpl);
+//! 
+//!     polyhal::init_interrupt();
+//! 
+//!     get_mem_areas().into_iter().for_each(|(start, size)| {
+//!         println!("init memory region {:#x} - {:#x}", start, start + size);
+//!         frame::add_frame_range(start, start + size);
+//!     });
+//!     panic!("end of rust_main!");
+//! }
+//! 
+//! ```
+//!
+//! The main(hardid: usize) is the entry point.
+//!
+//! You can find details in the example.
+//!
 extern crate alloc;
 
 #[macro_use]
@@ -82,7 +120,7 @@ pub use currrent_arch::TrapFrame;
 
 pub use currrent_arch::*;
 
-pub use arch_macro::{arch_entry, arch_interrupt};
+pub use polyhal_macro::{arch_entry, arch_interrupt};
 
 pub const PAGE_SIZE: usize = PageTable::PAGE_SIZE;
 pub const USER_VADDR_END: usize = PageTable::USER_VADDR_END;
@@ -102,7 +140,7 @@ pub enum KContextArgs {
 }
 
 /// Trap Frame Arg Type
-/// 
+///
 /// Using this by Index and IndexMut trait bound on TrapFrame
 #[derive(Debug)]
 pub enum TrapFrameArgs {

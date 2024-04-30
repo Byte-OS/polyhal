@@ -1,7 +1,7 @@
-use arch::console_putchar;
 use core::fmt::{self, Write};
 
 use log::{self, info, Level, LevelFilter, Log, Metadata, Record};
+use polyhal::debug::DebugConsole;
 
 pub struct Logger;
 
@@ -73,7 +73,7 @@ pub fn print(args: fmt::Arguments) {
 pub fn puts(buffer: &[u8]) {
     // use the main uart if it exists.
     for i in buffer {
-        console_putchar(*i);
+        DebugConsole::putchar(*i);
     }
 }
 

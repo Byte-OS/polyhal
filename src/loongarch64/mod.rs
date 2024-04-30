@@ -59,9 +59,7 @@ pub fn hart_id() -> usize {
     loongarch64::register::cpuid::read().core_id()
 }
 
-pub(crate) extern "C" fn rust_secondary_main(hartid: usize) {
-    
-}
+pub(crate) extern "C" fn rust_secondary_main(hartid: usize) {}
 
 #[cfg(feature = "multicore")]
 impl MultiCore {

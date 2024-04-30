@@ -46,7 +46,8 @@ unsafe extern "C" fn _start() -> ! {
 #[no_mangle]
 #[link_section = ".text.entry"]
 unsafe extern "C" fn _start_secondary() -> ! {
-    core::arch::asm!("
+    core::arch::asm!(
+        "
         idle    1
         b       _start_secondary
         ",

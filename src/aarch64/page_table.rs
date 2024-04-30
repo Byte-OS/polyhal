@@ -35,11 +35,6 @@ impl PTE {
     }
 
     #[inline]
-    pub fn is_block(&self) -> bool {
-        self.flags().contains(PTEFlags::NON_BLOCK)
-    }
-
-    #[inline]
     pub fn is_table(&self) -> bool {
         self.flags().contains(PTEFlags::NON_BLOCK | PTEFlags::VALID)
     }
@@ -52,11 +47,6 @@ impl PTE {
     #[inline]
     pub(crate) fn new_page(ppn: PhysPage, flags: PTEFlags) -> Self {
         Self(ppn.to_addr() | flags.bits() as usize)
-    }
-
-    #[inline]
-    pub fn get_next_ptr(&self) -> PhysAddr {
-        PhysAddr(self.0 & 0xffff_ffff_f000)
     }
 
     #[inline]

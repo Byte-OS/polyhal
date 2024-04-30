@@ -289,9 +289,9 @@ impl PageTable {
 /// Just use it in the fn.
 ///
 /// there are some methods in the TLB implementation
-/// 
+///
 /// ### Flush the tlb entry through the specific virtual address
-/// 
+///
 /// ```rust
 /// TLB::flush_vaddr(arg0);  arg0 should be VirtAddr
 /// ```

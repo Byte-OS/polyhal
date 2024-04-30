@@ -1,42 +1,42 @@
 /// Time struct and its interface
-/// 
+///
 /// You can use this to get time from ticks
-/// 
+///
 /// ### get current time
 /// ```rust
 /// Time::now();
 /// ```
-/// 
+///
 /// ### get current cpu's frequency
 /// ```rust
 /// Time::get_freq();
 /// ```
-/// 
+///
 /// ### get how many nanoseconds have passed.
 /// ```rust
 /// Time::now().to_nsec();
 /// ```
-/// 
+///
 /// ### get how many microseconds have passed.
 /// ```rust
 /// Time::now().to_usec();
 /// ```
-/// 
+///
 /// ### get how many millisecond have passed.
 /// ```rust
 /// Time::now().to_msec();
 /// ```
-/// 
+///
 /// ### get how may ticks have passed
 /// ```rust
 /// Time::now().raw();
 /// ```
-/// 
+///
 /// ### convert ticks to time
 /// ```rust
 /// Time::from_raw(Time::now().raw());
 /// ```
-/// 
+///
 
 #[derive(Clone, Copy, Debug)]
 pub struct Time(pub(crate) usize);

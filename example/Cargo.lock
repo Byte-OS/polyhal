@@ -21,32 +21,6 @@ dependencies = [
 ]
 
 [[package]]
-name = "arch"
-version = "0.1.0"
-dependencies = [
- "aarch64-cpu",
- "arm_gic",
- "arm_pl011",
- "bitflags 2.5.0",
- "cfg-if",
- "crate_interface",
- "fdt",
- "irq_safety",
- "log",
- "loongarch64",
- "multiboot",
- "percpu",
- "raw-cpuid 11.0.1",
- "riscv",
- "sbi-rt",
- "spin",
- "tock-registers",
- "x2apic",
- "x86",
- "x86_64",
-]
-
-[[package]]
 name = "arm_gic"
 version = "0.1.0"
 source = "git+https://github.com/Byte-OS/arm_gic#7a0693ebe4113cfeb2f5ee93920e6e7ea3afe99a"
@@ -130,11 +104,11 @@ dependencies = [
 name = "example"
 version = "0.1.0"
 dependencies = [
- "arch",
  "buddy_system_allocator",
  "crate_interface",
  "fdt",
  "log",
+ "polyhal",
  "spin",
 ]
 
@@ -219,6 +193,41 @@ dependencies = [
 name = "percpu_macros"
 version = "0.1.0"
 source = "git+https://github.com/Byte-OS/percpu.git#a71e60e376ac28cdf1a46312e2705b864c07732e"
+dependencies = [
+ "proc-macro2",
+ "quote",
+ "syn",
+]
+
+[[package]]
+name = "polyhal"
+version = "0.1.0"
+dependencies = [
+ "aarch64-cpu",
+ "arm_gic",
+ "arm_pl011",
+ "bitflags 2.5.0",
+ "cfg-if",
+ "fdt",
+ "irq_safety",
+ "log",
+ "loongarch64",
+ "multiboot",
+ "percpu",
+ "polyhal-macro",
+ "raw-cpuid 11.0.1",
+ "riscv",
+ "sbi-rt",
+ "spin",
+ "tock-registers",
+ "x2apic",
+ "x86",
+ "x86_64",
+]
+
+[[package]]
+name = "polyhal-macro"
+version = "0.1.0"
 dependencies = [
  "proc-macro2",
  "quote",

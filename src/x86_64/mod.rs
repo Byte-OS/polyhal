@@ -31,7 +31,10 @@ use x86_64::{
     },
 };
 
-use crate::{currrent_arch::multiboot::use_multiboot, multicore::MultiCore, once::LazyInit, CPU_NUM, DTB_BIN, MEM_AREA};
+use crate::{
+    currrent_arch::multiboot::use_multiboot, multicore::MultiCore, once::LazyInit, CPU_NUM,
+    DTB_BIN, MEM_AREA,
+};
 
 #[percpu::def_percpu]
 static CPU_ID: usize = 1;

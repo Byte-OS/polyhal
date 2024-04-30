@@ -101,7 +101,5 @@ pub(crate) fn arch_init() {
 #[cfg(feature = "multicore")]
 impl MultiCore {
     /// Boot application cores
-    pub fn boot_all() {
-        
-    }
+    pub fn boot_all() {}
 }

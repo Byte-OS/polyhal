@@ -1,0 +1,20 @@
+name: CI
+
+on:
+  push:
+    tags:
+      - '*'
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    steps:
+    - uses: actions/checkout@v4
+    - uses: dtolnay/rust-toolchain@stable
+    # - uses: katyo/publish-crates@v2
+    #   with:
+    #     registry-token: ${{ secrets.CRATES_PUBLISH_TOKEN }}
+    - name: publish to crates.io
+      run: cargo login --registry crates-io ${{ secrets.CRATES_PUBLISH_TOKEN }}
+    - name: publish to crates.io
+      run: cargo publish --registry crates-io

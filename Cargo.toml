@@ -2,6 +2,10 @@
 name = "polyhal"
 version = "0.1.0"
 edition = "2021"
+description = "This crate provides the interface for multiple platforms."
+authors = ["yfblock@321353225@qq.com"]
+license = "MIT"
+repository = "https://github.com/Byte-OS/polyhal"
 
 # See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
 

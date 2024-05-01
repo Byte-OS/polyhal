@@ -1,7 +1,7 @@
 use core::arch::{asm, global_asm};
 
-use loongarch64::register::estat::{self, Exception, Trap};
-use loongarch64::register::{
+use loongArch64::register::estat::{self, Exception, Trap};
+use loongArch64::register::{
     badv, ecfg, eentry, prmd, pwch, pwcl, stlbps, ticlr, tlbidx, tlbrehi, tlbrentry,
 };
 
@@ -335,15 +335,15 @@ fn loongarch64_trap_handler(tf: &mut TrapFrame) -> TrapType {
         Trap::Exception(Exception::Syscall) => TrapType::UserEnvCall,
         Trap::Exception(Exception::StorePageFault)
         | Trap::Exception(Exception::PageModifyFault) => {
-            TrapType::StorePageFault(badv::read().raw())
+            TrapType::StorePageFault(badv::read().vaddr())
         }
-        Trap::Exception(Exception::LoadPageFault) => TrapType::LoadPageFault(badv::read().raw()),
+        Trap::Exception(Exception::LoadPageFault) => TrapType::LoadPageFault(badv::read().vaddr()),
         _ => {
             panic!(
                 "Unhandled trap {:?} @ {:#x} BADV: {:#x}:\n{:#x?}",
                 estat.cause(),
                 tf.era,
-                badv::read().raw(),
+                badv::read().vaddr(),
                 tf
             );
         }

@@ -2,7 +2,7 @@
 #![no_main]
 #![feature(naked_functions)]
 #![feature(asm_const)]
-// #![feature(stdsimd)]
+#![feature(stdsimd)]
 #![feature(const_mut_refs)]
 #![feature(const_slice_from_raw_parts_mut)]
 #![cfg_attr(target_arch = "riscv64", feature(riscv_ext_intrinsics))]

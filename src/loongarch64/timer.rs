@@ -1,7 +1,7 @@
-use loongarch64::register::ecfg::{self, LineBasedInterrupt};
-use loongarch64::register::tcfg;
+use loongArch64::register::ecfg::{self, LineBasedInterrupt};
+use loongArch64::register::tcfg;
 /// Returns the current clock time in hardware ticks.
-use loongarch64::time::{get_timer_freq, Time};
+use loongArch64::time::{get_timer_freq, Time};
 use spin::Lazy;
 
 // static mut FREQ: usize = 0;

@@ -1,4 +1,4 @@
-use loongarch64::register::pgdl;
+use loongArch64::register::pgdl;
 
 use crate::{
     addr::{PhysAddr, PhysPage, VirtAddr, VirtPage},

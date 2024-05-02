@@ -36,6 +36,14 @@ static CPU_ID: usize = 0;
 
 static DTB_PTR: LazyInit<usize> = LazyInit::new();
 
+// struct Log;
+// impl Write for Log {
+//     fn write_str(&mut self, s: &str) -> core::fmt::Result {
+//         s.as_bytes().into_iter().for_each(|x| DebugConsole::putchar(*x));
+//         Ok(())
+//     }
+// }
+
 pub(crate) fn rust_main(hartid: usize, device_tree: usize) {
     crate::clear_bss();
     // Init allocator
@@ -45,7 +53,7 @@ pub(crate) fn rust_main(hartid: usize, device_tree: usize) {
 
     interrupt::init_interrupt();
 
-    let (hartid, device_tree) = boards::init_device(hartid, device_tree | VIRT_ADDR_START);
+    let (_hartid, device_tree) = boards::init_device(hartid, device_tree | VIRT_ADDR_START);
 
     // 开启 SUM
     unsafe {
@@ -106,9 +114,9 @@ pub fn arch_init() {
         }
     }
     DTB_BIN.init_by(buffer);
+    let mut mem_area = Vec::new();
     if let Ok(fdt) = Fdt::new(&DTB_BIN) {
         info!("There has {} CPU(s)", fdt.cpus().count());
-        let mut mem_area = Vec::new();
         fdt.memory().regions().for_each(|x| {
             info!(
                 "memory region {:#X} - {:#X}",
@@ -120,8 +128,11 @@ pub fn arch_init() {
                 x.size.unwrap_or(0),
             ));
         });
-        MEM_AREA.init_by(mem_area);
+        
+    } else {
+        mem_area.push((0x8000_0000| VIRT_ADDR_START, 0x1000_0000));
     }
+    MEM_AREA.init_by(mem_area);
 }
 
 #[cfg(feature = "multicore")]

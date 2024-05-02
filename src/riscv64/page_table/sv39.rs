@@ -128,22 +128,16 @@ impl From<MappingFlags> for PTEFlags {
         } else {
             let mut res = Self::V;
             if flags.contains(MappingFlags::R) {
-                res |= PTEFlags::R;
+                res |= PTEFlags::R | PTEFlags::A;
             }
             if flags.contains(MappingFlags::W) {
-                res |= PTEFlags::W;
+                res |= PTEFlags::W | PTEFlags::D;
             }
             if flags.contains(MappingFlags::X) {
                 res |= PTEFlags::X;
             }
             if flags.contains(MappingFlags::U) {
                 res |= PTEFlags::U;
-            }
-            if flags.contains(MappingFlags::A) {
-                res |= PTEFlags::A;
-            }
-            if flags.contains(MappingFlags::D) {
-                res |= PTEFlags::D;
             }
             res
         }

@@ -101,7 +101,10 @@ unsafe extern "C" fn _start() -> ! {
         mrs     x19, mpidr_el1
         and     x19, x19, #0xffffff     // get current CPU id
         mov     x20, x0                 // save DTB pointer
-
+        cbz     x19, 1f
+        b       .
+    ",
+    "1:
         adrp    x8, {boot_stack}        // setup boot stack
         add     x8, x8, {boot_stack_size}
         mov     sp, x8
@@ -125,6 +128,19 @@ unsafe extern "C" fn _start() -> ! {
         boot_stack_size = const crate::STACK_SIZE,
         phys_virt_offset = const super::VIRT_ADDR_START,
         entry = sym super::rust_tmp_main,
+        options(noreturn),
+    )
+}
+
+/// The secondary core boot entry point.
+#[naked]
+#[no_mangle]
+unsafe extern "C" fn _secondary_boot() -> ! {
+    // PC = 0x8_0000
+    // X0 = dtb
+    core::arch::asm!("
+        wfi
+        b      _secondary_boot",
         options(noreturn),
     )
 }

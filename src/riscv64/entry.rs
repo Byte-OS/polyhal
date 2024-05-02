@@ -20,6 +20,9 @@ pub(crate) static mut PAGE_TABLE: [PTE; PageTable::PTE_NUM_IN_PAGE] = {
     arr[0x100] = PTE::from_addr(0x0000_0000, PTEFlags::ADGVRWX);
     arr[0x101] = PTE::from_addr(0x4000_0000, PTEFlags::ADGVRWX);
     arr[0x102] = PTE::from_addr(0x8000_0000, PTEFlags::ADGVRWX);
+    arr[0x103] = PTE::from_addr(0xc000_0000, PTEFlags::ADGVRWX);
+    arr[0x104] = PTE::from_addr(0x1_0000_0000, PTEFlags::ADGVRWX);
+    arr[0x105] = PTE::from_addr(0x1_4000_0000, PTEFlags::ADGVRWX);
     arr[0x106] = PTE::from_addr(0x8000_0000, PTEFlags::ADVRWX);
     arr
 };
@@ -32,9 +35,31 @@ pub(crate) static mut PAGE_TABLE: [PTE; PageTable::PTE_NUM_IN_PAGE] = {
 #[link_section = ".text.entry"]
 unsafe extern "C" fn _start() -> ! {
     core::arch::asm!(
+        // Chcek boot core
+        "
+            beqz    a0, 2f
+        ",
+        // Ensure that boot core is 0
+        "1:
+            // li      a7, 0x48534D
+            // li      a6, 0
+            // li      a0, 0
+            // mv      a2, a1
+            // la      a1, _start
+            // ecall
+            // li      a7, 0x48534D
+            // li      a6, 1   // 0: START, 1: STOP, 2: STATUS
+            // li      a0, 0
+            // mv      a2, a1
+            // la      a1, _start
+            // ecall
+            // wfi
+            // la      ra, 1b
+            // ret
+        ",
         // 1. 设置栈信息
         // sp = bootstack + (hartid + 1) * 0x10000
-        "
+        "2:
             la      sp, {boot_stack}
             li      t0, {stack_size}
             add     sp, sp, t0              // set boot stack
@@ -70,7 +95,6 @@ unsafe extern "C" fn _start() -> ! {
 /// 汇编函数入口
 ///
 /// 初始化也表信息 并调到 rust_secondary_main 入口函数
-
 #[naked]
 #[no_mangle]
 pub(crate) unsafe extern "C" fn secondary_start() -> ! {

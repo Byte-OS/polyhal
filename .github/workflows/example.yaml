@@ -1,0 +1,21 @@
+name: Run Example CI
+
+on:
+  workflow_dispatch:
+  push:
+    
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    steps:
+    - uses: actions/checkout@v4
+    - uses: dtolnay/rust-toolchain@nightly
+    - name: Go to example dir
+      run: cd example
+    - name: Test riscv64
+      run: make ARCH=riscv64 run
+    - name: Test aarch64
+      run: make ARCH=aarch64 run
+    - name: Test x86_64
+      run: make ARCH=x86_64 run
+

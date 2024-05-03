@@ -59,4 +59,10 @@ QEMU_EXEC += -nographic -smp 1
 run-inner: build
 	$(QEMU_EXEC)
 
+test:
+	make ARCH=aarch64 run
+	make ARCH=riscv64 run
+	make ARCH=x86_64 run
+#	make ARCH=loongarch64 run
+
 .PHONY: build env kernel clean run-inner

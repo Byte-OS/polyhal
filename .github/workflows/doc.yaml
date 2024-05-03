@@ -1,0 +1,23 @@
+name: docs CI
+
+on:
+  workflow_dispatch:
+  push:
+    branches:
+      - main
+    
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    steps:
+    - uses: actions/checkout@v4
+    - uses: dtolnay/rust-toolchain@stable
+    - name: generate doc
+      run: cargo doc --no-deps --all-features
+    - name: Deploy to Github Pages
+      uses: JamesIves/github-pages-deploy-action@v4
+      with:
+        single-commit: true
+        branch: gh-pages
+        folder: target/doc

@@ -12,7 +12,7 @@ jobs:
     runs-on: ubuntu-latest
     steps:
     - uses: actions/checkout@v4
-    - uses: dtolnay/rust-toolchain@stable
+    - uses: dtolnay/rust-toolchain@nightly
     - name: generate doc
       run: cargo doc --no-deps --all-features
     - name: Deploy to Github Pages
@@ -20,4 +20,4 @@ jobs:
       with:
         single-commit: true
         branch: gh-pages
-        folder: target/doc
+        folder: target/riscv64gc-unknown-none-elf/doc

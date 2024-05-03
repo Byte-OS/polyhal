@@ -28,8 +28,6 @@ impl TLB {
     /// TLB::flush_all();
     #[inline]
     pub fn flush_all() {
-        unsafe {
-            riscv::asm::sfence_vma_all();
-        }
+        riscv::asm::sfence_vma_all();
     }
 }

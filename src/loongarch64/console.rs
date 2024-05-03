@@ -1,11 +1,12 @@
-use core::fmt::Write;
-
 use spin::Mutex;
 
 use crate::{debug::DebugConsole, VIRT_ADDR_START};
 
+#[cfg(not(board = "2k1000"))]
 const UART_ADDR: usize = 0x01FE001E0 | VIRT_ADDR_START;
-
+#[cfg(board = "2k1000")]
+const UART_ADDR: usize = 0x800000001fe20000;
+// 0x800000001fe20000ULL
 static COM1: Mutex<Uart> = Mutex::new(Uart::new(UART_ADDR));
 
 pub struct Uart {
@@ -21,8 +22,7 @@ impl Uart {
         let ptr = self.base_address as *mut u8;
         loop {
             unsafe {
-                let c = ptr.add(5).read_volatile();
-                if c & (1 << 5) != 0 {
+                if ptr.add(5).read_volatile() & (1 << 5) != 0 {
                     break;
                 }
             }
@@ -45,18 +45,13 @@ impl Uart {
         }
     }
 }
-impl Write for Uart {
-    fn write_str(&mut self, s: &str) -> core::fmt::Result {
-        for c in s.bytes() {
-            self.putchar(c);
-        }
-        Ok(())
-    }
-}
 
 impl DebugConsole {
     /// Writes a byte to the console.
     pub fn putchar(ch: u8) {
+        if ch == b'\n' {
+            COM1.lock().putchar(b'\r');
+        }
         COM1.lock().putchar(ch)
     }
 
@@ -66,3 +61,5 @@ impl DebugConsole {
         COM1.lock().getchar()
     }
 }
+
+pub(crate) fn init() {}

@@ -1,4 +1,5 @@
 mod apic;
+mod barrier;
 mod consts;
 mod context;
 mod gdt;

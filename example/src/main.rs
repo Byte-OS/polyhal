@@ -66,8 +66,6 @@ fn main(hartid: usize) {
     // Init page alloc for polyhal
     polyhal::init(&PageAllocImpl);
 
-    polyhal::init_interrupt();
-
     get_mem_areas().into_iter().for_each(|(start, size)| {
         println!("init memory region {:#x} - {:#x}", start, start + size);
         frame::add_frame_range(start, start + size);

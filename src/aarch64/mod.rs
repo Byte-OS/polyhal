@@ -1,3 +1,4 @@
+mod barrier;
 mod boot;
 mod consts;
 mod context;
@@ -13,8 +14,8 @@ mod trap;
 
 use core::slice;
 
+use aarch64_cpu::registers::CPACR_EL1;
 use aarch64_cpu::registers::{Readable, Writeable, MPIDR_EL1, TTBR0_EL1};
-use aarch64_cpu::{asm::barrier, registers::CPACR_EL1};
 use alloc::vec::Vec;
 pub use consts::*;
 pub use context::TrapFrame;
@@ -25,7 +26,7 @@ pub use kcontext::{context_switch, context_switch_pt, read_current_tp, KContext}
 
 pub use page_table::*;
 pub use psci::system_off as shutdown;
-pub use trap::{disable_irq, enable_external_irq, enable_irq, init_interrupt, run_user_task};
+pub use trap::{disable_irq, enable_external_irq, enable_irq, run_user_task};
 
 use crate::multicore::MultiCore;
 use crate::once::LazyInit;
@@ -52,7 +53,7 @@ pub fn rust_tmp_main(hart_id: usize, device_tree: usize) {
 
     // Enable Floating Point Feature.
     CPACR_EL1.write(CPACR_EL1::FPEN::TrapNothing);
-    barrier::isb(barrier::SY);
+    aarch64_cpu::asm::barrier::isb(aarch64_cpu::asm::barrier::SY);
 
     // Enter to kernel entry point(`main` function).
     unsafe { crate::api::_main_for_arch(hart_id) };

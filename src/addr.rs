@@ -216,6 +216,10 @@ impl PhysPage {
             asm!(".long 0x0010000b"); // dcache.all
             asm!(".long 0x01b0000b"); // sync.is
         }
+        #[cfg(board = "2k1000")]
+        unsafe {
+            core::arch::asm!("dbar 0;ibar 0;")
+        }
     }
 
     #[inline]
@@ -227,6 +231,10 @@ impl PhysPage {
                 PageTable::PAGE_SIZE / size_of::<usize>(),
             )
             .fill(0);
+        }
+        #[cfg(board = "2k1000")]
+        unsafe {
+            core::arch::asm!("dbar 0;ibar 0;")
         }
         #[cfg(c906)]
         unsafe {

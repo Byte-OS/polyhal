@@ -15,17 +15,17 @@
 //! ```rust
 //! /// impl
 //! pub struct PageAllocImpl;
-//! 
+//!
 //! impl PageAlloc for PageAllocImpl {
 //!     fn alloc(&self) -> PhysPage {
 //!         frame_alloc()
 //!     }
-//! 
+//!
 //!     fn dealloc(&self, ppn: PhysPage) {
 //!         frame::frame_dealloc(ppn)
 //!     }
 //! }
-//! 
+//!
 //! /// kernel interrupt
 //! #[polyhal::arch_interrupt]
 //! fn kernel_interrupt(ctx: &mut TrapFrame, trap_type: TrapType) {
@@ -51,37 +51,90 @@
 //!         }
 //!     }
 //! }
-//! 
+//!
 //! #[polyhal::arch_entry]
 //! /// kernel main function, entry point.
 //! fn main(hartid: usize) {
 //!     if hartid != 0 {
 //!         return;
 //!     }
-//! 
+//!
 //!     println!("[kernel] Hello, world!");
 //!     allocator::init_allocator();
 //!     logging::init(Some("trace"));
 //!     println!("init logging");
-//! 
+//!
 //!     // Init page alloc for polyhal
 //!     polyhal::init(&PageAllocImpl);
-//! 
+//!
 //!     polyhal::init_interrupt();
-//! 
+//!
 //!     get_mem_areas().into_iter().for_each(|(start, size)| {
 //!         println!("init memory region {:#x} - {:#x}", start, start + size);
 //!         frame::add_frame_range(start, start + size);
 //!     });
 //!     panic!("end of rust_main!");
 //! }
-//! 
+//!
 //! ```
 //!
 //! The main(hardid: usize) is the entry point.
 //!
 //! You can find details in the example.
 //!
+//! In this crate you can find some interfaces to use.
+//! These interfaces are classified into some structures.
+//!
+//! [PhysPage]: PhysicalPage And its associated functions.
+//!
+//! [PhysAddr](addr::PhysAddr): PhysicalAddr And its associated functions.
+//!
+//! [VirtPage](addr::VirtPage): VirtualPage And its associated functions.
+//!
+//! [VirtAddr](addr::VirtAddr): VirtualAddr And its associated functions.
+//!
+//! [IRQ](irq::IRQ): Interrupt ReQuest management, includes enable and disable.
+//!
+//! [Barrier](mem::Barrier): Memory barrier operations.
+//!
+//! [MultiCore](multicore::MultiCore): MultiCore operations. Now only [multicore::MultiCore::boot_all] is available.
+//!
+//! [PageTable]: PageTable and its associated functions.
+//!
+//! [MappingFlags](pagetable::MappingFlags): MappingFlags, This is an abstraction of pagetable flags.
+//!
+//! [TLB](pagetable::TLB): TLB operations.
+//!
+//! [PageTableWrapper](pagetable::PageTableWrapper): PageTableWrapper. It will dealloc all pagetable leaf when it was dropping.
+//!
+//! [Time](time::Time): Time and its associated functions.
+//!
+//! [Instruction](instruction::Instruction): Some platform instruction.
+//!
+//! There also provides a debugging console(recommanded only for debugging).
+//!
+//! [DebugConsole](debug::DebugConsole): A console for debugging.
+//!
+//! This crate provides a [TrapFrame], you can operate it through index with [TrapFrameArgs].
+//!
+//! If you are using kernel task. You should to enable feature `kcontext`.
+//! Then you can use kernel task context structure [KContext], and manipulate it with [KContextArgs].
+//!
+//! You can switch kcontext through [context_switch_pt] or [context_switch]
+//!
+//! There are also some consts.
+//!
+//! [VIRT_ADDR_START]: This is a higher half kernel offset address.
+//! [USER_VADDR_END]: End of the user address range.
+//! [PAGE_SIZE]: The size of the page.
+//!
+//! You can get some device information using the functions below.
+//! [get_mem_areas]: Get the avaliable memorys.
+//! [get_fdt]: Get the Fdt structure(fdt is a rust dtb operation crate).
+//! [get_cpu_num]: Get the number of cpus.
+//!
+//! TIPS: You should have finished [init] before using [get_mem_areas] and [get_fdt].
+
 extern crate alloc;
 
 #[macro_use]
@@ -92,7 +145,9 @@ pub mod api;
 #[macro_use]
 pub mod consts;
 pub mod debug;
+pub mod instruction;
 pub mod irq;
+pub mod mem;
 #[cfg(feature = "multicore")]
 pub mod multicore;
 pub mod once;

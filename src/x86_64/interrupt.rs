@@ -416,7 +416,9 @@ pub fn enable_external_irq() {
     // }
 }
 
-pub fn init_interrupt() {
-    // Test break point.
-    unsafe { core::arch::asm!("int 3") }
+impl crate::instruction::Instruction {
+    #[inline]
+    pub fn ebreak() {
+        unsafe { core::arch::asm!("int 3") }
+    }
 }

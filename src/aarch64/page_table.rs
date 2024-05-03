@@ -5,21 +5,12 @@ use crate::pagetable::{MappingFlags, PageTable, PTE, TLB};
 
 impl PTE {
     #[inline]
-    pub const fn from_ppn(ppn: usize, flags: PTEFlags) -> Self {
-        PTE((ppn << 12) | flags.bits())
-    }
-
-    #[inline]
-    pub const fn from_addr(addr: usize, flags: PTEFlags) -> Self {
-        Self::from_ppn(addr >> 12, flags)
-    }
-
-    #[inline]
     pub const fn address(&self) -> PhysAddr {
         PhysAddr(self.0 & 0xFFFF_FFFF_F000)
     }
 
     #[inline]
+    #[allow(dead_code)]
     pub fn set(&mut self, ppn: usize, flags: PTEFlags) {
         self.0 = (ppn << 10) | flags.bits() as usize;
     }
@@ -47,11 +38,6 @@ impl PTE {
     #[inline]
     pub(crate) fn new_page(ppn: PhysPage, flags: PTEFlags) -> Self {
         Self(ppn.to_addr() | flags.bits() as usize)
-    }
-
-    #[inline]
-    pub fn is_leaf(&self) -> bool {
-        self.flags().contains(PTEFlags::VALID | PTEFlags::NON_BLOCK)
     }
 }
 

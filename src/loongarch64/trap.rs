@@ -5,8 +5,10 @@ use loongArch64::register::{
     badv, ecfg, eentry, prmd, pwch, pwcl, stlbps, ticlr, tlbidx, tlbrehi, tlbrentry,
 };
 
+use crate::instruction::Instruction;
 use crate::TrapType;
 
+use super::unaligned::emulate_load_store_insn;
 use super::TrapFrame;
 
 global_asm!(
@@ -100,12 +102,13 @@ global_asm!(
     "
 );
 
-// 设置中断
-pub fn init_interrupt() {
-    unsafe {
-        core::arch::asm!("break 2");
+impl Instruction {
+    #[inline]
+    pub fn ebreak() {
+        unsafe {
+            core::arch::asm!("break 2");
+        }
     }
-    tlb_init(tlb_fill as _);
 }
 
 #[naked]
@@ -318,7 +321,8 @@ fn loongarch64_trap_handler(tf: &mut TrapFrame) -> TrapType {
             TrapType::Breakpoint
         }
         Trap::Exception(Exception::AddressNotAligned) => {
-            error!("address not aligned: {:#x?}", tf);
+            // error!("address not aligned: {:#x?}", tf);
+            unsafe { emulate_load_store_insn(tf) }
             TrapType::Unknown
         }
         Trap::Interrupt(_) => {
@@ -337,6 +341,14 @@ fn loongarch64_trap_handler(tf: &mut TrapFrame) -> TrapType {
         | Trap::Exception(Exception::PageModifyFault) => {
             TrapType::StorePageFault(badv::read().vaddr())
         }
+        Trap::Exception(Exception::PageNonReadableFault)
+        | Trap::Exception(Exception::PageNonExecutableFault) => {
+            // info!("page none readable: {tf:#x?}");
+            // let badv = badv::read().vaddr();
+
+            // TrapType::Un
+            TrapType::StorePageFault(badv::read().vaddr())
+        }
         Trap::Exception(Exception::LoadPageFault) => TrapType::LoadPageFault(badv::read().vaddr()),
         _ => {
             panic!(
@@ -348,7 +360,7 @@ fn loongarch64_trap_handler(tf: &mut TrapFrame) -> TrapType {
             );
         }
     };
-    // ArchInterface::kernel_interrupt(tf, trap_type);
+    // info!("return to addr: {:#x}", tf.era);
     unsafe { crate::api::_interrupt_for_arch(tf, trap_type) };
     trap_type
 }

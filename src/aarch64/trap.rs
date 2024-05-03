@@ -5,6 +5,7 @@ use tock_registers::interfaces::Readable;
 
 use crate::{
     currrent_arch::{gic::handle_irq, timer::set_next_timer},
+    instruction::Instruction,
     TrapType,
 };
 
@@ -98,14 +99,6 @@ pub fn init() {
     VBAR_EL1.set(exception_vector_base as _);
 }
 
-// 设置中断
-pub fn init_interrupt() {
-    // unsafe {
-    //     asm!("brk #0");
-    // }
-    // enable_irq();
-}
-
 #[naked]
 extern "C" fn user_restore(context: *mut TrapFrame) -> TrapKind {
     unsafe {
@@ -176,4 +169,11 @@ pub fn enable_external_irq() {
     // unsafe {
     //     sie::set_sext();
     // }
+}
+
+impl Instruction {
+    #[inline]
+    pub fn ebreak() {
+        unsafe { asm!("brk 0") }
+    }
 }

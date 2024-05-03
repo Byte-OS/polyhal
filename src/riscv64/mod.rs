@@ -1,3 +1,4 @@
+mod barrier;
 mod boards;
 mod consts;
 mod context;
@@ -17,8 +18,7 @@ pub use context::TrapFrame;
 pub use entry::{kernel_page_table, switch_to_kernel_page_table};
 use fdt::Fdt;
 pub use interrupt::{
-    disable_irq, enable_external_irq, enable_irq, init_interrupt, run_user_task,
-    run_user_task_forever,
+    disable_irq, enable_external_irq, enable_irq, run_user_task, run_user_task_forever,
 };
 use sbi::*;
 
@@ -35,14 +35,6 @@ use crate::{api::frame_alloc, multicore::MultiCore, once::LazyInit, CPU_NUM, DTB
 static CPU_ID: usize = 0;
 
 static DTB_PTR: LazyInit<usize> = LazyInit::new();
-
-// struct Log;
-// impl Write for Log {
-//     fn write_str(&mut self, s: &str) -> core::fmt::Result {
-//         s.as_bytes().into_iter().for_each(|x| DebugConsole::putchar(*x));
-//         Ok(())
-//     }
-// }
 
 pub(crate) fn rust_main(hartid: usize, device_tree: usize) {
     crate::clear_bss();
@@ -128,9 +120,8 @@ pub fn arch_init() {
                 x.size.unwrap_or(0),
             ));
         });
-        
     } else {
-        mem_area.push((0x8000_0000| VIRT_ADDR_START, 0x1000_0000));
+        mem_area.push((0x8000_0000 | VIRT_ADDR_START, 0x1000_0000));
     }
     MEM_AREA.init_by(mem_area);
 }

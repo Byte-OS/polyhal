@@ -138,7 +138,8 @@ unsafe extern "C" fn _start() -> ! {
 unsafe extern "C" fn _secondary_boot() -> ! {
     // PC = 0x8_0000
     // X0 = dtb
-    core::arch::asm!("
+    core::arch::asm!(
+        "
         wfi
         b      _secondary_boot",
         options(noreturn),

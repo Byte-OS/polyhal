@@ -5,7 +5,7 @@ use riscv::register::{
     sie, stval, stvec,
 };
 
-use crate::{TrapFrame, TrapType, VIRT_ADDR_START};
+use crate::{instruction::Instruction, TrapFrame, TrapType, VIRT_ADDR_START};
 
 use super::timer;
 
@@ -82,7 +82,7 @@ static KERNEL_RSP: usize = 0;
 static USER_RSP: usize = 0;
 
 // 设置中断
-pub fn init_interrupt() {
+pub(crate) fn init_interrupt() {
     crate::currrent_arch::page_table::sigtrx::init();
     // 输出内核信息
 
@@ -308,5 +308,14 @@ pub fn disable_irq() {
 pub fn enable_external_irq() {
     unsafe {
         sie::set_sext();
+    }
+}
+
+impl Instruction {
+    #[inline]
+    pub fn ebreak() {
+        unsafe {
+            riscv::asm::ebreak();
+        }
     }
 }

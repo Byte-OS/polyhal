@@ -13,8 +13,8 @@ unsafe extern "C" fn _start() -> ! {
         lu52i.d     $t0, $t0, -1792     # CA, PLV0, 0x9000 xxxx xxxx xxxx
         csrwr       $t0, 0x181          # LOONGARCH_CSR_DMWIN1
 
-        csrrd       $t1, 0x20       # read cpu from csr
-        bnez        $t1, _start_secondary
+        // csrrd       $t1, 0x20       # read cpu from csr
+        // bnez        $t1, _start_secondary
 
         # Enable PG 
         li.w		$t0, 0xb0		# PLV=0, IE=0, PG=1

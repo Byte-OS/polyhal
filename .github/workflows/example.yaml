@@ -8,6 +8,7 @@ jobs:
   build-qemu:
     runs-on: ubuntu-latest
     steps:
+    - run: sudo apt update
     - name: Install dependencies
       run: sudo apt -y install autoconf automake autotools-dev curl libmpc-dev libmpfr-dev libgmp-dev \
         build-essential bison flex texinfo gperf libtool patchutils bc \

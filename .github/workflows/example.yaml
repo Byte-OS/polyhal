@@ -33,3 +33,4 @@ jobs:
     - uses: dtolnay/rust-toolchain@nightly
     - name: Test ${{ matrix.arch }}
       run: cd example && make ARCH=${{ matrix.arch }} build
+      timeout-minutes: 1

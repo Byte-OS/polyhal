@@ -47,7 +47,7 @@ jobs:
     - name: Install generaic tools
       run: yes | pacman -Syy make cmake rustup
     - name: setup rust toolchain
-      run: rustup toolchain default nightly
+      run: rustup default nightly
     - name: Test ${{ matrix.arch }}
       run: cd example && make ARCH=${{ matrix.arch }} build
     - name: Install Qemu

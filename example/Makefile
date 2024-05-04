@@ -1,6 +1,9 @@
 # Building
 ARCH := riscv64
-QEMU_EXEC := timeout 60 
+ifeq ($(ARCH), loongarch64)
+  QEMU_EXEC := timeout 60
+endif
+
 ifeq ($(ARCH), x86_64)
   TARGET := x86_64-unknown-none
   KERNEL_ELF := target/$(TARGET)/release/example
@@ -60,10 +63,11 @@ clean:
 
 run: run-inner
 
-QEMU_EXEC += -nographic -smp 1
+QEMU_EXEC += -nographic -smp 1 >output.log 2>&1
 
 run-inner: build
-	$(QEMU_EXEC) || echo "QEMU exited with code $?"
+	$(QEMU_EXEC) || echo "QEMU exited"
+	grep "\[kernel\] Hello, world!" output.log
 
 test:
 	make ARCH=aarch64 run

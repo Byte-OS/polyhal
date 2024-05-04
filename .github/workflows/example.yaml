@@ -45,7 +45,7 @@ jobs:
     steps:
     - uses: actions/checkout@v4
     - name: Install generaic tools
-      run: yes | pacman -Syy make cmake rustup
+      run: yes | pacman -Syy make cmake rustup gcc
     - name: setup rust toolchain
       run: rustup default nightly
     - name: Test ${{ matrix.arch }}

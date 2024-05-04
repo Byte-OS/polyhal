@@ -164,7 +164,7 @@ checksum = "de3145af08024dea9fa9914f381a17b8fc6034dfb00f3a84013f7ff43f29ed4c"
 [[package]]
 name = "percpu"
 version = "0.1.0"
-source = "git+https://github.com/Byte-OS/percpu.git?rev=a71e60e#a71e60e376ac28cdf1a46312e2705b864c07732e"
+source = "git+https://github.com/Byte-OS/percpu.git#a71e60e376ac28cdf1a46312e2705b864c07732e"
 dependencies = [
  "cfg-if",
  "percpu_macros",
@@ -175,7 +175,7 @@ dependencies = [
 [[package]]
 name = "percpu_macros"
 version = "0.1.0"
-source = "git+https://github.com/Byte-OS/percpu.git?rev=a71e60e#a71e60e376ac28cdf1a46312e2705b864c07732e"
+source = "git+https://github.com/Byte-OS/percpu.git#a71e60e376ac28cdf1a46312e2705b864c07732e"
 dependencies = [
  "proc-macro2",
  "quote",

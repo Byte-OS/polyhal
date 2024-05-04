@@ -7,14 +7,12 @@ on:
 jobs:
   test:
     runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        arch: [x86_64, riscv64, aarch64, loongarch64]
     steps:
     - uses: actions/checkout@v4
     - uses: dtolnay/rust-toolchain@nightly
-    - name: Test riscv64
-      run: cd example && make ARCH=riscv64 build
-    - name: Test aarch64
-      run: cd example && make ARCH=aarch64 build
-    - name: Test x86_64
-      run: cd example && make ARCH=x86_64 build
-    - name: Test loongarch64
-      run: cd example && make ARCH=loongarch64 build
+    - name: Test ${{ matrix.arch }}
+      run: cd example && make ARCH=${{ matrix.arch }} build

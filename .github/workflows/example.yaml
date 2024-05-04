@@ -44,10 +44,13 @@ jobs:
             packages: qemu-system-x86
     steps:
     - uses: actions/checkout@v4
-    - uses: dtolnay/rust-toolchain@nightly
+    - name: Install generaic tools
+      run: yes | pacman -Syy make cmake rustup
+    - name: setup rust toolchain
+      run: rustup toolchain default nightly
     - name: Test ${{ matrix.arch }}
       run: cd example && make ARCH=${{ matrix.arch }} build
     - name: Install Qemu
-      run: yes | pacman -Syy ${{ matrix.packages }}
+      run: yes | pacman ${{ matrix.packages }}
     - name: Test run
       run: make ARCH=${{ matrix.arch }} run

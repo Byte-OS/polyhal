@@ -37,11 +37,11 @@ jobs:
           - arch: aarch64
             packages: qemu-system-aarch64
           - arch: riscv64
-            packages: qemu-system-riscv64
+            packages: qemu-system-riscv
           - arch: x86_64
             packages: qemu-system-x86
           - arch: loongarch64
-            packages: qemu-system-x86
+            packages: qemu-system-loongarch64
     steps:
     - uses: actions/checkout@v4
     - name: Install generaic tools

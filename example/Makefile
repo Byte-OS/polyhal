@@ -3,6 +3,8 @@ ARCH := riscv64
 QEMU_EXEC := timeout 60 
 ifeq ($(ARCH), x86_64)
   TARGET := x86_64-unknown-none
+  KERNEL_ELF := target/$(TARGET)/release/example
+  KERNEL_BIN := $(KERNEL_ELF).bin
   QEMU_EXEC += qemu-system-x86_64 \
 				-machine q35 \
 				-kernel $(KERNEL_ELF) \
@@ -10,26 +12,29 @@ ifeq ($(ARCH), x86_64)
   BUS := pci
 else ifeq ($(ARCH), riscv64)
   TARGET := riscv64gc-unknown-none-elf
+  KERNEL_ELF := target/$(TARGET)/release/example
+  KERNEL_BIN := $(KERNEL_ELF).bin
   QEMU_EXEC += qemu-system-$(ARCH) \
 				-machine virt \
 				-kernel $(KERNEL_BIN)
 else ifeq ($(ARCH), aarch64)
   TARGET := aarch64-unknown-none-softfloat
+  KERNEL_ELF := target/$(TARGET)/release/example
+  KERNEL_BIN := $(KERNEL_ELF).bin  
   QEMU_EXEC += qemu-system-$(ARCH) \
 				-cpu cortex-a72 \
 				-machine virt \
 				-kernel $(KERNEL_BIN)
 else ifeq ($(ARCH), loongarch64)
   TARGET := loongarch64-unknown-none
+  KERNEL_ELF := target/$(TARGET)/release/example
+  KERNEL_BIN := $(KERNEL_ELF).bin
   QEMU_EXEC += qemu-system-$(ARCH) -kernel $(KERNEL_ELF)
   BUILD_ARGS += -Z build-std=core,alloc
   BUS := pci
 else
   $(error "ARCH" must be one of "x86_64", "riscv64", "aarch64" or "loongarch64")
 endif
-
-KERNEL_ELF := target/$(TARGET)/release/example
-KERNEL_BIN := $(KERNEL_ELF).bin
 
 # Binutils
 OBJDUMP := rust-objdump --arch-name=riscv64

@@ -54,3 +54,4 @@ jobs:
       run: yes | pacman -Syy ${{ matrix.packages }}
     - name: Test run
       run: cd example && PATH=$PATH:~/.cargo/bin make ARCH=${{ matrix.arch }} run
+      timeout-minutes: 1

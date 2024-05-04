@@ -47,7 +47,7 @@ jobs:
     - name: Install generaic tools
       run: yes | pacman -Syy make cmake rustup gcc
     - name: setup rust toolchain
-      run: rustup default nightly
+      run: rustup default nightly && cargo install cargo-binutils && export PATH=$PATH:~/.cargo/bin
     - name: Test ${{ matrix.arch }}
       run: cd example && make ARCH=${{ matrix.arch }} build
     - name: Install Qemu

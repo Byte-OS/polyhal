@@ -51,6 +51,6 @@ jobs:
     - name: Test ${{ matrix.arch }}
       run: cd example && PATH=$PATH:~/.cargo/bin make ARCH=${{ matrix.arch }} build
     - name: Install Qemu
-      run: yes | pacman ${{ matrix.packages }}
+      run: yes | pacman -Syy ${{ matrix.packages }}
     - name: Test run
       run: PATH=$PATH:~/.cargo/bin make ARCH=${{ matrix.arch }} run

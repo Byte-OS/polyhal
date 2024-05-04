@@ -1,8 +1,7 @@
 # Building
 ARCH := riscv64
-ifeq ($(ARCH), loongarch64)
-  QEMU_EXEC := timeout 60
-endif
+QEMU_EXEC := timeout 40
+
 
 ifeq ($(ARCH), x86_64)
   TARGET := x86_64-unknown-none

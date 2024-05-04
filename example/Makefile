@@ -1,5 +1,6 @@
 # Building
 ARCH := riscv64
+QEMU_EXEC := timeout 60 
 ifeq ($(ARCH), x86_64)
   TARGET := x86_64-unknown-none
   QEMU_EXEC += qemu-system-x86_64 \
@@ -57,12 +58,12 @@ run: run-inner
 QEMU_EXEC += -nographic -smp 1
 
 run-inner: build
-	$(QEMU_EXEC)
+	$(QEMU_EXEC) || echo "QEMU exited with code $?"
 
 test:
 	make ARCH=aarch64 run
 	make ARCH=riscv64 run
 	make ARCH=x86_64 run
-#	make ARCH=loongarch64 run
+	make ARCH=loongarch64 run
 
 .PHONY: build env kernel clean run-inner

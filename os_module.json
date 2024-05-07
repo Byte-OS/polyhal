@@ -1,0 +1,9 @@
+{
+  "name": "polyhal",
+  "description": "This is a crate that help you porting your kernel to multiple platforms.",
+  "authors" [{
+    "name": "yfblock",
+    "email": "321353225@qq.com",
+  }],
+  "keywords": ["hal", "arch", "platform"]
+}

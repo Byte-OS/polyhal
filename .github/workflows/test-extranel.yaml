@@ -11,11 +11,11 @@ jobs:
     steps:
     - uses: convictional/trigger-workflow-and-wait@v1.6.1
       with:
-          owner: keithconvictional
-          repo: myrepo
-          github_token: ${{ secrets.GITHUB_PERSONAL_ACCESS_TOKEN }}
+          owner: yfblock
+          repo: rcore-tutorial-v3-with-hal-component
+          github_token: ${{ secrets.PERSONAL_TOKEN }}
           github_user: yfblock
-          workflow_file_name: doc-and-test.yaml
+          workflow_file_name: doc-and-test.yml
           ref: ch7
           wait_interval: 10
           client_payload: '{}'

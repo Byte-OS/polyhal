@@ -15,10 +15,10 @@ jobs:
           repo: rcore-tutorial-v3-with-hal-component
           github_token: ${{ secrets.PERSONAL_TOKEN }}
           github_user: yfblock
-          workflow_file_name: doc-and-test.yml
+          workflow_file_name: test-run.yml
           ref: ch7
           wait_interval: 10
-          client_payload: '{}'
+          client_payload: '{"commit": "${{ github.sha}}"}'
           propagate_failure: true
           trigger_workflow: true
           wait_workflow: true

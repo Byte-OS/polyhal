@@ -1,0 +1,24 @@
+name: TestExternal
+
+on:
+  workflow_dispatch:
+  push:
+  pull_request:
+    
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    steps:
+    - uses: convictional/trigger-workflow-and-wait@v1.6.1
+      with:
+          owner: keithconvictional
+          repo: myrepo
+          github_token: ${{ secrets.GITHUB_PERSONAL_ACCESS_TOKEN }}
+          github_user: yfblock
+          workflow_file_name: doc-and-test.yaml
+          ref: ch7
+          wait_interval: 10
+          client_payload: '{}'
+          propagate_failure: true
+          trigger_workflow: true
+          wait_workflow: true

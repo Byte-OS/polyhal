@@ -1,0 +1,24 @@
+name: TestExternal
+
+on:
+  workflow_dispatch:
+  push:
+  pull_request:
+    
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    steps:
+    - uses: convictional/trigger-workflow-and-wait@v1.6.1
+      with:
+          owner: yfblock
+          repo: rcore-tutorial-v3-with-hal-component
+          github_token: ${{ secrets.PERSONAL_TOKEN }}
+          github_user: yfblock
+          workflow_file_name: test-run.yml
+          ref: ch7
+          wait_interval: 10
+          client_payload: '{"commit": "${{ github.sha}}"}'
+          propagate_failure: true
+          trigger_workflow: true
+          wait_workflow: true

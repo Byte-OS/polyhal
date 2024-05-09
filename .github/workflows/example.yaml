@@ -5,32 +5,87 @@ on:
   push:
     
 jobs:
-  build-qemu:
-    runs-on: ubuntu-20.04
-    steps:
-    - name: Install dependencies
-      run: sudo apt -y install autoconf automake autotools-dev curl libmpc-dev libmpfr-dev libgmp-dev \
-        gawk build-essential bison flex texinfo gperf libtool patchutils bc \
-        zlib1g-dev libexpat-dev pkg-config  libglib2.0-dev libpixman-1-dev libsdl2-dev libslirp-dev \
-        git tmux python3 python3-pip ninja-build
-    - name: Get QEMU Source Code
-      run: wget https://github.com/qemu/qemu/archive/refs/tags/v9.0.0.tar.gz
-    - name: extract qemu source code
-      run: tar zxvf v9.0.0.tar.gz
-    - name: build qemu 9.0
-      run: mkdir v9.0.0/build && cd v9.0.0/build && ../configure --target-list=riscv64-softmmu,aarch64-softmmu,x86_64-softmmu,loongarch64-softmmu
-    - name: make qemu 9.0
-      run: cd v9.0.0/build && make -j8
+  # build-qemu:
+  #   runs-on: ubuntu-latest
+  #   steps:
+  #   - run: sudo apt update
+  #   - name: Install dependencies
+  #     run: sudo apt -y install autoconf automake autotools-dev curl libmpc-dev libmpfr-dev libgmp-dev \
+  #       build-essential bison flex texinfo gperf libtool patchutils bc \
+  #       libexpat-dev pkg-config  libglib2.0-dev libpixman-1-dev libsdl2-dev libslirp-dev \
+  #       tmux python3 python3-pip ninja-build
+  #   - name: Get QEMU Source Code
+  #     run: wget https://github.com/qemu/qemu/archive/refs/tags/v9.0.0.tar.gz
+  #   - name: extract qemu source code
+  #     run: tar zxvf v9.0.0.tar.gz
+  #   - name: build qemu 9.0
+  #     run: mkdir v9.0.0/build && cd v9.0.0/build && ../configure --target-list=riscv64-softmmu,aarch64-softmmu,x86_64-softmmu,loongarch64-softmmu
+  #   - name: make qemu 9.0
+  #     run: cd v9.0.0/build && make -j8
+
   test:
-    runs-on: ubuntu-20.04
-    needs: build-qemu
+    runs-on: ubuntu-latest
+    container:
+      image: archlinux:base
+      volumes:
+        - .:/code
     strategy:
       fail-fast: false
       matrix:
         arch: [x86_64, riscv64, aarch64, loongarch64]
+        include:
+          - arch: aarch64
+            packages: qemu-system-aarch64
+          - arch: riscv64
+            packages: qemu-system-riscv
+          - arch: x86_64
+            packages: qemu-system-x86
+          - arch: loongarch64
+            packages: qemu-system-loongarch64
     steps:
     - uses: actions/checkout@v4
-    - uses: dtolnay/rust-toolchain@nightly
+    - name: Install generaic tools
+      run: yes | pacman -Syy make cmake rustup gcc
+    - name: setup rust toolchain
+      run: rustup default nightly && cargo install cargo-binutils
     - name: Test ${{ matrix.arch }}
-      run: cd example && make ARCH=${{ matrix.arch }} build
+      run: cd example && PATH=$PATH:~/.cargo/bin make ARCH=${{ matrix.arch }} build
+    - name: Install Qemu
+      run: yes | pacman -Syy ${{ matrix.packages }}
+    - name: Test run
+      run: cd example && PATH=$PATH:~/.cargo/bin make ARCH=${{ matrix.arch }} run
       timeout-minutes: 1
+  
+  template:
+    runs-on: ubuntu-latest
+    container:
+      image: archlinux:base
+      volumes:
+        - .:/code
+    strategy:
+      fail-fast: false
+      matrix:
+        arch: [x86_64, riscv64, aarch64, loongarch64]
+        include:
+          - arch: aarch64
+            packages: qemu-system-aarch64
+          - arch: riscv64
+            packages: qemu-system-riscv
+          - arch: x86_64
+            packages: qemu-system-x86
+          - arch: loongarch64
+            packages: qemu-system-loongarch64
+    steps:
+      - name: Install generaic tools
+        run: yes | pacman -Syy make cmake rustup gcc git libgit2 libgit2-glib pkgconf openssl
+      - name: Install Rust toolchain
+        run: rustup default stable && cargo install cargo-binutils && cargo install cargo-generate
+      - name: generate by template
+        run: USER=test cargo generate --git https://github.com/Byte-OS/polyhal-template.git -n test-polyhal
+      - name: Install Qemu
+        run: yes | pacman -Syy ${{ matrix.packages }}
+      - name: test run
+        run: cd test-polyhal && (PATH=$PATH:~/.cargo/bin timeout 60 make ARCH=${{ matrix.arch }} run > output.log) || echo "qemu exited!"
+        timeout-minutes: 2
+      - name: test log
+        run: grep "\[kernel\] exited successfully" test-polyhal/output.log

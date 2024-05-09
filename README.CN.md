@@ -4,6 +4,8 @@
 
 English | [中文简体](./README.CN.md)
 
+[Wiki](https://github.com/Byte-OS/polyhal/wiki)
+
 ## Supported platforms
 
 | Platform | Board |

@@ -77,7 +77,7 @@ jobs:
             packages: qemu-system-loongarch64
     steps:
       - name: Install generaic tools
-        run: yes | pacman -Syy make cmake rustup gcc git libgit2 libgit2-glib
+        run: yes | pacman -Syy make cmake rustup gcc git libgit2 libgit2-glib pkgconf openssl
       - name: Install Rust toolchain
         run: rustup default stable && cargo install cargo-binutils && cargo install cargo-generate
       - name: generate by template

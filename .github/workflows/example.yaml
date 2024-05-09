@@ -85,5 +85,5 @@ jobs:
       - name: Install Qemu
         run: yes | pacman -Syy ${{ matrix.packages }}
       - name: test run
-        run: cd test-polyhal && make ARCH=${{ matrix.arch }} run
+        run: cd test-polyhal && PATH=$PATH:~/.cargo/bin make ARCH=${{ matrix.arch }} run
         timeout-minutes: 1

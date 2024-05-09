@@ -77,11 +77,11 @@ jobs:
             packages: qemu-system-loongarch64
     steps:
       - name: Install generaic tools
-        run: yes | pacman -Syy make cmake rustup gcc openssl pkgconf
+        run: yes | pacman -Syy make cmake rustup gcc cargo-generate
       - name: Install Rust toolchain
-        run: rustup default stable && cargo install cargo-binutils && cargo install cargo-generate
+        run: rustup default stable && cargo install cargo-binutils
       - name: generate by template
-        run: cargo generate --git https://github.com/Byte-OS/polyhal-template.git -n test-polyhal
+        run: USER=test cargo generate --git https://github.com/Byte-OS/polyhal-template.git -n test-polyhal
       - name: Install Qemu
         run: yes | pacman -Syy ${{ matrix.packages }}
       - name: test run

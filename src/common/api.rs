@@ -1,4 +1,4 @@
-use crate::addr::PhysPage;
+use crate::PhysPage;
 use crate::{TrapFrame, TrapType, PAGE_ALLOC};
 
 extern "Rust" {

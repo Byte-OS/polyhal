@@ -1,7 +1,4 @@
-use crate::{
-    pagetable::{PageTable, PTE},
-    VIRT_ADDR_START,
-};
+use crate::{PageTable, PTE, VIRT_ADDR_START};
 
 use super::PTEFlags;
 

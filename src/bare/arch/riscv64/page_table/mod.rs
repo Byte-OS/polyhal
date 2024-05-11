@@ -1,12 +1,12 @@
 pub mod sigtrx;
-mod sv39;
+pub mod sv39;
 
 use core::arch::riscv64::sfence_vma;
 
 pub use sv39::*;
 
-use crate::addr::VirtAddr;
-use crate::pagetable::TLB;
+use crate::VirtAddr;
+use crate::TLB;
 
 /// TLB operations
 impl TLB {

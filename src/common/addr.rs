@@ -5,7 +5,7 @@ use core::{
     ops::Add,
 };
 
-use crate::{pagetable::PageTable, VIRT_ADDR_START};
+use crate::{PageTable, VIRT_ADDR_START};
 
 #[repr(C)]
 #[derive(Copy, Clone, Ord, PartialOrd, Eq, PartialEq)]

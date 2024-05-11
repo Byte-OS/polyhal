@@ -1,4 +1,4 @@
-use crate::mem::Barrier;
+use crate::Barrier;
 
 impl Barrier {
     #[inline]

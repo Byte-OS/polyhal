@@ -12,6 +12,7 @@ repository = "https://github.com/Byte-OS/polyhal"
 [features]
 kcontext = []
 multicore = []
+libos = []
 
 default = ["multicore"]
 

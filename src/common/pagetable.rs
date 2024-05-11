@@ -1,7 +1,7 @@
 use core::ops::Deref;
 
-use crate::addr::{PhysAddr, PhysPage, VirtAddr, VirtPage};
-use crate::api::{frame_alloc, frame_dealloc};
+use crate::{PhysAddr, PhysPage, VirtAddr, VirtPage};
+use crate::{frame_alloc, frame_dealloc};
 
 bitflags::bitflags! {
     /// Mapping flags for page table.

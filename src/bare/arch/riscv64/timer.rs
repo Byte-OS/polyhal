@@ -1,4 +1,4 @@
-use crate::current_arch::boards::CLOCK_FREQ;
+use crate::CLOCK_FREQ;
 use crate::time::Time;
 use riscv::register::{sie, time};
 

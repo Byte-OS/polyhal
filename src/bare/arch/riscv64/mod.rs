@@ -20,6 +20,7 @@ use fdt::Fdt;
 pub use interrupt::{
     disable_irq, enable_external_irq, enable_irq, run_user_task, run_user_task_forever,
 };
+pub use boards::*;
 use sbi::*;
 
 pub use sbi::shutdown;
@@ -29,7 +30,8 @@ pub use kcontext::{context_switch, context_switch_pt, read_current_tp, KContext}
 
 use riscv::register::sstatus;
 
-use crate::{api::frame_alloc, multicore::MultiCore, once::LazyInit, CPU_NUM, DTB_BIN, MEM_AREA};
+use crate::{frame_alloc, MultiCore, utils::once::LazyInit};
+use super::{CPU_NUM, DTB_BIN, MEM_AREA};
 
 #[percpu::def_percpu]
 static CPU_ID: usize = 0;
@@ -37,7 +39,7 @@ static CPU_ID: usize = 0;
 static DTB_PTR: LazyInit<usize> = LazyInit::new();
 
 pub(crate) fn rust_main(hartid: usize, device_tree: usize) {
-    crate::clear_bss();
+    super::clear_bss();
     // Init allocator
     percpu::init(4);
     percpu::set_local_thread_pointer(hartid);
@@ -60,7 +62,7 @@ pub(crate) fn rust_main(hartid: usize, device_tree: usize) {
 
     DTB_PTR.init_by(device_tree);
 
-    unsafe { crate::api::_main_for_arch(hartid) };
+    unsafe { crate::_main_for_arch(hartid) };
     shutdown();
 }
 
@@ -78,7 +80,7 @@ pub(crate) extern "C" fn rust_secondary_main(hartid: usize) {
     }
 
     info!("secondary hart {} started", hartid);
-    unsafe { crate::api::_main_for_arch(hartid) };
+    unsafe { crate::_main_for_arch(hartid) };
     shutdown();
 }
 
@@ -132,10 +134,7 @@ impl MultiCore {
     /// Boot all application cores.
     pub fn boot_all() {
         use self::entry::secondary_start;
-        use crate::{
-            addr::VirtPage,
-            pagetable::{MappingFlags, MappingSize, PageTable},
-        };
+        use crate::{VirtPage, MappingFlags, MappingSize, PageTable};
 
         let page_table = PageTable::current();
 

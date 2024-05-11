@@ -1,6 +1,6 @@
 use core::arch::riscv64::sfence_vma_all;
 
-use crate::pagetable::{PageTable, PTE};
+use crate::{PageTable, PTE};
 use crate::VIRT_ADDR_START;
 
 use super::page_table::PTEFlags;

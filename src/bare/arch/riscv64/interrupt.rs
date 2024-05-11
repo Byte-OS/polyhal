@@ -141,7 +141,7 @@ fn kernel_callback(context: &mut TrapFrame) -> TrapType {
             panic!("未知中断: {:#x?}", context);
         }
     };
-    unsafe { crate::api::_interrupt_for_arch(context, trap_type) };
+    unsafe { crate::_interrupt_for_arch(context, trap_type) };
     trap_type
 }
 
@@ -169,7 +169,7 @@ pub unsafe extern "C" fn kernelvec() {
             LOAD_GENERAL_REGS
             sret
         ",
-        cx_size = const crate::consts::TRAPFRAME_SIZE,
+        cx_size = const crate::TRAPFRAME_SIZE,
         options(noreturn)
     )
 }

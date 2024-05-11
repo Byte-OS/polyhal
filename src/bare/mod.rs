@@ -162,6 +162,7 @@ use alloc::vec::Vec;
 
 use crate::STACK_SIZE;
 use crate::PhysPage;
+use crate::PageAlloc;
 
 pub const PAGE_SIZE: usize = crate::PageTable::PAGE_SIZE;
 pub const USER_VADDR_END: usize = crate::PageTable::USER_VADDR_END;
@@ -226,10 +227,6 @@ pub(crate) fn clear_bss() {
     }
 }
 
-pub trait PageAlloc: Sync {
-    fn alloc(&self) -> PhysPage;
-    fn dealloc(&self, ppn: PhysPage);
-}
 pub static PAGE_ALLOC: LazyInit<&dyn PageAlloc> = LazyInit::new();
 
 /// Init arch with page allocator, like log crate

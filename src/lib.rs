@@ -31,10 +31,22 @@ cfg_if! {
 
 use common::pagetable::*;
 use common::consts::*;
-use common::addr::*;
 use common::api::*;
 use common::multicore::MultiCore;
 use imp::*;
 use imp::current_arch::*;
 
+pub use common::addr::*;
+pub use common::page::PageAlloc;
 pub use imp::{get_cpu_num, get_mem_areas, get_fdt, init};
+pub use imp::time::*;
+pub use imp::debug::DebugConsole;
+pub use imp::current_arch::{run_user_task, run_user_task_forever, disable_irq, enable_irq, enable_external_irq, switch_to_kernel_page_table, kernel_page_table};
+pub use imp::current_arch::TrapFrame;
+pub use imp::current_arch::VIRT_ADDR_START;
+pub use imp::{TrapFrameArgs, TrapType, PAGE_ALLOC, PAGE_SIZE};
+#[cfg(feature = "kcontext")]
+pub use imp::{KContextArgs, current_arch::{KContext, read_current_tp, context_switch_pt, context_switch}};
+pub use polyhal_macro::{arch_entry, arch_interrupt};
+pub use imp::current_arch::shutdown;
+pub use common::pagetable::{PageTable, PageTableWrapper, MappingFlags, MappingSize};

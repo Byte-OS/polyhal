@@ -14,7 +14,7 @@ kcontext = []
 multicore = []
 libos = []
 
-default = ["multicore"]
+default = ["multicore", "kcontext"]
 
 [dependencies]
 log = "0.4"

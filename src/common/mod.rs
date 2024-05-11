@@ -4,6 +4,7 @@ pub mod api;
 pub mod consts;
 #[cfg(feature = "multicore")]
 pub mod multicore;
+pub mod page;
 
 /// bit macro will generate the number through a shift value.
 ///

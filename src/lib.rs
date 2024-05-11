@@ -36,3 +36,5 @@ use common::api::*;
 use common::multicore::MultiCore;
 use imp::*;
 use imp::current_arch::*;
+
+pub use imp::{get_cpu_num, get_mem_areas, get_fdt, init};

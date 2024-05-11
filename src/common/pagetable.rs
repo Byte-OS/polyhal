@@ -2,8 +2,15 @@ use core::ops::Deref;
 
 use crate::{PhysAddr, PhysPage, VirtAddr, VirtPage};
 use crate::{frame_alloc, frame_dealloc};
+use bitflags::bitflags;
 
-bitflags::bitflags! {
+macro_rules! bit {
+    ($x:expr) => {
+        1 << $x
+    };
+}
+
+bitflags! {
     /// Mapping flags for page table.
     #[derive(Debug, Clone, Copy, PartialEq, Eq, PartialOrd, Ord, Hash)]
     pub struct MappingFlags: u64 {

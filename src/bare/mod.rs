@@ -151,17 +151,15 @@ pub mod irq;
 pub mod mem;
 pub mod time;
 use core::mem::size_of;
-pub use current_arch::*;
-use alloc::vec::Vec;
 pub use mem::Barrier;
 
 use cfg_if::cfg_if;
-use fdt::Fdt;
 use crate::utils::once::LazyInit;
+use fdt::Fdt;
+use alloc::vec::Vec;
 
 /// Trap Frame
 
-pub use polyhal_macro::{arch_entry, arch_interrupt};
 use crate::STACK_SIZE;
 use crate::PhysPage;
 
@@ -232,7 +230,6 @@ pub trait PageAlloc: Sync {
     fn alloc(&self) -> PhysPage;
     fn dealloc(&self, ppn: PhysPage);
 }
-
 pub static PAGE_ALLOC: LazyInit<&dyn PageAlloc> = LazyInit::new();
 
 /// Init arch with page allocator, like log crate

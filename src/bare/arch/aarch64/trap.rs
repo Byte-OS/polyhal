@@ -88,7 +88,7 @@ fn handle_exception(tf: &mut TrapFrame, kind: TrapKind, source: TrapSource) -> T
             );
         }
     };
-    unsafe { crate::api::_interrupt_for_arch(tf, trap_type) };
+    unsafe { crate::_interrupt_for_arch(tf, trap_type) };
     trap_type
 }
 

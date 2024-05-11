@@ -1,4 +1,4 @@
-use crate::{pagetable::TLB, PTEFlags};
+use crate::{TLB, PTEFlags};
 use aarch64_cpu::{asm, asm::barrier, registers::*};
 
 // use page_table_entry::aarch64::{MemAttr, A64PTE};

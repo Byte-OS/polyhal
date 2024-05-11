@@ -28,10 +28,10 @@ pub use page_table::*;
 pub use psci::system_off as shutdown;
 pub use trap::{disable_irq, enable_external_irq, enable_irq, run_user_task};
 
-use crate::multicore::MultiCore;
-use crate::once::LazyInit;
-use crate::pagetable::PageTable;
-use crate::{clear_bss, CPU_NUM, DTB_BIN, MEM_AREA};
+use crate::MultiCore;
+use crate::utils::once::LazyInit;
+use crate::PageTable;
+use super::{clear_bss, CPU_NUM, MEM_AREA, DTB_BIN};
 
 static DTB_PTR: LazyInit<usize> = LazyInit::new();
 
@@ -56,13 +56,13 @@ pub fn rust_tmp_main(hart_id: usize, device_tree: usize) {
     aarch64_cpu::asm::barrier::isb(aarch64_cpu::asm::barrier::SY);
 
     // Enter to kernel entry point(`main` function).
-    unsafe { crate::api::_main_for_arch(hart_id) };
+    unsafe { crate::_main_for_arch(hart_id) };
 
     shutdown();
 }
 
 pub fn kernel_page_table() -> PageTable {
-    PageTable(crate::addr::PhysAddr(TTBR0_EL1.get_baddr() as _))
+    PageTable(crate::PhysAddr(TTBR0_EL1.get_baddr() as _))
 }
 
 #[inline]

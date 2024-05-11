@@ -32,10 +32,12 @@ use x86_64::{
     },
 };
 
-use crate::{
-    current_arch::multiboot::use_multiboot, multicore::MultiCore, once::LazyInit, CPU_NUM,
+use crate::imp::{
+    current_arch::multiboot::use_multiboot, CPU_NUM,
     DTB_BIN, MEM_AREA,
 };
+use crate::MultiCore;
+use crate::utils::once::LazyInit;
 
 #[percpu::def_percpu]
 static CPU_ID: usize = 1;
@@ -93,7 +95,7 @@ fn rust_tmp_main(magic: usize, mboot_ptr: usize) {
 
     MBOOT_PTR.init_by(mboot_ptr);
 
-    unsafe { crate::api::_main_for_arch(0) };
+    unsafe { crate::_main_for_arch(0) };
 
     shutdown()
 }

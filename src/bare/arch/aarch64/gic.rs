@@ -2,7 +2,7 @@ use arm_gic::gic_v2::{GicCpuInterface, GicDistributor};
 use arm_gic::{translate_irq, InterruptType};
 use irq_safety::MutexIrqSafe;
 
-use crate::addr::PhysAddr;
+use crate::PhysAddr;
 
 /// The maximum number of IRQs.
 #[allow(dead_code)]

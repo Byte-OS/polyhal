@@ -1,5 +1,5 @@
-use crate::current_arch::rust_tmp_main;
-use crate::pagetable::PageTable;
+use crate::imp::current_arch::rust_tmp_main;
+use crate::PageTable;
 use crate::{BOOT_STACK, STACK_SIZE};
 use core::arch::global_asm;
 use core::{mem, slice};
@@ -7,7 +7,7 @@ use multiboot::information::{MemoryManagement, Multiboot, PAddr};
 use x86_64::registers::control::{Cr0Flags, Cr4Flags};
 use x86_64::registers::model_specific::EferFlags;
 
-use crate::VIRT_ADDR_START;
+use crate::imp::current_arch::VIRT_ADDR_START;
 
 /// Flags set in the 'flags' member of the multiboot header.
 ///
@@ -78,7 +78,7 @@ pub fn kernel_page_table() -> PageTable {
     extern "C" {
         fn _kernel_page_table();
     }
-    PageTable(crate::addr::PhysAddr(
+    PageTable(crate::PhysAddr(
         _kernel_page_table as usize - VIRT_ADDR_START,
     ))
 }

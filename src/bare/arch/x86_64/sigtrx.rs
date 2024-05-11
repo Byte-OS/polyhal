@@ -1,6 +1,6 @@
 use x86::bits64::paging::{PDEntry, PDFlags, PTEntry, PTFlags, PAGE_SIZE_ENTRIES, PD, PT};
 
-use crate::VIRT_ADDR_START;
+use crate::imp::current_arch::VIRT_ADDR_START;
 
 /// 汇编入口函数
 ///

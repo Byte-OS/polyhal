@@ -8,10 +8,11 @@ use x86_64::VirtAddr;
 
 use x86::{controlregs::cr2, irq::*};
 
-use crate::consts::TRAPFRAME_SIZE;
-use crate::current_arch::gdt::set_tss_kernel_sp;
-use crate::SYSCALL_VECTOR;
-use crate::{current_arch::gdt::GdtStruct, TrapFrame, TrapType};
+use crate::TRAPFRAME_SIZE;
+use crate::imp::current_arch::gdt::set_tss_kernel_sp;
+use crate::imp::current_arch::SYSCALL_VECTOR;
+use crate::imp::current_arch::gdt::GdtStruct;
+use crate::{imp::current_arch::TrapFrame, TrapType};
 
 use super::apic::vectors::APIC_TIMER_VECTOR;
 use super::context::FxsaveArea;
@@ -107,7 +108,7 @@ fn kernel_callback(context: &mut TrapFrame) {
             );
         }
     };
-    unsafe { crate::api::_interrupt_for_arch(context, trap_type) };
+    unsafe { crate::_interrupt_for_arch(context, trap_type) };
     unsafe { super::apic::local_apic().end_of_interrupt() };
 }
 
@@ -389,7 +390,7 @@ pub fn run_user_task(context: &mut TrapFrame) -> Option<()> {
 
     match context.vector {
         SYSCALL_VECTOR => {
-            unsafe { crate::api::_interrupt_for_arch(context, TrapType::UserEnvCall) };
+            unsafe { crate::_interrupt_for_arch(context, TrapType::UserEnvCall) };
             Some(())
         }
         _ => {

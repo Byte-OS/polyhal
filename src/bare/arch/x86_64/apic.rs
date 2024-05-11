@@ -7,7 +7,7 @@ use x2apic::lapic::{xapic_base, LocalApic, LocalApicBuilder};
 use x86_64::instructions::port::Port;
 
 use self::vectors::*;
-use crate::VIRT_ADDR_START;
+use crate::imp::current_arch::VIRT_ADDR_START;
 
 pub(super) mod vectors {
     pub const APIC_TIMER_VECTOR: u8 = 0xf0;

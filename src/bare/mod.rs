@@ -129,14 +129,13 @@
 cfg_if! {
     if #[cfg(target_arch = "x86_64")] {
         #[path = "arch/x86_64/mod.rs"]
-        mod current_arch;
+        pub mod current_arch;
     } else if #[cfg(any(target_arch = "riscv32", target_arch = "riscv64"))] {
         #[path = "arch/riscv64/mod.rs"]
         pub mod current_arch;
     } else if #[cfg(target_arch = "aarch64")] {
         #[path = "arch/aarch64/mod.rs"]
         pub mod current_arch;
-        pub use self::arch::timer_interrupt_vector;
     } else if #[cfg(target_arch = "loongarch64")] {
         #[path = "arch/loongarch64/mod.rs"]
         pub mod current_arch;
@@ -227,7 +226,7 @@ pub(crate) fn clear_bss() {
     }
 }
 
-pub static PAGE_ALLOC: LazyInit<&dyn PageAlloc> = LazyInit::new();
+pub(crate) static PAGE_ALLOC: LazyInit<&dyn PageAlloc> = LazyInit::new();
 
 /// Init arch with page allocator, like log crate
 /// Please initialize the allocator before calling this function.

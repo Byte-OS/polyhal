@@ -227,7 +227,7 @@ pub unsafe extern "C" fn trap_vector_base() {
                 LOAD_REGS
                 ertn
         ",
-        trapframe_size = const crate::consts::TRAPFRAME_SIZE,
+        trapframe_size = const crate::TRAPFRAME_SIZE,
         user_vec = sym user_vec,
         trap_handler = sym loongarch64_trap_handler,
         options(noreturn)
@@ -361,6 +361,6 @@ fn loongarch64_trap_handler(tf: &mut TrapFrame) -> TrapType {
         }
     };
     // info!("return to addr: {:#x}", tf.era);
-    unsafe { crate::api::_interrupt_for_arch(tf, trap_type) };
+    unsafe { crate::_interrupt_for_arch(tf, trap_type) };
     trap_type
 }

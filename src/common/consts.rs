@@ -1,6 +1,6 @@
 use core::mem::size_of;
 
-use crate::TrapFrame;
+use crate::imp::current_arch::TrapFrame;
 
 /// Boot Stack Size.
 /// TODO: reduce the boot stack size. Map stack in boot step.

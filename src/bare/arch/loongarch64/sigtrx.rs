@@ -1,5 +1,5 @@
 use crate::{
-    pagetable::{MappingFlags, PageTable, PTE},
+    {MappingFlags, PageTable, PTE},
     PAGE_SIZE, VIRT_ADDR_START,
 };
 
@@ -26,7 +26,7 @@ static mut TRX_STEP: [[PTE; PageTable::PTE_NUM_IN_PAGE]; 2] =
 pub fn init() {
     unsafe {
         TRX_STEP[0][0] = PTE::from_addr(
-            crate::addr::PhysAddr(_sigreturn as usize & !VIRT_ADDR_START),
+            crate::PhysAddr(_sigreturn as usize & !VIRT_ADDR_START),
             MappingFlags::URX.into(),
         );
         TRX_STEP[1][0] = PTE(TRX_STEP.as_ptr() as usize & !VIRT_ADDR_START);

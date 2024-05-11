@@ -3,7 +3,7 @@
 use arm_pl011::pl011::Pl011Uart;
 use irq_safety::MutexIrqSafe;
 
-use crate::{addr::PhysAddr, debug::DebugConsole};
+use crate::{PhysAddr, debug::DebugConsole};
 
 const UART_BASE: PhysAddr = PhysAddr(0x0900_0000);
 

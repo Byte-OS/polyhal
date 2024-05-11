@@ -3,11 +3,10 @@ use bitflags::bitflags;
 use x86::tlb;
 use x86_64::registers::control::Cr3;
 
-use crate::addr::{PhysAddr, PhysPage, VirtAddr, VirtPage};
-use crate::{
-    pagetable::{MappingFlags, PageTable, PTE, TLB},
-    VIRT_ADDR_START,
-};
+use crate::{PhysAddr, PhysPage, VirtAddr, VirtPage};
+use crate::imp::current_arch::VIRT_ADDR_START;
+use crate::{MappingFlags, PageTable, PTE, TLB};
+
 
 bitflags! {
     pub struct PTEFlags: u64 {

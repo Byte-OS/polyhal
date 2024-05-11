@@ -11,7 +11,8 @@ mod timer;
 mod trap;
 mod unaligned;
 
-use crate::{clear_bss, multicore::MultiCore, CPU_NUM, DTB_BIN, MEM_AREA};
+use crate::MultiCore;
+use super::{clear_bss, CPU_NUM, DTB_BIN, MEM_AREA};
 use alloc::vec::Vec;
 pub use consts::*;
 pub use context::TrapFrame;
@@ -33,7 +34,7 @@ pub fn rust_tmp_main(hart_id: usize) {
 
     CPU_NUM.init_by(2);
 
-    unsafe { crate::api::_main_for_arch(hart_id) };
+    unsafe { crate::_main_for_arch(hart_id) };
 
     shutdown();
 }

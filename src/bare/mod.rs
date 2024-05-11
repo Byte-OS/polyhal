@@ -162,9 +162,11 @@ use crate::utils::once::LazyInit;
 /// Trap Frame
 
 pub use polyhal_macro::{arch_entry, arch_interrupt};
+use crate::STACK_SIZE;
+use crate::PhysPage;
 
-pub const PAGE_SIZE: usize;
-pub const USER_VADDR_END: usize = PageTable::USER_VADDR_END;
+pub const PAGE_SIZE: usize = crate::PageTable::PAGE_SIZE;
+pub const USER_VADDR_END: usize = crate::PageTable::USER_VADDR_END;
 
 /// Kernel Context Arg Type.
 ///
@@ -210,7 +212,7 @@ pub enum TrapType {
 }
 
 #[link_section = ".bss.stack"]
-static mut BOOT_STACK: [u8; STACK_SIZE] = [0; STACK_SIZE];
+pub static mut BOOT_STACK: [u8; STACK_SIZE] = [0; STACK_SIZE];
 
 pub(crate) fn clear_bss() {
     extern "C" {
@@ -231,7 +233,7 @@ pub trait PageAlloc: Sync {
     fn dealloc(&self, ppn: PhysPage);
 }
 
-static PAGE_ALLOC: LazyInit<&dyn PageAlloc> = LazyInit::new();
+pub static PAGE_ALLOC: LazyInit<&dyn PageAlloc> = LazyInit::new();
 
 /// Init arch with page allocator, like log crate
 /// Please initialize the allocator before calling this function.

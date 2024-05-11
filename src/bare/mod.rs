@@ -149,9 +149,15 @@ pub mod instruction;
 pub mod irq;
 pub mod mem;
 pub mod time;
+pub mod pagetable;
+pub mod addr;
+pub mod api;
+pub mod consts;
+pub mod multicore;
+pub mod page;
+
 use core::mem::size_of;
 pub use mem::Barrier;
-
 use cfg_if::cfg_if;
 use crate::utils::once::LazyInit;
 use fdt::Fdt;

@@ -3,12 +3,7 @@ use core::ops::Deref;
 use crate::{PhysAddr, PhysPage, VirtAddr, VirtPage};
 use crate::{frame_alloc, frame_dealloc};
 use bitflags::bitflags;
-
-macro_rules! bit {
-    ($x:expr) => {
-        1 << $x
-    };
-}
+use crate::bit;
 
 bitflags! {
     /// Mapping flags for page table.

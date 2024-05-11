@@ -5,6 +5,7 @@ use crate::{PhysAddr, PhysPage, VirtAddr, VirtPage};
 use crate::kernel_page_table;
 use crate::MappingFlags;
 use crate::{PageTable, PTE, TLB};
+use crate::bit;
 
 use super::sigtrx::get_trx_mapping;
 

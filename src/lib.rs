@@ -158,6 +158,7 @@ use core::mem::size_of;
 use addr::PhysPage;
 use alloc::vec::Vec;
 
+use cfg_if::cfg_if;
 use consts::STACK_SIZE;
 use fdt::Fdt;
 use once::LazyInit;
@@ -168,12 +169,12 @@ pub use percpu;
 #[cfg_attr(target_arch = "aarch64", path = "aarch64/mod.rs")]
 #[cfg_attr(target_arch = "x86_64", path = "x86_64/mod.rs")]
 #[cfg_attr(target_arch = "loongarch64", path = "loongarch64/mod.rs")]
-mod currrent_arch;
+mod current_arch;
 
 /// Trap Frame
-pub use currrent_arch::TrapFrame;
+pub use current_arch::TrapFrame;
 
-pub use currrent_arch::*;
+pub use current_arch::*;
 
 pub use polyhal_macro::{arch_entry, arch_interrupt};
 
@@ -253,7 +254,7 @@ pub fn init(page_alloc: &'static dyn PageAlloc) {
     PAGE_ALLOC.init_by(page_alloc);
 
     // Init current architecture
-    currrent_arch::arch_init();
+    current_arch::arch_init();
 }
 
 /// Store the number of cpu, this will fill up by startup function.

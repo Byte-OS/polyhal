@@ -33,7 +33,7 @@ use x86_64::{
 };
 
 use crate::{
-    currrent_arch::multiboot::use_multiboot, multicore::MultiCore, once::LazyInit, CPU_NUM,
+    current_arch::multiboot::use_multiboot, multicore::MultiCore, once::LazyInit, CPU_NUM,
     DTB_BIN, MEM_AREA,
 };
 

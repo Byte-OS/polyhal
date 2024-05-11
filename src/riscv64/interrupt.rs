@@ -83,7 +83,7 @@ static USER_RSP: usize = 0;
 
 // 设置中断
 pub(crate) fn init_interrupt() {
-    crate::currrent_arch::page_table::sigtrx::init();
+    crate::current_arch::page_table::sigtrx::init();
     // 输出内核信息
 
     unsafe {

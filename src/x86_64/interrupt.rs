@@ -9,9 +9,9 @@ use x86_64::VirtAddr;
 use x86::{controlregs::cr2, irq::*};
 
 use crate::consts::TRAPFRAME_SIZE;
-use crate::currrent_arch::gdt::set_tss_kernel_sp;
+use crate::current_arch::gdt::set_tss_kernel_sp;
 use crate::SYSCALL_VECTOR;
-use crate::{currrent_arch::gdt::GdtStruct, TrapFrame, TrapType};
+use crate::{current_arch::gdt::GdtStruct, TrapFrame, TrapType};
 
 use super::apic::vectors::APIC_TIMER_VECTOR;
 use super::context::FxsaveArea;

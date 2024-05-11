@@ -1,4 +1,4 @@
-use crate::currrent_arch::rust_tmp_main;
+use crate::current_arch::rust_tmp_main;
 use crate::pagetable::PageTable;
 use crate::{BOOT_STACK, STACK_SIZE};
 use core::arch::global_asm;

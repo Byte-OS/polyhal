@@ -150,6 +150,7 @@ pub mod irq;
 pub mod mem;
 pub mod time;
 pub mod pagetable;
+pub mod once;
 pub mod addr;
 pub mod api;
 pub mod consts;
@@ -159,7 +160,7 @@ pub mod page;
 use core::mem::size_of;
 pub use mem::Barrier;
 use cfg_if::cfg_if;
-use crate::utils::once::LazyInit;
+use once::LazyInit;
 use fdt::Fdt;
 use alloc::vec::Vec;
 

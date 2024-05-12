@@ -37,7 +37,7 @@ use crate::imp::{
     DTB_BIN, MEM_AREA,
 };
 use crate::MultiCore;
-use crate::utils::once::LazyInit;
+use super::once::LazyInit;
 
 #[percpu::def_percpu]
 static CPU_ID: usize = 1;

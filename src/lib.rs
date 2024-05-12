@@ -1,4 +1,4 @@
-#![no_std]
+#![cfg_attr(not(feature = "libos"), no_std)]
 #![no_main]
 #![feature(naked_functions)]
 #![feature(asm_const)]
@@ -14,14 +14,24 @@ extern crate alloc;
 extern crate log;
 #[macro_use]
 extern crate cfg_if;
+#[macro_use]
+extern  crate lazy_static;
 
 #[macro_use]
 mod utils;
+
 
 cfg_if! {
     if #[cfg(feature = "libos")] {
         #[path = "libos/mod.rs"]
         mod imp;
+
+        pub use polyhal_macro::{arch_entry, arch_interrupt};
+        pub use imp::context::*;
+        pub use imp::debug::DebugConsole;
+        pub use imp::page::PageAlloc;
+        pub use imp::addr::*;
+        pub use imp::init;
     } else {
         #[path = "bare/mod.rs"]
         mod imp;

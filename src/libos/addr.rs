@@ -1,5 +1,4 @@
 use bitflags::bitflags;
-use numeric_enum_macro::numeric_enum;
 
 /// Physical address.
 pub type PhysAddr = usize;

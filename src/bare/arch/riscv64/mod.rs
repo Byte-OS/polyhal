@@ -15,11 +15,9 @@ use core::slice;
 use alloc::vec::Vec;
 pub use consts::*;
 pub use context::TrapFrame;
-pub use entry::{kernel_page_table, switch_to_kernel_page_table};
+pub use entry::kernel_page_table;
 use fdt::Fdt;
-pub use interrupt::{
-    disable_irq, enable_external_irq, enable_irq, run_user_task, run_user_task_forever,
-};
+pub use interrupt::run_user_task;
 pub use boards::*;
 use sbi::*;
 
@@ -30,13 +28,13 @@ pub use kcontext::{context_switch, context_switch_pt, read_current_tp, KContext}
 
 use riscv::register::sstatus;
 
-use crate::{frame_alloc, MultiCore, utils::once::LazyInit};
+use crate::{frame_alloc, MultiCore, utils::init_once::InitOnce};
 use super::{CPU_NUM, DTB_BIN, MEM_AREA};
 
 #[percpu::def_percpu]
 static CPU_ID: usize = 0;
 
-static DTB_PTR: LazyInit<usize> = LazyInit::new();
+static DTB_PTR: InitOnce<usize> = InitOnce::new();
 
 pub(crate) fn rust_main(hartid: usize, device_tree: usize) {
     super::clear_bss();
@@ -60,7 +58,7 @@ pub(crate) fn rust_main(hartid: usize, device_tree: usize) {
         Err(_) => 1,
     });
 
-    DTB_PTR.init_by(device_tree);
+    DTB_PTR.init_once_by(device_tree);
 
     unsafe { crate::_main_for_arch(hartid) };
     shutdown();

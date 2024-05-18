@@ -20,7 +20,6 @@ extern  crate lazy_static;
 #[macro_use]
 mod utils;
 
-
 cfg_if! {
     if #[cfg(feature = "libos")] {
         #[path = "libos/mod.rs"]
@@ -36,7 +35,7 @@ cfg_if! {
         pub use imp::vm::{Page, PageTable, GenericPageTable};
         pub use imp::addr::MMUFlags;
         pub use imp::vm::PageSize;
-        pub use imp::mem::{pmem_read, pmem_copy, pmem_write};
+        pub use imp::mem::{pmem_read, pmem_copy, pmem_write, pmem_zero};
     } else {
         #[path = "bare/mod.rs"]
         mod imp;

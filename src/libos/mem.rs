@@ -25,10 +25,6 @@ lazy_static! {
     pub(super) static ref MOCK_PHYS_MEM: MockMemory = MockMemory::new(PMEM_SIZE);
 }
 
-pub fn phys_to_virt(paddr: PhysAddr) -> VirtAddr {
-    MOCK_PHYS_MEM.phys_to_virt(paddr)
-}
-
 pub fn free_pmem_regions() -> Vec<Range<PhysAddr>> {
     vec![PAGE_SIZE..PMEM_SIZE]
 }
@@ -47,7 +43,7 @@ pub fn pmem_write(paddr: PhysAddr, buf: &[u8]) {
     unsafe { dst.copy_from_nonoverlapping(buf.as_ptr(), buf.len()) };
 }
 
-fn pmem_zero(paddr: PhysAddr, len: usize) {
+pub fn pmem_zero(paddr: PhysAddr, len: usize) {
     trace!("pmem_zero: addr={:#x}, len={:#x}", paddr, len);
     assert!(paddr + len <= PMEM_SIZE);
     unsafe { core::ptr::write_bytes(MOCK_PHYS_MEM.as_mut_ptr::<u8>(paddr), 0, len) };

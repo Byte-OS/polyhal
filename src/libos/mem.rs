@@ -40,7 +40,7 @@ pub fn pmem_read(paddr: PhysAddr, buf: &mut [u8]) {
     unsafe { buf.as_mut_ptr().copy_from_nonoverlapping(src, buf.len()) };
 }
 
-fn pmem_write(paddr: PhysAddr, buf: &[u8]) {
+pub fn pmem_write(paddr: PhysAddr, buf: &[u8]) {
     trace!("pmem write: paddr={:#x}, len={:#x}", paddr, buf.len());
     assert!(paddr + buf.len() <= PMEM_SIZE);
     let dst = MOCK_PHYS_MEM.as_mut_ptr::<u8>(paddr);

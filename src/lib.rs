@@ -32,6 +32,11 @@ cfg_if! {
         pub use imp::page::PageAlloc;
         pub use imp::addr::*;
         pub use imp::init;
+        pub use imp::mem::free_pmem_regions;
+        pub use imp::vm::{Page, PageTable, GenericPageTable};
+        pub use imp::addr::MMUFlags;
+        pub use imp::vm::PageSize;
+        pub use imp::mem::{pmem_read, pmem_copy, pmem_write};
     } else {
         #[path = "bare/mod.rs"]
         mod imp;

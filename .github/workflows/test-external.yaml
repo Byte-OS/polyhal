@@ -7,7 +7,7 @@ on:
     
 jobs:
   test-external:
-    uses: Azure-stars/rcore-tutorial-v3-with-hal-component/.github/workflows/test-run.yml@ch7
+    uses: sysones/rcore-tutorial-v3-with-hal-component/.github/workflows/test-run.yml@ch7
     with:
       # The directory to Top test, which need to be empty or not exist in this repository
       TopTestDirectory: RcoreTest

@@ -18,7 +18,7 @@ jobs:
     - name: add target
       run: rustup target add riscv64gc-unknown-none-elf
     - name: generate doc
-      run: cargo doc --no-deps --all-features
+      run: cargo doc --no-deps --all-features --target riscv64gc-unknown-none-elf
     - name: Deploy to Github Pages
       uses: JamesIves/github-pages-deploy-action@v4
       with:

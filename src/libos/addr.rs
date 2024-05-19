@@ -1,4 +1,5 @@
 use bitflags::bitflags;
+use crate::bit;
 
 /// Physical address.
 pub type PhysAddr = usize;
@@ -42,16 +43,13 @@ pub type HalResult<T = ()> = core::result::Result<T, HalError>;
 
 bitflags! {
     /// Generic memory flags.
-    pub struct MMUFlags: usize {
+    #[derive(Debug, Clone, Copy, PartialEq, Eq, PartialOrd, Ord, Hash)]
+    pub struct MMUFlags: u64 {
         #[allow(clippy::identity_op)]
-        const CACHE_1   = 1 << 0;
-        const CACHE_2   = 1 << 1;
-        const READ      = 1 << 2;
-        const WRITE     = 1 << 3;
-        const EXECUTE   = 1 << 4;
-        const USER      = 1 << 5;
-        const HUGE_PAGE = 1 << 6;
-        const DEVICE    = 1 << 7;
-        const RXW = Self::READ.bits | Self::WRITE.bits | Self::EXECUTE.bits;
+        const READ      = bit!(2);
+        const WRITE     = bit!(3);
+        const EXECUTE   = bit!(4);
+        const USER      = bit!(5);
+        const HUGE_PAGE = bit!(6);
     }
 }

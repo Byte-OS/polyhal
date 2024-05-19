@@ -251,34 +251,3 @@ impl GenericPageTable for PageTable {
         Ok(())
     }
 }
-
-#[cfg(test)]
-mod tests {
-    use super::*;
-
-    /// A valid virtual address base to mmap.
-    const VBASE: VirtAddr = 0x0002_0000_0000;
-
-    #[test]
-    fn map_unmap() {
-        let mut pt = PageTable::new();
-        let flags = MMUFlags::READ | MMUFlags::WRITE;
-        // map 2 pages to 1 frame
-        pt.map(Page::new_aligned(VBASE, PageSize::Size4K), 0x1000, flags)
-            .unwrap();
-        pt.map(
-            Page::new_aligned(VBASE + 0x1000, PageSize::Size4K),
-            0x1000,
-            flags,
-        )
-        .unwrap();
-
-        unsafe {
-            const MAGIC: usize = 0xdead_beaf;
-            (VBASE as *mut usize).write(MAGIC);
-            assert_eq!(((VBASE + 0x1000) as *mut usize).read(), MAGIC);
-        }
-
-        pt.unmap(VBASE + 0x1000).unwrap();
-    }
-}

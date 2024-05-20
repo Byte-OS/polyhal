@@ -17,7 +17,7 @@ libos = [
     "tempfile"
 ]
 
-default = ["multicore", "libos"]
+default = ["multicore"]
 
 [dependencies]
 log = "0.4"

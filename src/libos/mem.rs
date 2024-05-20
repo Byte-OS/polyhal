@@ -2,27 +2,20 @@
 
 use alloc::vec::Vec;
 use core::ops::Range;
-
-use bitmap_allocator::BitAlloc;
-use lock::Mutex;
+use crate::utils::init_once::InitOnce;
 
 use super::mock_mem::MockMemory;
 use crate::{PhysAddr, VirtAddr, PAGE_SIZE};
-
-type FrameAlloc = bitmap_allocator::BitAlloc1M;
 
 /// Map physical memory from here.
 pub(super) const PMEM_MAP_VADDR: VirtAddr = 0x8_0000_0000;
 /// Physical memory size = 1GiB
 pub(super) const PMEM_SIZE: usize = 0x4000_0000;
 
-lazy_static! {
-    pub(super) static ref FRAME_ALLOCATOR: Mutex<FrameAlloc> = {
-        let mut allocator = FrameAlloc::DEFAULT;
-        allocator.insert(1..PMEM_SIZE / PAGE_SIZE);
-        Mutex::new(allocator)
-    };
-    pub(super) static ref MOCK_PHYS_MEM: MockMemory = MockMemory::new(PMEM_SIZE);
+pub(super) static MOCK_PHYS_MEM: InitOnce<MockMemory> = InitOnce::new();
+
+pub fn init_mock_mem() {
+    MOCK_PHYS_MEM.init_once_by(MockMemory::new(PMEM_SIZE));
 }
 
 pub fn free_pmem_regions() -> Vec<Range<PhysAddr>> {

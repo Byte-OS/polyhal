@@ -15,9 +15,6 @@ extern crate log;
 #[macro_use]
 extern crate cfg_if;
 #[macro_use]
-extern  crate lazy_static;
-
-#[macro_use]
 mod utils;
 
 cfg_if! {
@@ -49,8 +46,8 @@ cfg_if! {
         use imp::time::*;
 
         pub use imp::{
-            addr::*, 
-            page::PageAlloc, 
+            addr::*,
+            page::PageAlloc,
             pagetable::{PageTable, PageTableWrapper, MappingFlags, MappingSize}
         };
         pub use imp::{
@@ -64,7 +61,7 @@ cfg_if! {
             },
         };
         pub use polyhal_macro::{arch_entry, arch_interrupt};
-        
+
         #[cfg(feature = "kcontext")]
         pub use imp::{KContextArgs, current_arch::{KContext, read_current_tp, context_switch_pt, context_switch}};
     }

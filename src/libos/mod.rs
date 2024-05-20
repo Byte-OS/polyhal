@@ -20,4 +20,6 @@ pub(crate) static PAGE_ALLOC: InitOnce<&dyn PageAlloc> = InitOnce::new();
 /// Please initialize the allocator before calling this function.
 pub fn init(page_alloc: &'static dyn PageAlloc) {
     PAGE_ALLOC.init_once_by(page_alloc);
+
+    self::mem::init_mock_mem();
 }

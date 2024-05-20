@@ -17,7 +17,7 @@ libos = [
     "tempfile"
 ]
 
-default = ["multicore"]
+default = ["multicore", "libos"]
 
 [dependencies]
 log = "0.4"
@@ -28,9 +28,6 @@ bitflags = "2.0.1"
 cfg-if = "1.0.0"
 percpu = { git = "https://github.com/Byte-OS/percpu.git" }
 polyhal-macro = { path = "polyhal-macro" }
-lazy_static = { version = "1.4.0", features = ["spin_no_std"] }
-bitmap-allocator = { git = "https://github.com/rcore-os/bitmap-allocator.git", rev = "88e871a5"}
-lock = { git = "https://github.com/DeathWish5/kernel-sync", rev = "8486b8" }
 spin = { version = "0.9.8", features = ["mutex"] }
 
 [target.'cfg(target_arch = "riscv64")'.dependencies]

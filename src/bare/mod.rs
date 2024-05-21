@@ -144,30 +144,26 @@ cfg_if! {
     }
 }
 
-pub mod debug;
 pub mod instruction;
 pub mod irq;
 pub mod mem;
 pub mod time;
 pub mod pagetable;
-pub mod once;
 pub mod addr;
 pub mod api;
 pub mod consts;
 pub mod multicore;
-pub mod page;
 
 use core::mem::size_of;
 pub use mem::Barrier;
 use cfg_if::cfg_if;
-use once::LazyInit;
+use crate::utils::once::LazyInit;
 use fdt::Fdt;
 use alloc::vec::Vec;
 
 /// Trap Frame
 
 use crate::STACK_SIZE;
-use crate::PhysPage;
 use crate::PageAlloc;
 
 pub const PAGE_SIZE: usize = crate::PageTable::PAGE_SIZE;

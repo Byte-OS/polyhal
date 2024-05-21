@@ -29,11 +29,11 @@ pub use psci::system_off as shutdown;
 pub use trap::run_user_task;
 
 use crate::MultiCore;
-use crate::utils::init_once::InitOnce;
 use crate::PageTable;
+use crate::utils::once::LazyInit;
 use super::{clear_bss, CPU_NUM, MEM_AREA, DTB_BIN};
 
-static DTB_PTR: InitOnce<usize> = InitOnce::new();
+static DTB_PTR: LazyInit<usize> = LazyInit::new();
 
 pub fn rust_tmp_main(hart_id: usize, device_tree: usize) {
     clear_bss();
@@ -43,7 +43,7 @@ pub fn rust_tmp_main(hart_id: usize, device_tree: usize) {
 
     timer::init();
 
-    DTB_PTR.init_once_by(device_tree | VIRT_ADDR_START);
+    DTB_PTR.init_by(device_tree | VIRT_ADDR_START);
 
     if let Ok(fdt) = unsafe { Fdt::from_ptr(*DTB_PTR as *const u8) } {
         CPU_NUM.init_by(fdt.cpus().count());

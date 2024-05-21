@@ -22,7 +22,6 @@ pub use interrupt::*;
 pub use kcontext::{context_switch, context_switch_pt, read_current_tp, KContext};
 pub use multiboot::kernel_page_table;
 use raw_cpuid::CpuId;
-pub use uart::*;
 
 use x86_64::{
     instructions::port::PortWriteOnly,
@@ -37,7 +36,7 @@ use crate::imp::{
     DTB_BIN, MEM_AREA,
 };
 use crate::MultiCore;
-use super::once::LazyInit;
+use crate::utils::once::LazyInit;
 
 #[percpu::def_percpu]
 static CPU_ID: usize = 1;

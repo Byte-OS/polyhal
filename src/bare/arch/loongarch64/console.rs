@@ -1,6 +1,6 @@
 use spin::Mutex;
 
-use crate::{debug::DebugConsole, VIRT_ADDR_START};
+use crate::{DebugConsole, VIRT_ADDR_START};
 
 #[cfg(not(board = "2k1000"))]
 const UART_ADDR: usize = 0x01FE001E0 | VIRT_ADDR_START;

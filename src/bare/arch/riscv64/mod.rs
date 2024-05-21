@@ -28,13 +28,13 @@ pub use kcontext::{context_switch, context_switch_pt, read_current_tp, KContext}
 
 use riscv::register::sstatus;
 
-use crate::{frame_alloc, MultiCore, utils::init_once::InitOnce};
+use crate::{frame_alloc, MultiCore, utils::once::LazyInit};
 use super::{CPU_NUM, DTB_BIN, MEM_AREA};
 
 #[percpu::def_percpu]
 static CPU_ID: usize = 0;
 
-static DTB_PTR: InitOnce<usize> = InitOnce::new();
+static DTB_PTR: LazyInit<usize> = LazyInit::new();
 
 pub(crate) fn rust_main(hartid: usize, device_tree: usize) {
     super::clear_bss();
@@ -58,7 +58,7 @@ pub(crate) fn rust_main(hartid: usize, device_tree: usize) {
         Err(_) => 1,
     });
 
-    DTB_PTR.init_once_by(device_tree);
+    DTB_PTR.init_by(device_tree);
 
     unsafe { crate::_main_for_arch(hartid) };
     shutdown();

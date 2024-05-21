@@ -26,41 +26,33 @@ impl MockMemory {
         unistd::ftruncate(fd, size as _).expect("failed to set size of shared memory!");
 
         let mem = Self { size, fd };
-        mem.mmap(PMEM_MAP_VADDR, size, 0, MMUFlags::READ | MMUFlags::WRITE);
+        mem.mmap(PMEM_MAP_VADDR, size, PhysAddr::new(0), MMUFlags::READ | MMUFlags::WRITE);
         mem
     }
 
     /// Mmap `paddr` to `vaddr` in frame file.
     pub fn mmap(&self, vaddr: VirtAddr, len: usize, paddr: PhysAddr, prot: MMUFlags) {
-        assert!(paddr < self.size);
-        assert!(paddr + len <= self.size);
-
-        // workaround on macOS to write text section.
-        #[cfg(target_os = "macos")]
-        let prot = if prot.contains(MMUFlags::EXECUTE) {
-            prot | MMUFlags::WRITE
-        } else {
-            prot
-        };
+        assert!(paddr.addr() < self.size);
+        assert!(paddr.addr() + len <= self.size);
 
         let prot_noexec = ProtFlags::from(prot) - ProtFlags::PROT_EXEC;
         let flags = MapFlags::MAP_SHARED | MapFlags::MAP_FIXED;
         let fd = self.fd;
-        let offset = paddr as _;
+        let offset = paddr.addr() as _;
         trace!(
             "mmap file: fd={}, offset={:#x}, len={:#x}, vaddr={:#x}, prot={:?}",
             fd,
             offset,
             len,
-            vaddr,
+            vaddr.addr(),
             prot,
         );
 
-        unsafe { mman::mmap(vaddr as _, len, prot_noexec, flags, fd, offset) }.unwrap_or_else(
+        unsafe { mman::mmap(vaddr.addr() as _, len, prot_noexec, flags, fd, offset) }.unwrap_or_else(
             |err| {
                 panic!(
                     "failed to mmap: fd={}, offset={:#x}, len={:#x}, vaddr={:#x}, prot={:?}: {:?}",
-                    fd, offset, len, vaddr, prot, err
+                    fd, offset, len, vaddr.addr(), prot, err
                 )
             },
         );
@@ -70,22 +62,22 @@ impl MockMemory {
     }
 
     pub fn munmap(&self, vaddr: VirtAddr, len: usize) {
-        unsafe { mman::munmap(vaddr as _, len) }
-            .unwrap_or_else(|err| panic!("failed to munmap: vaddr={:#x}: {:?}", vaddr, err));
+        unsafe { mman::munmap(vaddr.addr() as _, len) }
+            .unwrap_or_else(|err| panic!("failed to munmap: vaddr={:#x}: {:?}", vaddr.addr(), err));
     }
 
     pub fn mprotect(&self, vaddr: VirtAddr, len: usize, prot: MMUFlags) {
-        unsafe { mman::mprotect(vaddr as _, len, prot.into()) }.unwrap_or_else(|err| {
+        unsafe { mman::mprotect(vaddr.addr() as _, len, prot.into()) }.unwrap_or_else(|err| {
             panic!(
                 "failed to mprotect: vaddr={:#x}, prot={:?}: {:?}",
-                vaddr, prot, err
+                vaddr.addr(), prot, err
             )
         });
     }
 
-    pub fn phys_to_virt(&self, paddr: PhysAddr) -> VirtAddr {
-        assert!(paddr < self.size);
-        PMEM_MAP_VADDR + paddr
+    pub fn phys_to_virt(&self, paddr: PhysAddr) -> usize {
+        assert!(paddr.addr() < self.size);
+        PMEM_MAP_VADDR.addr() + paddr.addr()
     }
 
     pub fn as_ptr<T>(&self, paddr: PhysAddr) -> *const T {

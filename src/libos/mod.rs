@@ -1,4 +1,3 @@
-pub mod api;
 pub mod context;
 pub mod debug;
 pub mod mem;
@@ -8,9 +7,13 @@ pub mod addr;
 use crate::utils::once::LazyInit;
 use crate::PageAlloc;
 
+extern "Rust" {
+    pub(crate) fn _main_for_arch(hartid: usize);
+}
+
 #[no_mangle]
 fn main() {
-    unsafe { api::_main_for_arch(0) };
+    unsafe { _main_for_arch(0) };
 }
 
 pub(crate) static PAGE_ALLOC: LazyInit<&dyn PageAlloc> = LazyInit::new();

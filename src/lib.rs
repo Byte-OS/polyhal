@@ -32,7 +32,7 @@ cfg_if! {
         pub use imp::addr::*;
         pub use imp::init;
         pub use imp::mem::get_mem_areas;
-        pub use imp::vm::{Page, PageTable, GenericPageTable};
+        pub use imp::vm::{Page, PageTable};
         pub use imp::addr::MMUFlags;
         pub use imp::mem::{pmem_read, pmem_copy, pmem_write, pmem_zero};
     } else {
@@ -43,6 +43,7 @@ cfg_if! {
         use imp::consts::*;
         use imp::multicore::MultiCore;
         use imp::*;
+        use imp::current_arch::*;
 
         pub use imp::{
             pagetable::{PageTable, PageTableWrapper, MappingFlags, MappingSize}

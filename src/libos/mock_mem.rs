@@ -5,7 +5,7 @@ use nix::sys::mman::{self, MapFlags, ProtFlags};
 use nix::{sys::stat::Mode, unistd};
 
 use super::mem::PMEM_MAP_VADDR;
-use crate::{MMUFlags, PhysAddr, VirtAddr};
+use crate::{MMUFlags, addr::{PhysAddr, VirtAddr}};
 
 pub struct MockMemory {
     size: usize,

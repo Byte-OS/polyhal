@@ -18,9 +18,7 @@ extern crate cfg_if;
 mod utils;
 
 mod common;
-pub use common::addr::*;
-pub use common::debug::DebugConsole;
-pub use common::page::PageAlloc;
+pub use common::{page::PageAlloc, *};
 
 cfg_if! {
     if #[cfg(feature = "libos")] {
@@ -42,13 +40,11 @@ cfg_if! {
         use imp::pagetable::*;
         use imp::consts::*;
         use imp::multicore::MultiCore;
-        use imp::*;
         use imp::current_arch::*;
 
+
         pub use imp::{
-            pagetable::{PageTable, PageTableWrapper, MappingFlags, MappingSize}
-        };
-        pub use imp::{
+            *,
             get_mem_areas, init,
             TrapFrameArgs, TrapType, PAGE_SIZE,
             time::*,

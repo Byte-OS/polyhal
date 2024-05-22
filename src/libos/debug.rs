@@ -1,4 +1,4 @@
-use crate::DebugConsole;
+use crate::debug::DebugConsole;
 
 impl DebugConsole {
     pub fn putchar(c: u8) {

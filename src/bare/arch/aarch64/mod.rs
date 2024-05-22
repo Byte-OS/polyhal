@@ -62,7 +62,7 @@ pub fn rust_tmp_main(hart_id: usize, device_tree: usize) {
 }
 
 pub fn kernel_page_table() -> PageTable {
-    PageTable(crate::PhysAddr(TTBR0_EL1.get_baddr() as _))
+    PageTable(crate::addr::PhysAddr(TTBR0_EL1.get_baddr() as _))
 }
 
 #[inline]

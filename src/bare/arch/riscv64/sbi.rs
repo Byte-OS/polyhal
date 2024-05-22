@@ -6,7 +6,7 @@ use core::arch::asm;
 
 use sbi_rt::{NoReason, Shutdown};
 
-use crate::DebugConsole;
+use crate::debug::DebugConsole;
 
 const SBI_SET_TIMER: usize = 0;
 const SBI_CONSOLE_PUT_CHAR: usize = 1;

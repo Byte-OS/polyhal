@@ -3,7 +3,7 @@
 use irq_safety::MutexIrqSafe;
 use x86_64::instructions::port::{Port, PortReadOnly, PortWriteOnly};
 
-use crate::DebugConsole;
+use crate::debug::DebugConsole;
 
 const UART_CLOCK_FACTOR: usize = 16;
 const OSC_FREQ: usize = 1_843_200;

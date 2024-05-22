@@ -1,6 +1,6 @@
 use core::ops::Deref;
 
-use crate::{PhysAddr, PhysPage, VirtAddr, VirtPage};
+use crate::common::addr::{VirtAddr, VirtPage, PhysAddr, PhysPage};
 use crate::{frame_alloc, frame_dealloc};
 use bitflags::bitflags;
 use crate::bit;

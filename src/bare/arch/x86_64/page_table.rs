@@ -3,7 +3,7 @@ use bitflags::bitflags;
 use x86::tlb;
 use x86_64::registers::control::Cr3;
 
-use crate::{PhysAddr, PhysPage, VirtAddr, VirtPage};
+use crate::addr::{PhysAddr, PhysPage, VirtAddr, VirtPage};
 use crate::imp::current_arch::VIRT_ADDR_START;
 use crate::{MappingFlags, PageTable, PTE, TLB};
 use crate::bit;

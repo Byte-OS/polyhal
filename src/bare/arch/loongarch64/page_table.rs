@@ -1,6 +1,6 @@
 use loongArch64::register::pgdl;
 
-use crate::{PhysAddr, PhysPage, VirtAddr, VirtPage, MappingFlags, PageTable, PTE, TLB};
+use crate::{addr::{PhysAddr, PhysPage, VirtAddr, VirtPage}, MappingFlags, PageTable, PTE, TLB};
 
 use super::sigtrx::get_trx_mapping;
 use crate::bit;

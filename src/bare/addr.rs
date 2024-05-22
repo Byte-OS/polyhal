@@ -3,7 +3,7 @@ use core::{
     mem::size_of,
 };
 
-use crate::{PhysAddr, PhysPage, VirtAddr};
+use crate::common::addr::{PhysAddr, PhysPage, VirtAddr};
 
 use crate::{PageTable, VIRT_ADDR_START};
 

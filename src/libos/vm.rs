@@ -1,5 +1,5 @@
 use super::mem::{MOCK_PHYS_MEM, PMEM_SIZE};
-use crate::{is_aligned, MMUFlags, PhysAddr, VirtAddr, PAGE_SIZE};
+use crate::{is_aligned, MMUFlags, addr::{PhysAddr, VirtAddr}, PAGE_SIZE};
 
 #[derive(Debug, Copy, Clone)]
 pub struct Page {

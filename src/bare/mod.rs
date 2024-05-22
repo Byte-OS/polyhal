@@ -149,7 +149,7 @@ pub mod irq;
 pub mod mem;
 pub mod time;
 pub mod pagetable;
-pub mod addr;
+mod addr;
 pub mod api;
 pub mod consts;
 pub mod multicore;
@@ -164,7 +164,7 @@ use alloc::vec::Vec;
 /// Trap Frame
 
 use crate::STACK_SIZE;
-use crate::PageAlloc;
+use crate::common::page::PageAlloc;
 
 pub const PAGE_SIZE: usize = crate::PageTable::PAGE_SIZE;
 pub const USER_VADDR_END: usize = crate::PageTable::USER_VADDR_END;

@@ -1,5 +1,6 @@
 use bitflags::bitflags;
-use crate::{bit, PhysAddr, VirtAddr};
+use crate::addr::{PhysAddr, VirtAddr};
+use crate::bit;
 use crate::common::addr::PhysPage;
 
 pub const PAGE_SIZE: usize = 0x1000;

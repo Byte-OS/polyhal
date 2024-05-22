@@ -5,7 +5,7 @@ use core::ops::Range;
 use crate::utils::once::LazyInit;
 
 use super::mock_mem::MockMemory;
-use crate::{PhysAddr, VirtAddr, PAGE_SIZE};
+use crate::{addr::{PhysAddr, VirtAddr}, PAGE_SIZE};
 
 /// Map physical memory from here.
 pub(super) const PMEM_MAP_VADDR: VirtAddr = VirtAddr::new(0x8_0000_0000);

@@ -1,9 +1,9 @@
 use core::arch::riscv64::sfence_vma_all;
 
-use crate::{PageTable, PTE};
-use crate::VIRT_ADDR_START;
-
 use super::page_table::PTEFlags;
+use crate::addr::PhysAddr;
+use crate::VIRT_ADDR_START;
+use crate::{PageTable, PTE};
 
 #[link_section = ".data.prepage.entry"]
 pub(crate) static mut PAGE_TABLE: [PTE; PageTable::PTE_NUM_IN_PAGE] = {
@@ -144,7 +144,7 @@ pub fn switch_to_kernel_page_table() {
 }
 
 pub fn kernel_page_table() -> PageTable {
-    PageTable(crate::PhysAddr(unsafe {
+    PageTable(PhysAddr(unsafe {
         PAGE_TABLE.as_ptr() as usize & !VIRT_ADDR_START
     }))
 }

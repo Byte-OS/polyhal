@@ -1,3 +1,3 @@
-pub(crate) mod addr;
-pub(crate) mod page;
-pub(crate) mod debug;
+pub mod addr;
+pub mod page;
+pub mod debug;

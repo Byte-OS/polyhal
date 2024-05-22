@@ -1,4 +1,4 @@
-use crate::PhysPage;
+use crate::common::addr::PhysPage;
 
 pub trait PageAlloc: Sync {
     fn alloc(&self) -> PhysPage;

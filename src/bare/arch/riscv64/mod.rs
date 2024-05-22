@@ -132,7 +132,7 @@ impl MultiCore {
     /// Boot all application cores.
     pub fn boot_all() {
         use self::entry::secondary_start;
-        use crate::{VirtPage, MappingFlags, MappingSize, PageTable};
+        use crate::{addr::VirtPage, MappingFlags, MappingSize, PageTable};
 
         let page_table = PageTable::current();
 

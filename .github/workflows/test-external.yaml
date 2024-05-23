@@ -8,10 +8,10 @@ on:
 jobs:
   test-output:
     steps:
-      -name: output
-        run: |
-          echo ${{ github.repository_owner }}
-          echo ${{ github.repository }}
+    - name: output
+      run: |
+        echo ${{ github.repository_owner }}
+        echo ${{ github.repository }}
 
   test-external:
     uses: sysones/rcore-tutorial-v3-with-hal-component/.github/workflows/test-run.yml@ch7
@@ -21,3 +21,4 @@ jobs:
       CallerPackage: polyhal
       CallerRepository: ${{ github.repository }}
       CallerCommit: ${{ github.sha }}
+  

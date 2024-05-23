@@ -14,7 +14,7 @@ jobs:
         echo ${{ github.repository_owner }}
         echo ${{ github.repository }}
 
-  test-external-rcore-ch7:
+  test-external-rcore-c:
     if: github.repository_owner == 'sysones'
     - uses: sysones/rcore-tutorial-v3-with-hal-component/.github/workflows/test-run.yml@ch7
       with:
@@ -23,7 +23,8 @@ jobs:
         CallerPackage: polyhal
         CallerRepository: ${{ github.repository }}
         CallerCommit: ${{ github.sha }}
-  test-external-rcore-ch6:
+
+  test-external-rcore-d:
     if: github.repository_owner == 'sysones'
     - uses: sysones/rcore-tutorial-v3-with-hal-component/.github/workflows/test-run.yml@ch7
       with:

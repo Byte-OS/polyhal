@@ -14,9 +14,8 @@ jobs:
         echo ${{ github.repository_owner }}
         echo ${{ github.repository }}
 
-  test-external:
+  test-external-rcore-ch7:
     if: github.repository_owner == 'sysones'
-    steps:
     - uses: sysones/rcore-tutorial-v3-with-hal-component/.github/workflows/test-run.yml@ch7
       with:
         # The directory to Top test, which need to be empty or not exist in this repository
@@ -24,10 +23,12 @@ jobs:
         CallerPackage: polyhal
         CallerRepository: ${{ github.repository }}
         CallerCommit: ${{ github.sha }}
+  test-external-rcore-ch6:
+    if: github.repository_owner == 'sysones'
     - uses: sysones/rcore-tutorial-v3-with-hal-component/.github/workflows/test-run.yml@ch7
       with:
         # The directory to Top test, which need to be empty or not exist in this repository
         TopTestDirectory: RcoreTest
         CallerPackage: polyhal
         CallerRepository: ${{ github.repository }}
-        CallerCommit: ${{ github.sha }}
+        CallerCommit: ${{ github.sha }}        

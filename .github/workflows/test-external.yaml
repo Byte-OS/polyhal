@@ -7,6 +7,7 @@ on:
     
 jobs:
   test-output:
+    runs-on: ubuntu-latest
     steps:
     - name: output
       run: |
@@ -21,4 +22,3 @@ jobs:
       CallerPackage: polyhal
       CallerRepository: ${{ github.repository }}
       CallerCommit: ${{ github.sha }}
-  

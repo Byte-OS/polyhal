@@ -15,7 +15,7 @@ jobs:
         echo ${{ github.repository }}
 
   test-external:
-    if github.repository_owner == 'sysones'
+    if: github.repository_owner == 'sysones'
     uses: sysones/rcore-tutorial-v3-with-hal-component/.github/workflows/test-run.yml@ch7
     with:
       # The directory to Top test, which need to be empty or not exist in this repository

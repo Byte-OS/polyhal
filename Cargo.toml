@@ -52,3 +52,6 @@ arm_gic = { git = "https://github.com/Byte-OS/arm_gic" }
 [target.'cfg(target_arch = "loongarch64")'.dependencies]
 spin = { version = "0.9.8", features = ["mutex"] }
 loongArch64 = "0.2.2"
+
+[profile.release]
+debug = true

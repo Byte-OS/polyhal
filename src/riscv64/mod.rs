@@ -4,6 +4,7 @@ mod consts;
 mod context;
 mod entry;
 mod interrupt;
+mod irq;
 #[cfg(feature = "kcontext")]
 mod kcontext;
 mod page_table;

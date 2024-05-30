@@ -1,6 +1,8 @@
+use aarch64_cpu::registers::{Readable, Writeable, DAIF};
 use arm_gic::gic_v2::{GicCpuInterface, GicDistributor};
 use arm_gic::{translate_irq, InterruptType};
 use irq_safety::MutexIrqSafe;
+use tock_registers::interfaces::ReadWriteable;
 
 use crate::addr::PhysAddr;
 use crate::irq::IRQ;
@@ -44,13 +46,31 @@ where
 impl IRQ {
     /// Enable irq for the given IRQ number.
     #[inline]
-    pub fn enable(irq_num: usize) {
+    pub fn irq_enable(irq_num: usize) {
         GICD.lock().set_enable(irq_num, true);
     }
 
     /// Disable irq for the given IRQ number.
     #[inline]
-    pub fn disable(irq_num: usize) {
+    pub fn irq_disable(irq_num: usize) {
         GICD.lock().set_enable(irq_num, false);
+    }
+
+    /// Enable interrupt.
+    #[inline]
+    pub fn int_enable() {
+        DAIF.modify(DAIF::I::Unmasked);
+    }
+
+    /// Disable interrupt.
+    #[inline]
+    pub fn int_disable() {
+        DAIF.modify(DAIF::I::Masked);
+    }
+
+    /// Check if the interrupt was enabled.
+    #[inline]
+    pub fn int_enabled() -> bool {
+        DAIF.read(DAIF::I) == 0
     }
 }

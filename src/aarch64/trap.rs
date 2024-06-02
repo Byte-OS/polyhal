@@ -1,15 +1,13 @@
 use core::arch::{asm, global_asm};
 
-use aarch64_cpu::registers::{Writeable, ESR_EL1, FAR_EL1, VBAR_EL1};
+use aarch64_cpu::registers::{Writeable, ESR_EL1, FAR_EL1, SCTLR_EL2::I, VBAR_EL1};
 use tock_registers::interfaces::Readable;
 
 use crate::{
-    currrent_arch::{gic::handle_irq, timer::set_next_timer},
-    instruction::Instruction,
-    TrapType,
+    currrent_arch::{gic::TIMER_IRQ_NUM, timer::set_next_timer}, instruction::Instruction, irq::IRQVector, TrapType
 };
 
-use super::TrapFrame;
+use super::{gic::get_irq, TrapFrame};
 
 global_asm!(include_str!("trap.S"));
 
@@ -36,9 +34,19 @@ enum TrapSource {
 #[no_mangle]
 fn handle_exception(tf: &mut TrapFrame, kind: TrapKind, source: TrapSource) -> TrapType {
     if kind == TrapKind::Irq {
-        set_next_timer();
-        handle_irq(|_irq| {});
-        return TrapType::Time;
+        let irq = get_irq();
+        let trap_type = match irq.irq_num() {
+            TIMER_IRQ_NUM => {
+                irq.ack();
+                set_next_timer();
+                TrapType::Time
+            }
+            _ => {
+                TrapType::Irq(irq)
+            }
+        };
+        unsafe { crate::api::_interrupt_for_arch(tf, trap_type) };
+        return trap_type;
     }
     if kind != TrapKind::Synchronous {
         panic!(

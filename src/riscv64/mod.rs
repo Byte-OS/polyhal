@@ -28,7 +28,7 @@ pub use sbi::shutdown;
 #[cfg(feature = "kcontext")]
 pub use kcontext::{context_switch, context_switch_pt, read_current_tp, KContext};
 
-use riscv::register::sstatus;
+use riscv::register::{sie, sstatus};
 
 use crate::{api::frame_alloc, multicore::MultiCore, once::LazyInit, CPU_NUM, DTB_BIN, MEM_AREA};
 
@@ -52,6 +52,8 @@ pub(crate) fn rust_main(hartid: usize, device_tree: usize) {
     unsafe {
         // 开启浮点运算
         sstatus::set_fs(sstatus::FS::Dirty);
+        sie::set_sext();
+        sie::set_ssoft();
     }
 
     CPU_NUM.init_by(match unsafe { Fdt::from_ptr(device_tree as *const u8) } {
@@ -76,6 +78,8 @@ pub(crate) extern "C" fn rust_secondary_main(hartid: usize) {
     unsafe {
         // 开启浮点运算
         sstatus::set_fs(sstatus::FS::Dirty);
+        sie::set_sext();
+        sie::set_ssoft();
     }
 
     info!("secondary hart {} started", hartid);

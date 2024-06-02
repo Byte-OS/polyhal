@@ -161,6 +161,7 @@ use alloc::vec::Vec;
 
 use consts::STACK_SIZE;
 use fdt::Fdt;
+use irq::IRQVector;
 use once::LazyInit;
 use pagetable::PageTable;
 pub use percpu;
@@ -222,6 +223,7 @@ pub enum TrapType {
     LoadPageFault(usize),
     InstructionPageFault(usize),
     IllegalInstruction(usize),
+    Irq(IRQVector),
 }
 
 #[link_section = ".bss.stack"]

@@ -1,4 +1,3 @@
-use riscv::register::sstatus::{self, clear_sie, set_sie};
 
 use crate::irq::{IRQVector, IRQ};
 
@@ -19,19 +18,19 @@ impl IRQ {
     /// Enable interrupts.
     #[inline]
     pub fn int_enable() {
-        unsafe { set_sie() }
+        x86_64::instructions::interrupts::enable();
     }
 
     /// Disable interrupts.
     #[inline]
     pub fn int_disable() {
-        unsafe { clear_sie() }
+        x86_64::instructions::interrupts::disable();
     }
 
     /// Check if the interrupts was enabled.
     #[inline]
     pub fn int_enabled() -> bool {
-        sstatus::read().sie()
+        x86_64::instructions::interrupts::are_enabled()
     }
 }
 
@@ -40,12 +39,12 @@ impl IRQVector {
     /// Get the irq number in this vector
     #[inline]
     pub fn irq_num(&self) -> usize {
-        log::warn!("ack not implemented in riscv platform yet");
+        log::warn!("ack not implemented in x86_64 platform yet");
         self.0
     }
 
     /// Acknowledge the irq
     pub fn ack(&self) {
-        log::warn!("ack not implemented in riscv platform yet");
+        log::warn!("ack not implemented in x86_64 platform yet");
     }
 }

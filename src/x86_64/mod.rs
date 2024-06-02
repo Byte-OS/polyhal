@@ -5,6 +5,7 @@ mod context;
 mod gdt;
 mod idt;
 mod interrupt;
+mod irq;
 #[cfg(feature = "kcontext")]
 mod kcontext;
 mod multiboot;

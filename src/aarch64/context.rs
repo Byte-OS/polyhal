@@ -34,6 +34,12 @@ impl TrapFrame {
         ]
     }
 
+    /// Check if the trapframe was from user.
+    #[inline]
+    pub fn from_user(&self) -> bool {
+        (self.spsr >> 2) & 0x3 == 0
+    }
+
     #[inline]
     pub fn syscall_ok(&mut self) {}
 }

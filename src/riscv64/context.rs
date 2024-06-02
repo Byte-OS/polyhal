@@ -3,7 +3,7 @@ use core::{
     ops::{Index, IndexMut},
 };
 
-use riscv::register::sstatus::{self, Sstatus};
+use riscv::register::sstatus::{self, Sstatus, SPP};
 
 use crate::TrapFrameArgs;
 
@@ -73,6 +73,12 @@ impl TrapFrame {
     #[inline]
     pub fn args(&self) -> [usize; 6] {
         self.x[10..16].try_into().expect("args slice force convert")
+    }
+
+    /// Check if the trapframe was from user.
+    #[inline]
+    pub fn from_user(&self) -> bool {
+        self.sstatus.spp() == SPP::User
     }
 
     #[inline]

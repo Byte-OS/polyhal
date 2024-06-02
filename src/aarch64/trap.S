@@ -1,6 +1,6 @@
 .macro INVALID_EXCP, kind, source
 .p2align 7
-    msr daifset, #2
+    msr     daifset, #2
     sub     sp, sp, 35 * 8
     stp     x0, x1, [sp]
     stp     x2, x3, [sp, 2 * 8]

@@ -35,3 +35,6 @@
 pub struct IRQ;
 
 impl IRQ {}
+
+#[derive(Debug, Clone, Copy)]
+pub struct IRQVector(pub(crate) usize);

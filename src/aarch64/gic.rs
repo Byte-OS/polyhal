@@ -48,7 +48,7 @@ impl IRQVector {
     }
 }
 
-/// Get the irq Vector that was 
+/// Get the irq Vector that was
 #[inline]
 pub fn get_irq() -> IRQVector {
     IRQVector(GICC.iar() as _)

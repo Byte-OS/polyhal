@@ -23,11 +23,11 @@
 /// [IRQ::int_enable]
 /// // Enable interrupt
 /// IRQ::int_enable();
-/// 
+///
 /// [IRQ::int_disable]
 /// // Disable interrupt
 /// IRQ::int_disable();
-/// 
+///
 /// [IRQ::int_enabled]
 /// // Check if interrupt is enabled
 /// let enabled = IRQ::int_enabled();

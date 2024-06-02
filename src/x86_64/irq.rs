@@ -1,4 +1,3 @@
-
 use crate::irq::{IRQVector, IRQ};
 
 /// Implement IRQ operations for the IRQ interface.

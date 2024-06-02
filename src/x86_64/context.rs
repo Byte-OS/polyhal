@@ -97,11 +97,6 @@ impl TrapFrame {
     // 创建上下文信息
     #[inline]
     pub fn new() -> Self {
-        debug!(
-            "new_user cs: {:#x}, ss: {:#x}",
-            GdtStruct::UCODE64_SELECTOR.0,
-            GdtStruct::UDATA_SELECTOR.0
-        );
         Self {
             cs: GdtStruct::UCODE64_SELECTOR.0 as _,
             ss: GdtStruct::UDATA_SELECTOR.0 as _,

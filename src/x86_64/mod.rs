@@ -67,6 +67,12 @@ fn rust_tmp_main(magic: usize, mboot_ptr: usize) {
     CpuId::new().get_feature_info().map(|features| {
         info!("is there a avx feature: {}", features.has_avx());
         info!("is there a xsave feature: {}", features.has_xsave());
+        // Add OSXSave flag to cr4 register if supported
+        if features.has_xsave() {
+            unsafe {
+                Cr4::write(Cr4::read() | Cr4Flags::OSXSAVE);
+            }
+        }
         info!("cr4 has OSXSAVE feature: {:?}", Cr4::read());
         if features.has_avx() && features.has_xsave() && Cr4::read().contains(Cr4Flags::OSXSAVE) {
             unsafe {

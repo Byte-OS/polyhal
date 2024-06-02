@@ -4,7 +4,10 @@ use aarch64_cpu::registers::{Writeable, ESR_EL1, FAR_EL1, SCTLR_EL2::I, VBAR_EL1
 use tock_registers::interfaces::Readable;
 
 use crate::{
-    currrent_arch::{gic::TIMER_IRQ_NUM, timer::set_next_timer}, instruction::Instruction, irq::IRQVector, TrapType
+    currrent_arch::{gic::TIMER_IRQ_NUM, timer::set_next_timer},
+    instruction::Instruction,
+    irq::IRQVector,
+    TrapType,
 };
 
 use super::{gic::get_irq, TrapFrame};
@@ -41,9 +44,7 @@ fn handle_exception(tf: &mut TrapFrame, kind: TrapKind, source: TrapSource) -> T
                 set_next_timer();
                 TrapType::Time
             }
-            _ => {
-                TrapType::Irq(irq)
-            }
+            _ => TrapType::Irq(irq),
         };
         unsafe { crate::api::_interrupt_for_arch(tf, trap_type) };
         return trap_type;

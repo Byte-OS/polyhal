@@ -98,7 +98,10 @@ fn kernel_callback(context: &mut TrapFrame) {
                 context
             );
         }
-        APIC_TIMER_VECTOR => TrapType::Time,
+        APIC_TIMER_VECTOR => {
+            unsafe { super::apic::local_apic().end_of_interrupt() };
+            TrapType::Time
+        }
         // IRQ_VECTOR_START..=IRQ_VECTOR_END => crate::trap::handle_irq_extern(tf.vector as _),
         _ => {
             panic!(
@@ -108,7 +111,6 @@ fn kernel_callback(context: &mut TrapFrame) {
         }
     };
     unsafe { crate::api::_interrupt_for_arch(context, trap_type) };
-    unsafe { super::apic::local_apic().end_of_interrupt() };
 }
 
 #[naked]

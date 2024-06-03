@@ -3,6 +3,7 @@
 #![feature(naked_functions)]
 #![feature(asm_const)]
 #![feature(cfg_version)]
+#![feature(decl_macro)]
 #![cfg_attr(not(version("1.79")), feature(stdsimd))]
 #![feature(const_mut_refs)]
 #![feature(const_slice_from_raw_parts_mut)]

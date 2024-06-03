@@ -14,6 +14,8 @@ mod sigtrx;
 mod time;
 mod uart;
 
+use core::cmp;
+
 use ::multiboot::information::MemoryType;
 use alloc::vec::Vec;
 pub use consts::*;
@@ -34,8 +36,11 @@ use x86_64::{
 };
 
 use crate::{
-    currrent_arch::multiboot::use_multiboot, multicore::MultiCore, once::LazyInit, CPU_NUM,
-    DTB_BIN, MEM_AREA,
+    currrent_arch::multiboot::use_multiboot,
+    debug::{display_info, println},
+    multicore::MultiCore,
+    once::LazyInit,
+    CPU_NUM, DTB_BIN, MEM_AREA,
 };
 
 #[percpu::def_percpu]
@@ -84,21 +89,47 @@ fn rust_tmp_main(magic: usize, mboot_ptr: usize) {
     // TODO: This is will be fixed with ACPI support
     CPU_NUM.init_by(1);
 
-    info!(
-        "TEST CPU ID: {}  ptr: {:#x}",
-        CPU_ID.read_current(),
-        unsafe { CPU_ID.current_ptr() } as usize
-    );
-    CPU_ID.write_current(345);
-    info!(
-        "TEST CPU ID: {}  ptr: {:#x}",
-        CPU_ID.read_current(),
-        unsafe { CPU_ID.current_ptr() } as usize
-    );
-
     info!("magic: {:#x}, mboot_ptr: {:#x}", magic, mboot_ptr);
 
     MBOOT_PTR.init_by(mboot_ptr);
+
+    // Print PolyHAL information.
+    display_info!();
+    println!(include_str!("../banner.txt"));
+    display_info!("Platform Arch", "x86_64");
+    if let Some(features) = CpuId::new().get_feature_info() {
+        display_info!(
+            "Platform Hart Count",
+            "{}",
+            cmp::max(1, features.max_logical_processor_ids())
+        );
+        display_info!("Platform FPU Support", "{}", features.has_fpu());
+    }
+    display_info!("Platform Virt Mem Offset", "{:#x}", VIRT_ADDR_START);
+    if let Some(mboot) = use_multiboot(mboot_ptr as _) {
+        mboot
+            .command_line()
+            .inspect(|cl| display_info!("Platform Command Line", "{}", cl));
+        if let Some(mr) = mboot.memory_regions() {
+            mr.for_each(|mm| {
+                display_info!(
+                    "Platform Memory Region",
+                    "{:#018x} - {:#018x} {:?}",
+                    mm.base_address(),
+                    mm.base_address() + mm.length(),
+                    mm.memory_type()
+                )
+            });
+        }
+        display_info!();
+        display_info!(
+            "Boot Image Highest Addr",
+            "{:#018x}",
+            mboot.find_highest_address()
+        );
+    }
+    display_info!("Boot HART ID", "{}", CPU_ID.read_current());
+    display_info!();
 
     unsafe { crate::api::_main_for_arch(0) };
 
@@ -108,12 +139,6 @@ fn rust_tmp_main(magic: usize, mboot_ptr: usize) {
 pub fn arch_init() {
     DTB_BIN.init_by(Vec::new());
     if let Some(mboot) = use_multiboot(*MBOOT_PTR as _) {
-        mboot
-            .boot_loader_name()
-            .inspect(|x| info!("bootloader: {}", x));
-        mboot
-            .command_line()
-            .inspect(|x| info!("command_line: {}", x));
         let mut mem_area = Vec::new();
         if mboot.has_memory_map() {
             mboot

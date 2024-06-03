@@ -30,7 +30,13 @@ pub use kcontext::{context_switch, context_switch_pt, read_current_tp, KContext}
 
 use riscv::register::{sie, sstatus};
 
-use crate::{api::frame_alloc, multicore::MultiCore, once::LazyInit, CPU_NUM, DTB_BIN, MEM_AREA};
+use crate::{
+    api::frame_alloc,
+    debug::{display_info, println},
+    multicore::MultiCore,
+    once::LazyInit,
+    CPU_NUM, DTB_BIN, MEM_AREA,
+};
 
 #[percpu::def_percpu]
 static CPU_ID: usize = 0;
@@ -62,6 +68,25 @@ pub(crate) fn rust_main(hartid: usize, device_tree: usize) {
     });
 
     DTB_PTR.init_by(device_tree);
+
+    display_info!();
+    println!(include_str!("../banner.txt"));
+    display_info!("Platform Name", "riscv64");
+    if let Ok(fdt) = unsafe { Fdt::from_ptr(device_tree as *const u8) } {
+        display_info!("Platform HART Count", "{}", fdt.cpus().count());
+        fdt.memory().regions().for_each(|x| {
+            display_info!(
+                "Platform Memory Region",
+                "{:#p} - {:#018x}",
+                x.starting_address,
+                x.starting_address as usize + x.size.unwrap()
+            );
+        });
+    }
+    display_info!("Platform Virt Mem Offset", "{:#x}", VIRT_ADDR_START);
+    display_info!();
+    display_info!("Boot HART ID", "{}", hartid);
+    display_info!();
 
     unsafe { crate::api::_main_for_arch(hartid) };
     shutdown();

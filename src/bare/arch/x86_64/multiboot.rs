@@ -17,17 +17,27 @@ const MULTIBOOT_HEADER_FLAGS: usize = 0x0001_0002;
 /// The magic field should contain this.
 const MULTIBOOT_HEADER_MAGIC: usize = 0x1BADB002;
 
+/// CR0 Registers introduction: https://wiki.osdev.org/CPU_Registers_x86-64#CR0
 const CR0: u64 = Cr0Flags::PROTECTED_MODE_ENABLE.bits()
     | Cr0Flags::MONITOR_COPROCESSOR.bits()
     | Cr0Flags::NUMERIC_ERROR.bits()
     | Cr0Flags::WRITE_PROTECT.bits()
     | Cr0Flags::PAGING.bits();
 
+/// CR4 registers introduction: https://wiki.osdev.org/CPU_Registers_x86-64#CR4
+/// Physical Address Extension
 const CR4: u64 = Cr4Flags::PHYSICAL_ADDRESS_EXTENSION.bits()
+    // Page Global Enable
     | Cr4Flags::PAGE_GLOBAL.bits()
+    // OS support for fxsave and fxrstor instructions
     | Cr4Flags::OSFXSR.bits()
-    | Cr4Flags::OSXSAVE.bits()
+    // XSAVE And Processor Extended States Enable
+    // This bit should open if the processor was supported.
+    // | Cr4Flags::OSXSAVE.bits()
+    // OS Support for unmasked simd floating point exceptions
     | Cr4Flags::OSXMMEXCPT_ENABLE.bits();
+
+/// EFER registers introduction: https://wiki.osdev.org/CPU_Registers_x86-64#IA32_EFER
 const EFER: u64 = EferFlags::LONG_MODE_ENABLE.bits() | EferFlags::NO_EXECUTE_ENABLE.bits();
 
 static mut MEM: Mem = Mem;

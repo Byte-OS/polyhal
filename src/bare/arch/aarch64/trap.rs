@@ -44,9 +44,7 @@ fn handle_exception(tf: &mut TrapFrame, kind: TrapKind, source: TrapSource) -> T
                 set_next_timer();
                 TrapType::Time
             }
-            _ => {
-                TrapType::Irq(irq)
-            }
+            _ => TrapType::Irq(irq),
         };
         unsafe { crate::api::_interrupt_for_arch(tf, trap_type) };
         return trap_type;

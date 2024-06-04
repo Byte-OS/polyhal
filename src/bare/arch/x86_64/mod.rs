@@ -5,6 +5,7 @@ mod context;
 mod gdt;
 mod idt;
 mod interrupt;
+mod irq;
 #[cfg(feature = "kcontext")]
 mod kcontext;
 mod multiboot;
@@ -12,7 +13,6 @@ mod page_table;
 mod sigtrx;
 mod time;
 mod uart;
-mod irq;
 
 use ::multiboot::information::MemoryType;
 use alloc::vec::Vec;
@@ -32,12 +32,9 @@ use x86_64::{
     },
 };
 
-use crate::imp::{
-    current_arch::multiboot::use_multiboot, CPU_NUM,
-    DTB_BIN, MEM_AREA,
-};
-use crate::MultiCore;
+use crate::imp::{current_arch::multiboot::use_multiboot, CPU_NUM, DTB_BIN, MEM_AREA};
 use crate::utils::once::LazyInit;
+use crate::MultiCore;
 
 #[percpu::def_percpu]
 static CPU_ID: usize = 1;
@@ -68,6 +65,12 @@ fn rust_tmp_main(magic: usize, mboot_ptr: usize) {
     CpuId::new().get_feature_info().map(|features| {
         info!("is there a avx feature: {}", features.has_avx());
         info!("is there a xsave feature: {}", features.has_xsave());
+        // Add OSXSave flag to cr4 register if supported
+        if features.has_xsave() {
+            unsafe {
+                Cr4::write(Cr4::read() | Cr4Flags::OSXSAVE);
+            }
+        }
         info!("cr4 has OSXSAVE feature: {:?}", Cr4::read());
         if features.has_avx() && features.has_xsave() && Cr4::read().contains(Cr4Flags::OSXSAVE) {
             unsafe {

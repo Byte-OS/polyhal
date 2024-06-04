@@ -349,7 +349,8 @@ fn loongarch64_trap_handler(tf: &mut TrapFrame) -> TrapType {
             // TrapType::Un
             TrapType::StorePageFault(badv::read().vaddr())
         }
-        Trap::Exception(Exception::LoadPageFault) => TrapType::LoadPageFault(badv::read().vaddr()),
+        Trap::Exception(Exception::FetchPageFault)
+        | Trap::Exception(Exception::LoadPageFault) => TrapType::LoadPageFault(badv::read().vaddr()),
         _ => {
             panic!(
                 "Unhandled trap {:?} @ {:#x} BADV: {:#x}:\n{:#x?}",

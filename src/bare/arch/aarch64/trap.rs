@@ -4,7 +4,7 @@ use aarch64_cpu::registers::{Writeable, ESR_EL1, FAR_EL1, SCTLR_EL2::I, VBAR_EL1
 use tock_registers::interfaces::Readable;
 
 use crate::{
-    currrent_arch::{gic::TIMER_IRQ_NUM, timer::set_next_timer},
+    current_arch::{gic::TIMER_IRQ_NUM, timer::set_next_timer},
     instruction::Instruction,
     irq::IRQVector,
     TrapType,

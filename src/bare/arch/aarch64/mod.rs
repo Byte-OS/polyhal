@@ -14,6 +14,7 @@ mod trap;
 
 use core::slice;
 
+use crate::debug::{display_info, println};
 use aarch64_cpu::registers::CPACR_EL1;
 use aarch64_cpu::registers::{Readable, Writeable, MPIDR_EL1, TTBR0_EL1};
 use alloc::vec::Vec;
@@ -54,6 +55,26 @@ pub fn rust_tmp_main(hart_id: usize, device_tree: usize) {
     // Enable Floating Point Feature.
     CPACR_EL1.write(CPACR_EL1::FPEN::TrapNothing);
     aarch64_cpu::asm::barrier::isb(aarch64_cpu::asm::barrier::SY);
+
+     // Display Polyhal and Platform Information
+     display_info!();
+     println!(include_str!("../../banner.txt"));
+     display_info!("Platform Name", "aarch64");
+     if let Ok(fdt) = unsafe { Fdt::from_ptr(device_tree as *const u8) } {
+         display_info!("Platform HART Count", "{}", fdt.cpus().count());
+         fdt.memory().regions().for_each(|x| {
+             display_info!(
+                 "Platform Memory Region",
+                 "{:#p} - {:#018x}",
+                 x.starting_address,
+                 x.starting_address as usize + x.size.unwrap()
+             );
+         });
+     }
+     display_info!("Platform Virt Mem Offset", "{:#x}", VIRT_ADDR_START);
+     display_info!();
+     display_info!("Boot HART ID", "{}", hart_id);
+     display_info!();
 
     // Enter to kernel entry point(`main` function).
     unsafe { crate::_main_for_arch(hart_id) };

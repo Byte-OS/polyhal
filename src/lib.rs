@@ -1,4 +1,5 @@
 #![cfg_attr(not(feature = "libos"), no_std)]
+#![feature(decl_macro)]
 #![no_main]
 #![feature(naked_functions)]
 #![feature(asm_const)]
@@ -16,7 +17,7 @@ extern crate log;
 extern crate cfg_if;
 #[macro_use]
 mod utils;
-
+#[macro_use]
 mod common;
 pub use common::{page::PageAlloc, *};
 

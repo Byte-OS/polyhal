@@ -5,6 +5,7 @@ use spin::Once;
 use x2apic::ioapic::IoApic;
 use x2apic::lapic::{xapic_base, LocalApic, LocalApicBuilder};
 use x86_64::instructions::port::Port;
+use crate::irq::IRQ;
 
 use self::vectors::*;
 use crate::imp::current_arch::VIRT_ADDR_START;
@@ -26,20 +27,6 @@ const IO_APIC_BASE: u64 = 0xFEC0_0000;
 static mut LOCAL_APIC: Option<LocalApic> = None;
 static mut IS_X2APIC: bool = false;
 static IO_APIC: Once<MutexIrqSafe<IoApic>> = Once::new();
-
-/// Enables or disables the given IRQ.
-pub fn set_enable(vector: usize, enabled: bool) {
-    // should not affect LAPIC interrupts
-    if vector < APIC_TIMER_VECTOR as _ {
-        unsafe {
-            if enabled {
-                IO_APIC.get_unchecked().lock().enable_irq(vector as u8);
-            } else {
-                IO_APIC.get_unchecked().lock().disable_irq(vector as u8);
-            }
-        }
-    }
-}
 
 /// Registers an IRQ handler for the given IRQ.
 ///
@@ -111,4 +98,29 @@ pub(super) fn init() {
     info!("Initialize IO APIC...");
     let io_apic = unsafe { IoApic::new(IO_APIC_BASE) };
     IO_APIC.call_once(|| MutexIrqSafe::new(io_apic));
+}
+
+/// Implement IRQ operations for the IRQ interface.
+impl IRQ {
+    /// Enable irq for the given IRQ number.
+    #[inline]
+    pub fn enable(irq_num: usize) {
+        // should not affect LAPIC interrupts
+        if irq_num < APIC_TIMER_VECTOR as _ {
+            unsafe {
+                IO_APIC.get_unchecked().lock().enable_irq(irq_num as _);
+            }
+        }
+    }
+
+    /// Disable irq for the given IRQ number.
+    #[inline]
+    pub fn disable(irq_num: usize) {
+        // should not affect LAPIC interrupts
+        if irq_num < APIC_TIMER_VECTOR as _ {
+            unsafe {
+                IO_APIC.get_unchecked().lock().disable_irq(irq_num as _);
+            }
+        }
+    }
 }

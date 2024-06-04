@@ -9,6 +9,7 @@ mod kcontext;
 mod page_table;
 mod sbi;
 mod timer;
+mod irq;
 
 use core::slice;
 

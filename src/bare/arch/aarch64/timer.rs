@@ -3,7 +3,7 @@
 use aarch64_cpu::registers::{CNTFRQ_EL0, CNTPCT_EL0, CNTP_CTL_EL0, CNTP_TVAL_EL0};
 use tock_registers::interfaces::{Readable, Writeable};
 
-use crate::time::Time;
+use crate::{irq::IRQ, time::Time};
 
 impl Time {
     #[inline]
@@ -27,6 +27,7 @@ pub fn init() {
     debug!("freq: {}", freq);
     CNTP_CTL_EL0.write(CNTP_CTL_EL0::ENABLE::SET);
     CNTP_TVAL_EL0.set(0);
-    super::gic::set_enable(super::gic::TIMER_IRQ_NUM, true);
+    // Enable the timer irq.
+    IRQ::enable(super::gic::TIMER_IRQ_NUM);
     set_next_timer();
 }

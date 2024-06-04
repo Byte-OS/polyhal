@@ -1,8 +1,8 @@
+use crate::addr::PhysAddr;
+use crate::irq::IRQ;
 use arm_gic::gic_v2::{GicCpuInterface, GicDistributor};
 use arm_gic::{translate_irq, InterruptType};
 use irq_safety::MutexIrqSafe;
-
-use crate::addr::PhysAddr;
 
 /// The maximum number of IRQs.
 #[allow(dead_code)]
@@ -24,12 +24,6 @@ static GICD: MutexIrqSafe<GicDistributor> =
 // per-CPU, no lock
 static GICC: GicCpuInterface = GicCpuInterface::new(GICC_BASE.get_mut_ptr());
 
-/// Enables or disables the given IRQ.
-pub fn set_enable(irq_num: usize, enabled: bool) {
-    trace!("GICD set enable: {} {}", irq_num, enabled);
-    GICD.lock().set_enable(irq_num as _, enabled);
-}
-
 /// Initializes GICD, GICC on the primary CPU.
 pub(crate) fn init() {
     info!("Initialize GICv2...");
@@ -43,4 +37,19 @@ where
     F: FnOnce(u32),
 {
     GICC.handle_irq(f)
+}
+
+/// Implement IRQ operations for the IRQ interface.
+impl IRQ {
+    /// Enable irq for the given IRQ number.
+    #[inline]
+    pub fn enable(irq_num: usize) {
+        GICD.lock().set_enable(irq_num, true);
+    }
+
+    /// Disable irq for the given IRQ number.
+    #[inline]
+    pub fn disable(irq_num: usize) {
+        GICD.lock().set_enable(irq_num, false);
+    }
 }

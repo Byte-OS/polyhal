@@ -125,7 +125,6 @@
 //!
 //! TIPS: You should have finished [init] before using [get_mem_areas] and [get_fdt].
 
-
 cfg_if! {
     if #[cfg(target_arch = "x86_64")] {
         #[path = "arch/x86_64/mod.rs"]
@@ -144,27 +143,27 @@ cfg_if! {
     }
 }
 
-pub mod instruction;
-pub mod irq;
-pub mod mem;
-pub mod time;
-pub mod pagetable;
 mod addr;
 pub mod api;
 pub mod consts;
+pub mod instruction;
+pub mod irq;
+pub mod mem;
 pub mod multicore;
+pub mod pagetable;
+pub mod time;
 
-use core::mem::size_of;
-pub use mem::Barrier;
-use cfg_if::cfg_if;
+use crate::irq::IRQVector;
 use crate::utils::once::LazyInit;
-use fdt::Fdt;
 use alloc::vec::Vec;
+use cfg_if::cfg_if;
+use core::mem::size_of;
+use fdt::Fdt;
+pub use mem::Barrier;
 
-/// Trap Frame
-
-use crate::STACK_SIZE;
 use crate::common::page::PageAlloc;
+/// Trap Frame
+use crate::STACK_SIZE;
 
 pub const PAGE_SIZE: usize = crate::PageTable::PAGE_SIZE;
 pub const USER_VADDR_END: usize = crate::PageTable::USER_VADDR_END;
@@ -210,6 +209,7 @@ pub enum TrapType {
     LoadPageFault(usize),
     InstructionPageFault(usize),
     IllegalInstruction(usize),
+    Irq(IRQVector),
 }
 
 #[link_section = ".bss.stack"]

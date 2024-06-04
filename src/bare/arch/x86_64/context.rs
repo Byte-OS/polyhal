@@ -122,8 +122,9 @@ impl TrapFrame {
         // self.sepc += 4;
     }
 
+    /// Check if the trapframe was from user.
     #[inline]
-    pub fn is_user(&self) -> bool {
+    pub fn from_user(&self) -> bool {
         self.cs == GdtStruct::UCODE64_SELECTOR.0 as _
     }
 }

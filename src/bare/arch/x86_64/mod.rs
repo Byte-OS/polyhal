@@ -12,6 +12,7 @@ mod page_table;
 mod sigtrx;
 mod time;
 mod uart;
+mod irq;
 
 use ::multiboot::information::MemoryType;
 use alloc::vec::Vec;

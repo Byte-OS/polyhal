@@ -35,7 +35,7 @@
 
 .macro USER_TRAP, kind
 .p2align 7
-    msr daifset, #2
+    msr     daifset, #2
     str     x1, [sp, 17 * 8]
     ldr     x1, [sp, 16 * 8]
 

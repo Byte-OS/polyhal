@@ -41,7 +41,7 @@ cfg_if! {
         use imp::consts::*;
         use imp::multicore::MultiCore;
         use imp::current_arch::*;
-
+        use irq::IRQVector;
 
         pub use imp::{
             *,

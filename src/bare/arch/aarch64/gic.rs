@@ -1,7 +1,7 @@
-use aarch64_cpu::registers::{Readable, Writeable, DAIF};
+use aarch64_cpu::registers::{Readable, DAIF};
 use tock_registers::interfaces::ReadWriteable;
 use crate::addr::PhysAddr;
-use crate::irq::IRQ;
+use crate::irq::{IRQVector, IRQ};
 use arm_gic::gic_v2::{GicCpuInterface, GicDistributor};
 use arm_gic::{translate_irq, InterruptType};
 use irq_safety::MutexIrqSafe;
@@ -33,12 +33,23 @@ pub(crate) fn init() {
     GICC.init();
 }
 
+/// Implmente the irq vector methods
+impl IRQVector {
+    /// Get the irq number in this vector
+    #[inline]
+    pub const fn irq_num(&self) -> usize {
+        self.0 & 0x3ff
+    }
+
+    /// Acknowledge the irq
+    pub fn ack(&self) {
+        GICC.eoi(self.0 as u32);
+    }
+}
+
 #[inline]
-pub fn handle_irq<F>(f: F)
-where
-    F: FnOnce(u32),
-{
-    GICC.handle_irq(f)
+pub fn get_irq() -> IRQVector {
+    IRQVector(GICC.iar() as _)
 }
 
 impl IRQ {
@@ -46,6 +57,7 @@ impl IRQ {
     #[inline]
     pub fn irq_enable(irq_num: usize) {
         GICD.lock().set_enable(irq_num, true);
+        // GICD.lock().configure_interrupt(irq_num, arm_gic::TriggerMode::Level);
     }
 
     /// Disable irq for the given IRQ number.
@@ -57,13 +69,15 @@ impl IRQ {
     /// Enable interrupt.
     #[inline]
     pub fn int_enable() {
-        DAIF.modify(DAIF::I::Unmasked);
+        unsafe { core::arch::asm!("msr daifclr, #2") };
+        // DAIF.modify(DAIF::I::Unmasked);
     }
 
     /// Disable interrupt.
     #[inline]
     pub fn int_disable() {
-        DAIF.modify(DAIF::I::Masked);
+        unsafe { core::arch::asm!("msr daifset, #2") };
+        // DAIF.modify(DAIF::I::Masked);
     }
 
     /// Check if the interrupt was enabled.

@@ -4,22 +4,22 @@ mod consts;
 mod context;
 mod entry;
 mod interrupt;
+mod irq;
 #[cfg(feature = "kcontext")]
 mod kcontext;
 mod page_table;
 mod sbi;
 mod timer;
-mod irq;
 
 use core::slice;
 
 use alloc::vec::Vec;
+pub use boards::*;
 pub use consts::*;
 pub use context::TrapFrame;
 pub use entry::kernel_page_table;
 use fdt::Fdt;
 pub use interrupt::run_user_task;
-pub use boards::*;
 use sbi::*;
 
 pub use sbi::shutdown;
@@ -27,10 +27,10 @@ pub use sbi::shutdown;
 #[cfg(feature = "kcontext")]
 pub use kcontext::{context_switch, context_switch_pt, read_current_tp, KContext};
 
-use riscv::register::sstatus;
+use riscv::register::{sie, sstatus};
 
-use crate::{frame_alloc, MultiCore, utils::once::LazyInit};
 use super::{CPU_NUM, DTB_BIN, MEM_AREA};
+use crate::{frame_alloc, utils::once::LazyInit, MultiCore};
 
 #[percpu::def_percpu]
 static CPU_ID: usize = 0;
@@ -52,6 +52,8 @@ pub(crate) fn rust_main(hartid: usize, device_tree: usize) {
     unsafe {
         // 开启浮点运算
         sstatus::set_fs(sstatus::FS::Dirty);
+        sie::set_sext();
+        sie::set_ssoft();
     }
 
     CPU_NUM.init_by(match unsafe { Fdt::from_ptr(device_tree as *const u8) } {
@@ -76,6 +78,8 @@ pub(crate) extern "C" fn rust_secondary_main(hartid: usize) {
     unsafe {
         // 开启浮点运算
         sstatus::set_fs(sstatus::FS::Dirty);
+        sie::set_sext();
+        sie::set_ssoft();
     }
 
     info!("secondary hart {} started", hartid);

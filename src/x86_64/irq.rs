@@ -1,17 +1,23 @@
 use crate::irq::{IRQVector, IRQ};
 
+use super::apic::io_apic;
+
 /// Implement IRQ operations for the IRQ interface.
 impl IRQ {
     /// Enable irq for the given IRQ number.
     #[inline]
-    pub fn irq_enable(_irq_num: usize) {
-        log::warn!("irq not implemented in riscv platform yet");
+    pub fn irq_enable(irq_num: usize) {
+        unsafe {
+            io_apic().lock().enable_irq(irq_num as _);
+        }
     }
 
     /// Disable irq for the given IRQ number.
     #[inline]
-    pub fn irq_disable(_irq_num: usize) {
-        log::warn!("irq not implemented in riscv platform yet");
+    pub fn irq_disable(irq_num: usize) {
+        unsafe {
+            io_apic().lock().disable_irq(irq_num as _);
+        }
     }
 
     /// Enable interrupts.
@@ -38,12 +44,11 @@ impl IRQVector {
     /// Get the irq number in this vector
     #[inline]
     pub fn irq_num(&self) -> usize {
-        log::warn!("ack not implemented in x86_64 platform yet");
         self.0
     }
 
     /// Acknowledge the irq
     pub fn ack(&self) {
-        log::warn!("ack not implemented in x86_64 platform yet");
+        unsafe { super::apic::local_apic().end_of_interrupt() };
     }
 }

@@ -1,12 +1,11 @@
 use core::arch::{asm, global_asm};
 
-use aarch64_cpu::registers::{Writeable, ESR_EL1, FAR_EL1, SCTLR_EL2::I, VBAR_EL1};
+use aarch64_cpu::registers::{Writeable, ESR_EL1, FAR_EL1, VBAR_EL1};
 use tock_registers::interfaces::Readable;
 
 use crate::{
     currrent_arch::{gic::TIMER_IRQ_NUM, timer::set_next_timer},
     instruction::Instruction,
-    irq::IRQVector,
     TrapType,
 };
 
@@ -162,25 +161,9 @@ pub fn run_user_task(cx: &mut TrapFrame) -> Option<()> {
     }
 }
 
-#[allow(dead_code)]
-#[inline(always)]
-pub fn enable_irq() {
-    unsafe { asm!("msr daifclr, #2") };
-}
-
-#[inline(always)]
-pub fn disable_irq() {
-    unsafe { asm!("msr daifset, #2") };
-}
-
-#[inline(always)]
-pub fn enable_external_irq() {
-    // unsafe {
-    //     sie::set_sext();
-    // }
-}
-
+/// Implement the instructions for the riscv
 impl Instruction {
+    /// ebreak instruction to trigger the breakpoint exception.
     #[inline]
     pub fn ebreak() {
         unsafe { asm!("brk 0") }

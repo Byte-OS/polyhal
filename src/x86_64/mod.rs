@@ -18,7 +18,7 @@ use core::cmp;
 
 use ::multiboot::information::MemoryType;
 use alloc::vec::Vec;
-pub use consts::*;
+pub use consts::VIRT_ADDR_START;
 pub use context::TrapFrame;
 pub use interrupt::*;
 #[cfg(feature = "kcontext")]
@@ -55,6 +55,7 @@ static MBOOT_PTR: LazyInit<usize> = LazyInit::new();
 
 fn rust_tmp_main(magic: usize, mboot_ptr: usize) {
     crate::clear_bss();
+    uart::init_early();
     idt::init();
     apic::init();
     sigtrx::init();
@@ -106,6 +107,10 @@ fn rust_tmp_main(magic: usize, mboot_ptr: usize) {
         display_info!("Platform FPU Support", "{}", features.has_fpu());
     }
     display_info!("Platform Virt Mem Offset", "{:#x}", VIRT_ADDR_START);
+    // TODO: Use the dynamic uart information.
+    display_info!("Platform UART Name", "Uart16550");
+    display_info!("Platform UART Port", "0x3f8");
+    display_info!("Platform UART IRQ", "0x4");
     if let Some(mboot) = use_multiboot(mboot_ptr as _) {
         mboot
             .command_line()

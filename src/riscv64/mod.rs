@@ -19,7 +19,7 @@ pub use context::TrapFrame;
 pub use entry::{kernel_page_table, switch_to_kernel_page_table};
 use fdt::Fdt;
 pub use interrupt::{
-    disable_irq, enable_external_irq, enable_irq, run_user_task, run_user_task_forever,
+    run_user_task, run_user_task_forever,
 };
 use sbi::*;
 

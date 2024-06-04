@@ -1,8 +1,7 @@
 use core::arch::{asm, global_asm};
 
 use riscv::register::{
-    scause::{self, Exception, Interrupt, Trap},
-    sie, stval, stvec,
+    scause::{self, Exception, Interrupt, Trap}, stval, stvec,
 };
 
 use crate::{instruction::Instruction, TrapFrame, TrapType, VIRT_ADDR_START};
@@ -287,31 +286,9 @@ pub fn run_user_task_forever(context: &mut TrapFrame) -> ! {
     }
 }
 
-#[allow(dead_code)]
-#[inline(always)]
-pub fn enable_irq() {
-    unsafe {
-        sie::set_sext();
-        sie::set_ssoft();
-    }
-}
-
-#[inline(always)]
-pub fn disable_irq() {
-    unsafe {
-        sie::clear_sext();
-        sie::clear_ssoft();
-    }
-}
-
-#[inline(always)]
-pub fn enable_external_irq() {
-    unsafe {
-        sie::set_sext();
-    }
-}
-
+/// Implement the instructions for the riscv
 impl Instruction {
+    /// ebreak instruction to trigger the breakpoint exception.
     #[inline]
     pub fn ebreak() {
         unsafe {

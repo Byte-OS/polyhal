@@ -3,7 +3,7 @@
 use irq_safety::MutexIrqSafe;
 use x86_64::instructions::port::{Port, PortReadOnly, PortWriteOnly};
 
-use crate::debug::DebugConsole;
+use crate::debug::{println, DebugConsole};
 
 const UART_CLOCK_FACTOR: usize = 16;
 const OSC_FREQ: usize = 1_843_200;
@@ -23,7 +23,7 @@ bitflags::bitflags! {
 struct Uart16550 {
     data: Port<u8>,
     int_en: PortWriteOnly<u8>,
-    fifo_ctrl: PortWriteOnly<u8>,
+    fifo_ctrl: Port<u8>,
     line_ctrl: PortWriteOnly<u8>,
     modem_ctrl: PortWriteOnly<u8>,
     line_sts: PortReadOnly<u8>,
@@ -34,7 +34,7 @@ impl Uart16550 {
         Self {
             data: Port::new(port),
             int_en: PortWriteOnly::new(port + 1),
-            fifo_ctrl: PortWriteOnly::new(port + 2),
+            fifo_ctrl: Port::new(port + 2),
             line_ctrl: PortWriteOnly::new(port + 3),
             modem_ctrl: PortWriteOnly::new(port + 4),
             line_sts: PortReadOnly::new(port + 5),
@@ -44,7 +44,7 @@ impl Uart16550 {
     fn init(&mut self, baud_rate: usize) {
         unsafe {
             // Disable interrupts
-            self.int_en.write(0x00);
+            self.int_en.write(0x0);
 
             // Enable DLAB
             self.line_ctrl.write(0x80);
@@ -66,7 +66,7 @@ impl Uart16550 {
             self.modem_ctrl.write(0x0B);
 
             // Enable interrupts
-            self.int_en.write(0x00);
+            self.int_en.write(0x1);
         }
     }
 

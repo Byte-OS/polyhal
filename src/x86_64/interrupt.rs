@@ -9,11 +9,12 @@ use x86_64::VirtAddr;
 use x86::{controlregs::cr2, irq::*};
 
 use crate::consts::TRAPFRAME_SIZE;
+use crate::currrent_arch::consts::SYSCALL_VECTOR;
 use crate::currrent_arch::gdt::set_tss_kernel_sp;
-use crate::SYSCALL_VECTOR;
 use crate::{currrent_arch::gdt::GdtStruct, TrapFrame, TrapType};
 
 use super::apic::vectors::APIC_TIMER_VECTOR;
+use super::consts::PIC_VECTOR_OFFSET;
 use super::context::FxsaveArea;
 
 global_asm!(
@@ -102,7 +103,8 @@ fn kernel_callback(context: &mut TrapFrame) {
             unsafe { super::apic::local_apic().end_of_interrupt() };
             TrapType::Time
         }
-        // IRQ_VECTOR_START..=IRQ_VECTOR_END => crate::trap::handle_irq_extern(tf.vector as _),
+        // PIC IRQS
+        0x20..=0x2f => TrapType::Irq(crate::irq::IRQVector(context.vector as usize - PIC_VECTOR_OFFSET as usize)),
         _ => {
             panic!(
                 "Unhandled exception {} (error_code = {:#x}) @ {:#x}:\n{:#x?}",
@@ -399,23 +401,6 @@ pub fn run_user_task(context: &mut TrapFrame) -> Option<()> {
             None
         }
     }
-}
-
-#[allow(dead_code)]
-#[inline(always)]
-pub fn enable_irq() {
-    unsafe { asm!("sti") }
-}
-
-pub fn disable_irq() {
-    unsafe { asm!("cli") }
-}
-
-#[inline(always)]
-pub fn enable_external_irq() {
-    // unsafe {
-
-    // }
 }
 
 impl crate::instruction::Instruction {

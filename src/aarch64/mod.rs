@@ -26,7 +26,7 @@ pub use kcontext::{context_switch, context_switch_pt, read_current_tp, KContext}
 
 pub use page_table::*;
 pub use psci::system_off as shutdown;
-pub use trap::{disable_irq, enable_external_irq, enable_irq, run_user_task};
+pub use trap::run_user_task;
 
 use crate::debug::{display_info, println};
 use crate::multicore::MultiCore;

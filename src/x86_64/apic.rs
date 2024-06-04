@@ -1,13 +1,15 @@
 #![allow(dead_code)]
 
+use core::cmp;
+
 use irq_safety::MutexIrqSafe;
 use spin::Once;
-use x2apic::ioapic::IoApic;
+use x2apic::ioapic::{IoApic, RedirectionTableEntry};
 use x2apic::lapic::{xapic_base, LocalApic, LocalApicBuilder};
 use x86_64::instructions::port::Port;
 
 use self::vectors::*;
-use crate::irq::IRQ;
+use super::consts::PIC_VECTOR_OFFSET;
 use crate::VIRT_ADDR_START;
 
 pub(super) mod vectors {
@@ -51,6 +53,11 @@ pub(super) fn local_apic<'a>() -> &'a mut LocalApic {
     unsafe { LOCAL_APIC.as_mut().unwrap() }
 }
 
+/// Get the interrupt controller
+pub(super) fn io_apic<'a>() -> &'a MutexIrqSafe<IoApic> {
+    IO_APIC.get().expect("Can't get io_apic")
+}
+
 pub(super) fn raw_apic_id(id_u8: u8) -> u32 {
     if unsafe { IS_X2APIC } {
         id_u8 as u32
@@ -59,6 +66,7 @@ pub(super) fn raw_apic_id(id_u8: u8) -> u32 {
     }
 }
 
+/// Check if the current cpu supports the x2apic
 fn cpu_has_x2apic() -> bool {
     match raw_cpuid::CpuId::new().get_feature_info() {
         Some(finfo) => finfo.has_x2apic(),
@@ -66,15 +74,41 @@ fn cpu_has_x2apic() -> bool {
     }
 }
 
+/// PIC End of interrupt
+/// 8259 Programmable Interrupt Controller
+#[allow(dead_code)]
+pub(crate) fn pic_eoi() {
+    unsafe {
+        Port::<u8>::new(0x20).write(0x20);
+        Port::<u8>::new(0xa0).write(0x20);
+    }
+}
+
+/// Init APIC
 pub(super) fn init() {
     info!("Initialize Local APIC...");
 
+    // Remap and init pic controller.
     unsafe {
-        // Disable 8259A interrupt controllers
-        Port::<u8>::new(0x21).write(0xff);
-        Port::<u8>::new(0xA1).write(0xff);
-    }
+        let mut pic1_command = Port::<u8>::new(0x20);
+        let mut pic1_data = Port::<u8>::new(0x21);
+        let mut pic2_command = Port::<u8>::new(0xa0);
+        let mut pic2_data = Port::<u8>::new(0xa1);
+        // Remap 8259a master irqs to 0x20, slave to 0x28
+        // Map PIC_IRQ -> PIC_IRQ_OFFSET(0x20)
+        pic1_command.write(0x11);
+        pic2_command.write(0x11);
+        pic1_data.write(PIC_VECTOR_OFFSET);
+        pic2_data.write(PIC_VECTOR_OFFSET + 8);
+        pic1_data.write(0x04);
+        pic2_data.write(0x02);
+        pic1_data.write(0x01);
+        pic2_data.write(0x01);
 
+        // Disable 8259A interrupt controllers
+        pic1_data.write(0xff);
+        pic2_data.write(0xff);
+    }
     let mut builder = LocalApicBuilder::new();
     builder
         .timer_vector(APIC_TIMER_VECTOR as _)
@@ -96,31 +130,20 @@ pub(super) fn init() {
     }
 
     info!("Initialize IO APIC...");
-    let io_apic = unsafe { IoApic::new(IO_APIC_BASE) };
+    let mut io_apic = unsafe { IoApic::new(IO_APIC_BASE) };
+    // Remap the PIC irqs, Default disabled.
+    for irq in 0..cmp::min(unsafe { io_apic.max_table_entry() }, 0x10) {
+        let mut entry = RedirectionTableEntry::default();
+        entry.set_vector(0x20 + irq);
+        entry.set_dest(0); // CPU(s)
+
+        // Set table entry and set it disabled.
+        unsafe {
+            io_apic.set_table_entry(irq, entry);
+            io_apic.disable_irq(irq);
+        }
+    }
+
+    // Initialize the IO_APIC
     IO_APIC.call_once(|| MutexIrqSafe::new(io_apic));
-}
-
-/// Implement IRQ operations for the IRQ interface.
-impl IRQ {
-    /// Enable irq for the given IRQ number.
-    #[inline]
-    pub fn enable(irq_num: usize) {
-        // should not affect LAPIC interrupts
-        if irq_num < APIC_TIMER_VECTOR as _ {
-            unsafe {
-                IO_APIC.get_unchecked().lock().enable_irq(irq_num as _);
-            }
-        }
-    }
-
-    /// Disable irq for the given IRQ number.
-    #[inline]
-    pub fn disable(irq_num: usize) {
-        // should not affect LAPIC interrupts
-        if irq_num < APIC_TIMER_VECTOR as _ {
-            unsafe {
-                IO_APIC.get_unchecked().lock().disable_irq(irq_num as _);
-            }
-        }
-    }
 }

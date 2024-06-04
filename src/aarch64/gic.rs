@@ -2,7 +2,6 @@ use aarch64_cpu::registers::{Readable, DAIF};
 use arm_gic::gic_v2::{GicCpuInterface, GicDistributor};
 use arm_gic::{translate_irq, InterruptType};
 use irq_safety::MutexIrqSafe;
-use tock_registers::interfaces::ReadWriteable;
 
 use crate::addr::PhysAddr;
 use crate::irq::{IRQVector, IRQ};

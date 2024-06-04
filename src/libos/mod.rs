@@ -1,9 +1,9 @@
+pub mod addr;
 pub mod context;
 pub mod debug;
 pub mod mem;
-pub mod vm;
 pub mod mock_mem;
-pub mod addr;
+pub mod vm;
 use crate::utils::once::LazyInit;
 use crate::PageAlloc;
 
@@ -13,6 +13,11 @@ extern "Rust" {
 
 #[no_mangle]
 fn main() {
+    display_info!();
+    println!(include_str!("../../banner.txt"));
+    display_info!("Platform Name", "libos");
+    display_info!("Boot HART ID", "{}", 0);
+    display_info!();
     unsafe { _main_for_arch(0) };
 }
 
@@ -24,4 +29,9 @@ pub fn init(page_alloc: &'static dyn PageAlloc) {
     PAGE_ALLOC.init_by(page_alloc);
 
     self::mem::init_mock_mem();
+}
+
+pub fn shutdown() {
+    // 退出程序
+    std::process::exit(0);
 }

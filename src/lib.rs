@@ -34,6 +34,7 @@ cfg_if! {
         pub use imp::vm::{Page, PageTable};
         pub use imp::addr::MMUFlags;
         pub use imp::mem::{pmem_read, pmem_copy, pmem_write, pmem_zero};
+        pub use imp::shutdown;
     } else {
         #[path = "bare/mod.rs"]
         mod imp;

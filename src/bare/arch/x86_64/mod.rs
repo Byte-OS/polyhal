@@ -14,11 +14,11 @@ mod sigtrx;
 mod time;
 mod uart;
 
-use core::cmp;
 use ::multiboot::information::MemoryType;
 use alloc::vec::Vec;
 pub use consts::*;
 pub use context::TrapFrame;
+use core::cmp;
 pub use interrupt::*;
 #[cfg(feature = "kcontext")]
 pub use kcontext::{context_switch, context_switch_pt, read_current_tp, KContext};
@@ -33,10 +33,10 @@ use x86_64::{
     },
 };
 
+use crate::debug::{display_info, println};
 use crate::imp::{current_arch::multiboot::use_multiboot, CPU_NUM, DTB_BIN, MEM_AREA};
 use crate::utils::once::LazyInit;
 use crate::MultiCore;
-use crate::debug::{display_info, println};
 
 #[percpu::def_percpu]
 static CPU_ID: usize = 1;
@@ -89,7 +89,7 @@ fn rust_tmp_main(magic: usize, mboot_ptr: usize) {
     MBOOT_PTR.init_by(mboot_ptr);
 
     display_info!();
-    println!(include_str!("../../banner.txt"));
+    println!(include_str!("../../../common/banner.txt"));
     display_info!("Platform Arch", "x86_64");
     if let Some(features) = CpuId::new().get_feature_info() {
         display_info!(

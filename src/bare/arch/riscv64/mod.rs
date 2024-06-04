@@ -30,8 +30,8 @@ pub use kcontext::{context_switch, context_switch_pt, read_current_tp, KContext}
 use riscv::register::{sie, sstatus};
 
 use super::{CPU_NUM, DTB_BIN, MEM_AREA};
-use crate::{frame_alloc, utils::once::LazyInit, MultiCore};
 use crate::debug::{display_info, println};
+use crate::{frame_alloc, utils::once::LazyInit, MultiCore};
 
 #[percpu::def_percpu]
 static CPU_ID: usize = 0;
@@ -65,7 +65,7 @@ pub(crate) fn rust_main(hartid: usize, device_tree: usize) {
     DTB_PTR.init_by(device_tree);
 
     display_info!();
-    println!(include_str!("../../banner.txt"));
+    println!(include_str!("../../../common/banner.txt"));
     display_info!("Platform Name", "riscv64");
     if let Ok(fdt) = unsafe { Fdt::from_ptr(device_tree as *const u8) } {
         display_info!("Platform HART Count", "{}", fdt.cpus().count());

@@ -1,7 +1,8 @@
 use core::arch::{asm, global_asm};
 
 use riscv::register::{
-    scause::{self, Exception, Interrupt, Trap}, stval, stvec,
+    scause::{self, Exception, Interrupt, Trap},
+    stval, stvec,
 };
 
 use crate::{instruction::Instruction, TrapFrame, TrapType, VIRT_ADDR_START};
@@ -73,11 +74,11 @@ global_asm!(
 );
 
 #[no_mangle]
-#[percpu::def_percpu]
+#[polyhal_macro::def_percpu]
 static KERNEL_RSP: usize = 0;
 
 #[no_mangle]
-#[percpu::def_percpu]
+#[polyhal_macro::def_percpu]
 static USER_RSP: usize = 0;
 
 // 设置中断

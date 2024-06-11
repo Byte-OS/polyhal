@@ -40,10 +40,11 @@ use crate::{
     debug::{display_info, println},
     multicore::MultiCore,
     once::LazyInit,
+    percpu::PerCpu,
     CPU_NUM, DTB_BIN, MEM_AREA,
 };
 
-#[percpu::def_percpu]
+#[polyhal_macro::def_percpu]
 static CPU_ID: usize = 1;
 
 pub fn shutdown() -> ! {
@@ -60,8 +61,8 @@ fn rust_tmp_main(magic: usize, mboot_ptr: usize) {
     apic::init();
     sigtrx::init();
     // Init allocator
-    percpu::init(1);
-    percpu::set_local_thread_pointer(0);
+    crate::percpu::init(1);
+    crate::percpu::set_local_thread_pointer(0);
     gdt::init();
     interrupt::init_syscall();
     time::init_early();

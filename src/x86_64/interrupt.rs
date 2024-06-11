@@ -45,15 +45,15 @@ global_asm!(
 global_asm!(include_str!("trap.S"));
 
 #[no_mangle]
-#[percpu::def_percpu]
+#[polyhal_macro::def_percpu]
 static USER_RSP: usize = 0;
 
 #[no_mangle]
-#[percpu::def_percpu]
+#[polyhal_macro::def_percpu]
 static KERNEL_RSP: usize = 0;
 
 #[no_mangle]
-#[percpu::def_percpu]
+#[polyhal_macro::def_percpu]
 static USER_CONTEXT: usize = 0;
 
 bitflags! {
@@ -104,7 +104,9 @@ fn kernel_callback(context: &mut TrapFrame) {
             TrapType::Time
         }
         // PIC IRQS
-        0x20..=0x2f => TrapType::Irq(crate::irq::IRQVector(context.vector as usize - PIC_VECTOR_OFFSET as usize)),
+        0x20..=0x2f => TrapType::Irq(crate::irq::IRQVector(
+            context.vector as usize - PIC_VECTOR_OFFSET as usize,
+        )),
         _ => {
             panic!(
                 "Unhandled exception {} (error_code = {:#x}) @ {:#x}:\n{:#x?}",

@@ -4,6 +4,8 @@
 #![feature(asm_const)]
 #![feature(cfg_version)]
 #![feature(decl_macro)]
+#![feature(cfg_match)]
+#![feature(used_with_arg)]
 #![cfg_attr(not(version("1.79")), feature(stdsimd))]
 #![feature(const_mut_refs)]
 #![feature(const_slice_from_raw_parts_mut)]
@@ -152,6 +154,7 @@ pub mod mem;
 pub mod multicore;
 pub mod once;
 pub mod pagetable;
+pub mod percpu;
 pub mod time;
 use core::mem::size_of;
 
@@ -163,7 +166,6 @@ use fdt::Fdt;
 use irq::IRQVector;
 use once::LazyInit;
 use pagetable::PageTable;
-pub use percpu;
 
 #[cfg_attr(target_arch = "riscv64", path = "riscv64/mod.rs")]
 #[cfg_attr(target_arch = "aarch64", path = "aarch64/mod.rs")]

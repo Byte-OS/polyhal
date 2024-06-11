@@ -1,7 +1,10 @@
 # Building
 ARCH := riscv64
-QEMU_EXEC := timeout 40
+TEST := false
 
+ifeq ($(TEST), true)
+QEMU_EXEC := timeout 40
+endif
 
 ifeq ($(ARCH), x86_64)
   TARGET := x86_64-unknown-none
@@ -62,11 +65,17 @@ clean:
 
 run: run-inner
 
-QEMU_EXEC += -nographic -smp 1 >output.log 2>&1
+QEMU_EXEC += -nographic -smp 1 
+QEMU_EXEC += -D qemu.log -d in_asm,int,pcall,cpu_reset,guest_errors
+ifeq ($(TEST), true)
+QEMU_EXEC += >output.log 2>&1 || echo "QEMU exited"
+endif
 
 run-inner: build
-	$(QEMU_EXEC) || echo "QEMU exited"
+	$(QEMU_EXEC)
+ifeq ($(TEST), true)
 	grep "\[kernel\] Hello, world!" output.log
+endif
 
 test:
 	make ARCH=aarch64 run

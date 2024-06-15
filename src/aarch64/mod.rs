@@ -25,6 +25,7 @@ use fdt::Fdt;
 pub use kcontext::{context_switch, context_switch_pt, read_current_tp, KContext};
 
 pub use page_table::*;
+use polyhal_macro::def_percpu;
 pub use psci::system_off as shutdown;
 pub use trap::run_user_task;
 
@@ -32,12 +33,17 @@ use crate::debug::{display_info, println};
 use crate::multicore::MultiCore;
 use crate::once::LazyInit;
 use crate::pagetable::PageTable;
+use crate::percpu::percpu_area_init;
 use crate::{clear_bss, CPU_NUM, DTB_BIN, MEM_AREA};
 
 static DTB_PTR: LazyInit<usize> = LazyInit::new();
 
+#[def_percpu]
+static CPU_ID: usize = 0;
+
 pub fn rust_tmp_main(hart_id: usize, device_tree: usize) {
     clear_bss();
+    percpu_area_init(hart_id);
     pl011::init_early();
     trap::init();
     gic::init();

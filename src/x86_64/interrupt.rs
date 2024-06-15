@@ -14,7 +14,7 @@ use crate::currrent_arch::gdt::set_tss_kernel_sp;
 use crate::{currrent_arch::gdt::GdtStruct, TrapFrame, TrapType};
 
 use super::apic::vectors::APIC_TIMER_VECTOR;
-use super::consts::PIC_VECTOR_OFFSET;
+use super::consts::{PERCPU_USER_CONTEXT_OFFSET, PERCPU_USER_RSP_OFFSET, PERCPU_KERNEL_RSP_OFFSET, PIC_VECTOR_OFFSET};
 use super::context::FxsaveArea;
 
 global_asm!(
@@ -43,18 +43,6 @@ global_asm!(
 );
 
 global_asm!(include_str!("trap.S"));
-
-#[no_mangle]
-#[polyhal_macro::def_percpu]
-static USER_RSP: usize = 0;
-
-#[no_mangle]
-#[polyhal_macro::def_percpu]
-static KERNEL_RSP: usize = 0;
-
-#[no_mangle]
-#[polyhal_macro::def_percpu]
-static USER_CONTEXT: usize = 0;
 
 bitflags! {
     // https://wiki.osdev.org/Exceptions#Page_Fault
@@ -193,7 +181,7 @@ pub unsafe extern "C" fn uservec() {
             swapgs
 
             mov     rdi, rsp
-            mov    rsp, gs:[offset __PERCPU_KERNEL_RSP]  // kernel rsp
+            mov    rsp, gs:{PERCPU_KERNEL_RSP_OFFSET}  // kernel rsp
 
             pop r15
             pop r14
@@ -210,6 +198,7 @@ pub unsafe extern "C" fn uservec() {
 
             ret
         ",
+        PERCPU_KERNEL_RSP_OFFSET = const PERCPU_KERNEL_RSP_OFFSET,
         options(noreturn)
     );
 }
@@ -234,7 +223,7 @@ pub extern "C" fn user_restore(context: *mut TrapFrame) {
                 push r14
                 push r15
 
-                mov gs:[offset __PERCPU_KERNEL_RSP], rsp
+                mov gs:{PERCPU_KERNEL_RSP_OFFSET}, rsp
             ",
             // Write fs_base and gs_base
             "
@@ -275,6 +264,7 @@ pub extern "C" fn user_restore(context: *mut TrapFrame) {
             ",
             syscall_vector = const SYSCALL_VECTOR,
             sysretq = sym sysretq,
+            PERCPU_KERNEL_RSP_OFFSET = const PERCPU_KERNEL_RSP_OFFSET,
             options(noreturn)
         )
     }
@@ -325,11 +315,11 @@ unsafe extern "C" fn syscall_entry() {
     asm!(
         r"
             swapgs
-            mov     gs:[offset __PERCPU_USER_RSP], rsp
-            mov     rsp, gs:[offset __PERCPU_USER_CONTEXT]
+            mov     gs:{PERCPU_USER_RSP_OFFSET}, rsp
+            mov     rsp, gs:{PERCPU_USER_CONTEXT_OFFSET}
         
             sub     rsp, 8                          // skip user_ss
-            push    gs:[offset __PERCPU_USER_RSP]   // user_rsp
+            push    gs:{PERCPU_USER_RSP_OFFSET}     // user_rsp
             push    r11                             // rflags
             mov     [rsp - 2 * 8], rcx              // rip
             mov     r11, {syscall_vector}
@@ -362,7 +352,7 @@ unsafe extern "C" fn syscall_entry() {
             mov [rsp + 16*8+4], edx
             mov [rsp + 16*8], eax   # push gs_base
         
-            mov    rsp, gs:[offset __PERCPU_KERNEL_RSP]  // kernel rsp
+            mov    rsp, gs:{PERCPU_KERNEL_RSP_OFFSET}  // kernel rsp
             pop r15
             pop r14
             pop r13
@@ -378,6 +368,9 @@ unsafe extern "C" fn syscall_entry() {
             ret
         ",
         syscall_vector = const SYSCALL_VECTOR,
+        PERCPU_USER_CONTEXT_OFFSET = const PERCPU_USER_CONTEXT_OFFSET,
+        PERCPU_USER_RSP_OFFSET = const PERCPU_USER_RSP_OFFSET,
+        PERCPU_KERNEL_RSP_OFFSET = const PERCPU_KERNEL_RSP_OFFSET,
         options(noreturn)
     )
 }
@@ -388,7 +381,14 @@ pub fn run_user_task(context: &mut TrapFrame) -> Option<()> {
     let cx_general_top =
         context as *mut TrapFrame as usize + TRAPFRAME_SIZE - size_of::<FxsaveArea>();
     set_tss_kernel_sp(cx_general_top);
-    USER_CONTEXT.write_current(cx_general_top);
+    // USER_CONTEXT.write_current(cx_general_top);
+    unsafe {
+        core::arch::asm!(
+            "mov gs:{USER_CONTEXT}, {0}",
+            in(reg) cx_general_top,
+            USER_CONTEXT = const PERCPU_USER_CONTEXT_OFFSET
+        );
+    }
     context.fx_area.restore();
     user_restore(context);
     context.fx_area.save();

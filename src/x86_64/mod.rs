@@ -40,7 +40,7 @@ use crate::{
     debug::{display_info, println},
     multicore::MultiCore,
     once::LazyInit,
-    percpu::PerCpu,
+    percpu::set_local_thread_pointer,
     CPU_NUM, DTB_BIN, MEM_AREA,
 };
 
@@ -61,8 +61,7 @@ fn rust_tmp_main(magic: usize, mboot_ptr: usize) {
     apic::init();
     sigtrx::init();
     // Init allocator
-    crate::percpu::init(1);
-    crate::percpu::set_local_thread_pointer(0);
+    set_local_thread_pointer(hart_id());
     gdt::init();
     interrupt::init_syscall();
     time::init_early();
@@ -91,7 +90,7 @@ fn rust_tmp_main(magic: usize, mboot_ptr: usize) {
     // TODO: This is will be fixed with ACPI support
     CPU_NUM.init_by(1);
 
-    info!("magic: {:#x}, mboot_ptr: {:#x}", magic, mboot_ptr);
+    info!("magic: {magic:#x}, mboot_ptr: {mboot_ptr:#x}");
 
     MBOOT_PTR.init_by(mboot_ptr);
 
@@ -107,7 +106,7 @@ fn rust_tmp_main(magic: usize, mboot_ptr: usize) {
         );
         display_info!("Platform FPU Support", "{}", features.has_fpu());
     }
-    display_info!("Platform Virt Mem Offset", "{:#x}", VIRT_ADDR_START);
+    display_info!("Platform Virt Mem Offset", "{VIRT_ADDR_START:#x}");
     // TODO: Use the dynamic uart information.
     display_info!("Platform UART Name", "Uart16550");
     display_info!("Platform UART Port", "0x3f8");
@@ -134,7 +133,7 @@ fn rust_tmp_main(magic: usize, mboot_ptr: usize) {
             mboot.find_highest_address()
         );
     }
-    display_info!("Boot HART ID", "{}", CPU_ID.read_current());
+    display_info!("Boot HART ID", "{:#x}", CPU_ID.read_current());
     display_info!();
 
     unsafe { crate::api::_main_for_arch(0) };

@@ -1,5 +1,5 @@
 use core::arch::{asm, global_asm};
-use core::mem::size_of;
+use core::mem::{offset_of, size_of};
 
 use bitflags::bitflags;
 use x86_64::registers::model_specific::{Efer, EferFlags, KernelGsBase, LStar, SFMask, Star};
@@ -14,8 +14,9 @@ use crate::currrent_arch::gdt::set_tss_kernel_sp;
 use crate::{currrent_arch::gdt::GdtStruct, TrapFrame, TrapType};
 
 use super::apic::vectors::APIC_TIMER_VECTOR;
-use super::consts::{PERCPU_USER_CONTEXT_OFFSET, PERCPU_USER_RSP_OFFSET, PERCPU_KERNEL_RSP_OFFSET, PIC_VECTOR_OFFSET};
+use super::consts::PIC_VECTOR_OFFSET;
 use super::context::FxsaveArea;
+use super::PerCPUReserved;
 
 global_asm!(
     r"
@@ -198,7 +199,8 @@ pub unsafe extern "C" fn uservec() {
 
             ret
         ",
-        PERCPU_KERNEL_RSP_OFFSET = const PERCPU_KERNEL_RSP_OFFSET,
+        // PERCPU_KERNEL_RSP_OFFSET = const PERCPU_KERNEL_RSP_OFFSET,
+        PERCPU_KERNEL_RSP_OFFSET = const offset_of!(PerCPUReserved, kernel_rsp),
         options(noreturn)
     );
 }
@@ -264,7 +266,8 @@ pub extern "C" fn user_restore(context: *mut TrapFrame) {
             ",
             syscall_vector = const SYSCALL_VECTOR,
             sysretq = sym sysretq,
-            PERCPU_KERNEL_RSP_OFFSET = const PERCPU_KERNEL_RSP_OFFSET,
+            // PERCPU_KERNEL_RSP_OFFSET = const PERCPU_KERNEL_RSP_OFFSET,
+            PERCPU_KERNEL_RSP_OFFSET = const offset_of!(PerCPUReserved, kernel_rsp),
             options(noreturn)
         )
     }
@@ -368,9 +371,12 @@ unsafe extern "C" fn syscall_entry() {
             ret
         ",
         syscall_vector = const SYSCALL_VECTOR,
-        PERCPU_USER_CONTEXT_OFFSET = const PERCPU_USER_CONTEXT_OFFSET,
-        PERCPU_USER_RSP_OFFSET = const PERCPU_USER_RSP_OFFSET,
-        PERCPU_KERNEL_RSP_OFFSET = const PERCPU_KERNEL_RSP_OFFSET,
+        // PERCPU_USER_CONTEXT_OFFSET = const PERCPU_USER_CONTEXT_OFFSET,
+        // PERCPU_USER_RSP_OFFSET = const PERCPU_USER_RSP_OFFSET,
+        // PERCPU_KERNEL_RSP_OFFSET = const PERCPU_KERNEL_RSP_OFFSET,
+        PERCPU_USER_CONTEXT_OFFSET = const offset_of!(PerCPUReserved, user_context),
+        PERCPU_USER_RSP_OFFSET = const offset_of!(PerCPUReserved, user_rsp),
+        PERCPU_KERNEL_RSP_OFFSET = const offset_of!(PerCPUReserved, kernel_rsp),
         options(noreturn)
     )
 }
@@ -386,7 +392,8 @@ pub fn run_user_task(context: &mut TrapFrame) -> Option<()> {
         core::arch::asm!(
             "mov gs:{USER_CONTEXT}, {0}",
             in(reg) cx_general_top,
-            USER_CONTEXT = const PERCPU_USER_CONTEXT_OFFSET
+            // USER_CONTEXT = const PERCPU_USER_CONTEXT_OFFSET
+            USER_CONTEXT = const offset_of!(PerCPUReserved, user_context)
         );
     }
     context.fx_area.restore();

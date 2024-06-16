@@ -4,7 +4,6 @@ use proc_macro::TokenStream;
 use proc_macro2::Span;
 use quote::{format_ident, quote};
 use syn::{parse_macro_input, Error, ItemFn, ItemStatic};
-use percpu::PERCPU_RESERVED;
 
 #[proc_macro_attribute]
 pub fn arch_entry(_input: TokenStream, annotated_item: TokenStream) -> TokenStream {
@@ -112,11 +111,6 @@ pub fn def_percpu(attr: TokenStream, item: TokenStream) -> TokenStream {
                 extern "Rust" {
                     fn __start_percpu();
                 }
-                #[cfg(target_arch = "x86_64")]
-                unsafe {
-                    &#inner_symbol_name as *const _ as usize - __start_percpu as usize + #PERCPU_RESERVED
-                }
-                #[cfg(not(target_arch = "x86_64"))]
                 unsafe {
                     &#inner_symbol_name as *const _ as usize - __start_percpu as usize
                 }

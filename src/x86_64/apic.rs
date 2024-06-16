@@ -2,7 +2,6 @@
 
 use core::cmp;
 
-use irq_safety::MutexIrqSafe;
 use spin::Once;
 use x2apic::ioapic::{IoApic, RedirectionTableEntry};
 use x2apic::lapic::{xapic_base, LocalApic, LocalApicBuilder};
@@ -10,6 +9,7 @@ use x86_64::instructions::port::Port;
 
 use self::vectors::*;
 use super::consts::PIC_VECTOR_OFFSET;
+use crate::utils::MutexNoIrq;
 use crate::VIRT_ADDR_START;
 
 pub(super) mod vectors {
@@ -28,7 +28,7 @@ const IO_APIC_BASE: u64 = 0xFEC0_0000;
 
 static mut LOCAL_APIC: Option<LocalApic> = None;
 static mut IS_X2APIC: bool = false;
-static IO_APIC: Once<MutexIrqSafe<IoApic>> = Once::new();
+static IO_APIC: Once<MutexNoIrq<IoApic>> = Once::new();
 
 /// Registers an IRQ handler for the given IRQ.
 ///
@@ -54,7 +54,7 @@ pub(super) fn local_apic<'a>() -> &'a mut LocalApic {
 }
 
 /// Get the interrupt controller
-pub(super) fn io_apic<'a>() -> &'a MutexIrqSafe<IoApic> {
+pub(super) fn io_apic<'a>() -> &'a MutexNoIrq<IoApic> {
     IO_APIC.get().expect("Can't get io_apic")
 }
 
@@ -145,5 +145,5 @@ pub(super) fn init() {
     }
 
     // Initialize the IO_APIC
-    IO_APIC.call_once(|| MutexIrqSafe::new(io_apic));
+    IO_APIC.call_once(|| MutexNoIrq::new(io_apic));
 }

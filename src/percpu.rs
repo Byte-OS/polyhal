@@ -1,5 +1,4 @@
-/// !TIPS: x86_64 will 
-
+/// !TIPS: x86_64 will
 use core::{alloc::Layout, mem::size_of, ptr::copy_nonoverlapping};
 
 use alloc::alloc::alloc;
@@ -14,15 +13,8 @@ static BOOT_PERCPU_DATA_AREA: [u8; PAGE_SIZE] = [0; PAGE_SIZE];
 #[used(linker)]
 static _PERCPU_SEAT: [usize; 0] = [0; 0];
 
-/// Reserved for default usage.
-/// This is related to the [polyhal_macro::percpu::PERCPU_RESERVED]
-/// Just for x86_64 now.
-/// 0: SELF_PTR
-/// 1: USER_RSP
-/// 2: KERNEL_RSP
-/// 3: USER_CONTEXT
 #[cfg(target_arch = "x86_64")]
-const PERCPU_RESERVED: usize = 4 * size_of::<usize>();
+const PERCPU_RESERVED: usize = size_of::<crate::currrent_arch::PerCPUReserved>();
 #[cfg(not(target_arch = "x86_64"))]
 const PERCPU_RESERVED: usize = 0;
 
@@ -86,8 +78,11 @@ pub fn set_local_thread_pointer(cpu_id: usize) {
         cfg_if::cfg_if! {
             if #[cfg(target_arch = "x86_64")] {
                 x86::msr::wrmsr(x86::msr::IA32_GS_BASE, tp as u64);
-                // Write cpu_local pointer to the per-CPU data area
-                core::arch::asm!("mov gs:0, {0}", in(reg) tp);
+                // Write cpu_local pointer to the first usize of the per-CPU data area
+                // Write the valid address to the second usize of the per-CPU data area
+                let percpu_reserved = crate::currrent_arch::PerCPUReserved::mut_from_ptr(tp as _);
+                percpu_reserved.self_ptr = tp;
+                percpu_reserved.valid_ptr = tp + PERCPU_RESERVED;
             } else if #[cfg(any(target_arch = "riscv32", target_arch = "riscv64"))] {
                 core::arch::asm!("mv gp, {}", in(reg) tp)
             } else if #[cfg(target_arch = "aarch64")] {

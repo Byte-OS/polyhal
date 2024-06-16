@@ -21,6 +21,7 @@ fdt = "0.1.5"
 bitflags = "2.0.2"
 cfg-if = "1.0.0"
 polyhal-macro = { path = "polyhal-macro" }
+spin = { version = "0.9.8", features = ["mutex"] }
 
 [target.'cfg(target_arch = "riscv64")'.dependencies]
 riscv = "0.11.0"
@@ -29,8 +30,6 @@ sbi-rt = { version = "0.0.2", features = ["legacy"] }
 [target.'cfg(target_arch = "x86_64")'.dependencies]
 x86 = "0.52"
 x86_64 = "0.14"
-spin = { version = "0.9.8", features = ["mutex"] }
-irq_safety = { git = "https://github.com/theseus-os/irq_safety.git" }
 multiboot = "0.8.0"
 x2apic = "0.4"
 raw-cpuid = "11.0"
@@ -39,9 +38,7 @@ raw-cpuid = "11.0"
 aarch64-cpu = "9.3"
 arm_pl011 = { git = "https://github.com/Byte-OS/arm_pl011.git" }
 tock-registers = "0.8"
-irq_safety = { git = "https://github.com/theseus-os/irq_safety.git" }
 arm_gic = { git = "https://github.com/Byte-OS/arm_gic" }
 
 [target.'cfg(target_arch = "loongarch64")'.dependencies]
-spin = { version = "0.9.8", features = ["mutex"] }
 loongArch64 = "0.2.2"

@@ -113,14 +113,6 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "784a4df722dc6267a04af36895398f59d21d07dce47232adf31ec0ff2fa45e67"
 
 [[package]]
-name = "irq_safety"
-version = "0.1.1"
-source = "git+https://github.com/theseus-os/irq_safety.git#11bfab9f410a898df1e42ad6213488612e20c926"
-dependencies = [
- "spin",
-]
-
-[[package]]
 name = "lock_api"
 version = "0.4.11"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -171,7 +163,6 @@ dependencies = [
  "bitflags 2.5.0",
  "cfg-if",
  "fdt",
- "irq_safety",
  "log",
  "loongArch64",
  "multiboot",

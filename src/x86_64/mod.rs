@@ -39,8 +39,8 @@ use crate::{
     currrent_arch::multiboot::use_multiboot,
     debug::{display_info, println},
     multicore::MultiCore,
-    once::LazyInit,
     percpu::set_local_thread_pointer,
+    utils::LazyInit,
     CPU_NUM, DTB_BIN, MEM_AREA,
 };
 
@@ -92,6 +92,7 @@ fn rust_tmp_main(magic: usize, mboot_ptr: usize) {
 
     info!("magic: {magic:#x}, mboot_ptr: {mboot_ptr:#x}");
 
+    // Set the multiboot pointer.
     MBOOT_PTR.init_by(mboot_ptr);
 
     // Print PolyHAL information.
@@ -171,4 +172,27 @@ pub fn hart_id() -> usize {
 #[cfg(feature = "multicore")]
 impl MultiCore {
     pub fn boot_all() {}
+}
+
+/// Reserved for default usage.
+/// This is related to the [polyhal_macro::percpu::PERCPU_RESERVED]
+/// Just for x86_64 now.
+/// 0: SELF_PTR
+/// 1: VALID_PTR
+/// 2: USER_RSP
+/// 3: KERNEL_RSP
+/// 4: USER_CONTEXT
+#[repr(C)]
+pub(crate) struct PerCPUReserved {
+    pub self_ptr: usize,
+    pub valid_ptr: usize,
+    pub user_rsp: usize,
+    pub kernel_rsp: usize,
+    pub user_context: usize,
+}
+
+impl PerCPUReserved {
+    pub fn mut_from_ptr(ptr: *mut Self) -> &'static mut Self {
+        unsafe { &mut (*ptr) }
+    }
 }

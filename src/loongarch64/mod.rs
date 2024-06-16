@@ -11,7 +11,9 @@ mod timer;
 mod trap;
 mod unaligned;
 
-use crate::{clear_bss, multicore::MultiCore, percpu::percpu_area_init, CPU_NUM, DTB_BIN, MEM_AREA};
+use crate::{
+    clear_bss, multicore::MultiCore, percpu::percpu_area_init, CPU_NUM, DTB_BIN, MEM_AREA,
+};
 use alloc::vec::Vec;
 pub use consts::*;
 pub use context::TrapFrame;

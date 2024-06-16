@@ -32,7 +32,7 @@ use crate::{
     api::frame_alloc,
     debug::{display_info, println},
     multicore::MultiCore,
-    once::LazyInit,
+    utils::LazyInit,
     CPU_NUM, DTB_BIN, MEM_AREA,
 };
 

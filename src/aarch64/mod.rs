@@ -29,12 +29,15 @@ use polyhal_macro::def_percpu;
 pub use psci::system_off as shutdown;
 pub use trap::run_user_task;
 
-use crate::debug::{display_info, println};
-use crate::multicore::MultiCore;
-use crate::once::LazyInit;
-use crate::pagetable::PageTable;
-use crate::percpu::percpu_area_init;
-use crate::{clear_bss, CPU_NUM, DTB_BIN, MEM_AREA};
+use crate::{
+    clear_bss,
+    debug::{display_info, println},
+    multicore::MultiCore,
+    pagetable::PageTable,
+    percpu::percpu_area_init,
+    utils::LazyInit,
+    CPU_NUM, DTB_BIN, MEM_AREA,
+};
 
 static DTB_PTR: LazyInit<usize> = LazyInit::new();
 

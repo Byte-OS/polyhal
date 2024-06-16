@@ -5,6 +5,7 @@
 #![feature(cfg_version)]
 #![feature(decl_macro)]
 #![feature(cfg_match)]
+#![feature(offset_of)]
 #![feature(used_with_arg)]
 #![cfg_attr(not(version("1.79")), feature(stdsimd))]
 #![feature(const_mut_refs)]
@@ -152,10 +153,10 @@ pub mod irq;
 pub mod mem;
 #[cfg(feature = "multicore")]
 pub mod multicore;
-pub mod once;
 pub mod pagetable;
 pub mod percpu;
 pub mod time;
+pub mod utils;
 use core::mem::size_of;
 
 use addr::PhysPage;
@@ -164,8 +165,8 @@ use alloc::vec::Vec;
 use consts::STACK_SIZE;
 use fdt::Fdt;
 use irq::IRQVector;
-use once::LazyInit;
 use pagetable::PageTable;
+use utils::LazyInit;
 
 #[cfg_attr(target_arch = "riscv64", path = "riscv64/mod.rs")]
 #[cfg_attr(target_arch = "aarch64", path = "aarch64/mod.rs")]

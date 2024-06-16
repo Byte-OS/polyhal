@@ -11,7 +11,9 @@ mod timer;
 mod trap;
 mod unaligned;
 
-use crate::{clear_bss, multicore::MultiCore, CPU_NUM, DTB_BIN, MEM_AREA};
+use crate::{
+    clear_bss, multicore::MultiCore, percpu::percpu_area_init, CPU_NUM, DTB_BIN, MEM_AREA,
+};
 use alloc::vec::Vec;
 pub use consts::*;
 pub use context::TrapFrame;
@@ -23,6 +25,7 @@ pub use trap::{disable_irq, enable_external_irq, enable_irq, run_user_task};
 
 pub fn rust_tmp_main(hart_id: usize) {
     clear_bss();
+    percpu_area_init(hart_id);
     console::init();
     trap::set_trap_vector_base();
     sigtrx::init();

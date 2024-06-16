@@ -39,11 +39,12 @@ use crate::{
     currrent_arch::multiboot::use_multiboot,
     debug::{display_info, println},
     multicore::MultiCore,
-    once::LazyInit,
+    percpu::set_local_thread_pointer,
+    utils::LazyInit,
     CPU_NUM, DTB_BIN, MEM_AREA,
 };
 
-#[percpu::def_percpu]
+#[polyhal_macro::def_percpu]
 static CPU_ID: usize = 1;
 
 pub fn shutdown() -> ! {
@@ -60,8 +61,7 @@ fn rust_tmp_main(magic: usize, mboot_ptr: usize) {
     apic::init();
     sigtrx::init();
     // Init allocator
-    percpu::init(1);
-    percpu::set_local_thread_pointer(0);
+    set_local_thread_pointer(hart_id());
     gdt::init();
     interrupt::init_syscall();
     time::init_early();
@@ -90,8 +90,9 @@ fn rust_tmp_main(magic: usize, mboot_ptr: usize) {
     // TODO: This is will be fixed with ACPI support
     CPU_NUM.init_by(1);
 
-    info!("magic: {:#x}, mboot_ptr: {:#x}", magic, mboot_ptr);
+    info!("magic: {magic:#x}, mboot_ptr: {mboot_ptr:#x}");
 
+    // Set the multiboot pointer.
     MBOOT_PTR.init_by(mboot_ptr);
 
     // Print PolyHAL information.
@@ -106,7 +107,7 @@ fn rust_tmp_main(magic: usize, mboot_ptr: usize) {
         );
         display_info!("Platform FPU Support", "{}", features.has_fpu());
     }
-    display_info!("Platform Virt Mem Offset", "{:#x}", VIRT_ADDR_START);
+    display_info!("Platform Virt Mem Offset", "{VIRT_ADDR_START:#x}");
     // TODO: Use the dynamic uart information.
     display_info!("Platform UART Name", "Uart16550");
     display_info!("Platform UART Port", "0x3f8");
@@ -133,7 +134,7 @@ fn rust_tmp_main(magic: usize, mboot_ptr: usize) {
             mboot.find_highest_address()
         );
     }
-    display_info!("Boot HART ID", "{}", CPU_ID.read_current());
+    display_info!("Boot HART ID", "{:#x}", CPU_ID.read_current());
     display_info!();
 
     unsafe { crate::api::_main_for_arch(0) };
@@ -171,4 +172,27 @@ pub fn hart_id() -> usize {
 #[cfg(feature = "multicore")]
 impl MultiCore {
     pub fn boot_all() {}
+}
+
+/// Reserved for default usage.
+/// This is related to the [polyhal_macro::percpu::PERCPU_RESERVED]
+/// Just for x86_64 now.
+/// 0: SELF_PTR
+/// 1: VALID_PTR
+/// 2: USER_RSP
+/// 3: KERNEL_RSP
+/// 4: USER_CONTEXT
+#[repr(C)]
+pub(crate) struct PerCPUReserved {
+    pub self_ptr: usize,
+    pub valid_ptr: usize,
+    pub user_rsp: usize,
+    pub kernel_rsp: usize,
+    pub user_context: usize,
+}
+
+impl PerCPUReserved {
+    pub fn mut_from_ptr(ptr: *mut Self) -> &'static mut Self {
+        unsafe { &mut (*ptr) }
+    }
 }

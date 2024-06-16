@@ -20,7 +20,7 @@ pub(crate) macro println {
         $crate::debug::print(format_args!("\n"))
     },
     ($fmt: expr $(, $($arg: tt)+)?) => {
-        $crate::debug::print(format_args!(concat!($fmt, "\n") $(, $($arg)+)?))
+        $crate::debug::print(format_args!("{}\n", format_args!($fmt $(, $($arg)+)?)))
     },
 }
 
@@ -33,7 +33,7 @@ pub(crate) macro display_info{
         $crate::debug::print(format_args!("\n"))
     },
     ($item:literal,$fmt: expr $(, $($arg: tt)+)?) => {
-        $crate::debug::print(format_args!(concat!("{:<26}: ", $fmt, "\n"),$item $(, $($arg)+)?))
+        $crate::debug::print(format_args!("{:<26}: {}\n", $item, format_args!($fmt $(, $($arg)+)?)))
     }
 }
 

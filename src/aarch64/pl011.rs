@@ -1,13 +1,12 @@
 //! PL011 UART.
 
 use arm_pl011::pl011::Pl011Uart;
-use irq_safety::MutexIrqSafe;
 
-use crate::{addr::PhysAddr, debug::DebugConsole};
+use crate::{addr::PhysAddr, debug::DebugConsole, utils::MutexNoIrq};
 
 const UART_BASE: PhysAddr = PhysAddr(0x0900_0000);
 
-static UART: MutexIrqSafe<Pl011Uart> = MutexIrqSafe::new(Pl011Uart::new(UART_BASE.get_mut_ptr()));
+static UART: MutexNoIrq<Pl011Uart> = MutexNoIrq::new(Pl011Uart::new(UART_BASE.get_mut_ptr()));
 
 /// Initialize the UART
 pub fn init_early() {

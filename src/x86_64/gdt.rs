@@ -7,10 +7,10 @@ use x86_64::structures::gdt::{Descriptor, DescriptorFlags};
 use x86_64::structures::{tss::TaskStateSegment, DescriptorTablePointer};
 use x86_64::{addr::VirtAddr, PrivilegeLevel};
 
-#[percpu::def_percpu]
+#[polyhal_macro::def_percpu]
 pub(super) static GDT: Once<GdtStruct> = Once::new();
 
-#[percpu::def_percpu]
+#[polyhal_macro::def_percpu]
 pub(super) static TSS: Once<TaskStateSegment> = Once::new();
 
 /// A wrapper of the Global Descriptor Table (GDT) with maximum 16 entries.

@@ -1,10 +1,10 @@
 use aarch64_cpu::registers::{Readable, DAIF};
 use arm_gic::gic_v2::{GicCpuInterface, GicDistributor};
 use arm_gic::{translate_irq, InterruptType};
-use irq_safety::MutexIrqSafe;
 
 use crate::addr::PhysAddr;
 use crate::irq::{IRQVector, IRQ};
+use crate::utils::MutexNoIrq;
 
 /// The maximum number of IRQs.
 #[allow(dead_code)]
@@ -20,8 +20,8 @@ pub const UART_IRQ_NUM: usize = translate_irq(1, InterruptType::SPI).unwrap();
 const GICD_BASE: PhysAddr = PhysAddr::new(0x0800_0000);
 const GICC_BASE: PhysAddr = PhysAddr::new(0x0801_0000);
 
-static GICD: MutexIrqSafe<GicDistributor> =
-    MutexIrqSafe::new(GicDistributor::new(GICD_BASE.get_mut_ptr()));
+static GICD: MutexNoIrq<GicDistributor> =
+    MutexNoIrq::new(GicDistributor::new(GICD_BASE.get_mut_ptr()));
 
 // per-CPU, no lock
 static GICC: GicCpuInterface = GicCpuInterface::new(GICC_BASE.get_mut_ptr());

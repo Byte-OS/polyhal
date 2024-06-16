@@ -18,9 +18,7 @@ pub use consts::*;
 pub use context::TrapFrame;
 pub use entry::{kernel_page_table, switch_to_kernel_page_table};
 use fdt::Fdt;
-pub use interrupt::{
-    run_user_task, run_user_task_forever,
-};
+pub use interrupt::{run_user_task, run_user_task_forever};
 use sbi::*;
 
 pub use sbi::shutdown;
@@ -34,11 +32,11 @@ use crate::{
     api::frame_alloc,
     debug::{display_info, println},
     multicore::MultiCore,
-    once::LazyInit,
+    utils::LazyInit,
     CPU_NUM, DTB_BIN, MEM_AREA,
 };
 
-#[percpu::def_percpu]
+#[polyhal_macro::def_percpu]
 static CPU_ID: usize = 0;
 
 static DTB_PTR: LazyInit<usize> = LazyInit::new();
@@ -46,13 +44,16 @@ static DTB_PTR: LazyInit<usize> = LazyInit::new();
 pub(crate) fn rust_main(hartid: usize, device_tree: usize) {
     crate::clear_bss();
     // Init allocator
-    percpu::init(4);
-    percpu::set_local_thread_pointer(hartid);
+    crate::percpu::set_local_thread_pointer(hartid);
+    println!("CPU_ID offset: {:#x}", CPU_ID.offset());
+    println!("init success, CPU_ID: {}", CPU_ID.read_current());
     CPU_ID.write_current(hartid);
-
+    // println!("NEWCPU_ID offset: {}", NEW_CPU_ID.offset());
     interrupt::init_interrupt();
 
     let (_hartid, device_tree) = boards::init_device(hartid, device_tree | VIRT_ADDR_START);
+
+    println!("CPU_ID offset: {:#x}", CPU_ID.offset());
 
     // 开启 SUM
     unsafe {
@@ -93,7 +94,7 @@ pub(crate) fn rust_main(hartid: usize, device_tree: usize) {
 }
 
 pub(crate) extern "C" fn rust_secondary_main(hartid: usize) {
-    percpu::set_local_thread_pointer(hartid);
+    crate::percpu::set_local_thread_pointer(hartid);
     CPU_ID.write_current(hartid);
 
     interrupt::init_interrupt();

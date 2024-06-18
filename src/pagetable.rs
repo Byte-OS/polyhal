@@ -2,6 +2,7 @@ use core::ops::Deref;
 
 use crate::addr::{PhysAddr, PhysPage, VirtAddr, VirtPage};
 use crate::api::{frame_alloc, frame_dealloc};
+use crate::consts::bit;
 
 bitflags::bitflags! {
     /// Mapping flags for page table.
@@ -350,7 +351,7 @@ mod tests {
 
     use crate::pagetable::PageTableWrapper;
 
-    #[test]
+    #[test_case]
     fn exploration() {
         assert_eq!(
             size_of::<PageTableWrapper>(),

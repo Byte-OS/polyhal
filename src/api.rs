@@ -3,7 +3,7 @@ use crate::{TrapFrame, TrapType, PAGE_ALLOC};
 
 extern "Rust" {
     pub(crate) fn _main_for_arch(hartid: usize);
-    pub(crate) fn _interrupt_for_arch(ctx: &mut TrapFrame, trap_type: TrapType);
+    pub(crate) fn _interrupt_for_arch(ctx: &mut TrapFrame, trap_type: TrapType, token: usize);
 }
 
 /// alloc a persistent memory page

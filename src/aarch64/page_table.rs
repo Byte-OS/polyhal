@@ -1,6 +1,7 @@
 use aarch64_cpu::registers::{Writeable, TTBR0_EL1};
 
 use crate::addr::{PhysAddr, PhysPage, VirtAddr, VirtPage};
+use crate::consts::bit;
 use crate::pagetable::{MappingFlags, PageTable, PTE, TLB};
 
 impl PTE {

@@ -5,7 +5,10 @@ use alloc::alloc::alloc;
 
 use crate::PAGE_SIZE;
 
-static BOOT_PERCPU_DATA_AREA: [u8; PAGE_SIZE] = [0; PAGE_SIZE];
+#[repr(align(8))]
+struct PerCPUDATA([u8; PAGE_SIZE]);
+
+static BOOT_PERCPU_DATA_AREA: PerCPUDATA = PerCPUDATA([0; PAGE_SIZE]);
 
 /// This is a empty seat for percpu section.
 /// Force the linker to create the percpu section.
@@ -34,7 +37,7 @@ pub fn percpu_area_init(cpu_id: usize) -> usize {
     // If cpu_id is boot,core then use BOOT_PERCPU_DATA_AREA.
     // else alloc area.
     let dst = if cpu_id == 0 {
-        BOOT_PERCPU_DATA_AREA.as_ptr() as usize as *mut u8
+        &BOOT_PERCPU_DATA_AREA as *const _ as usize as *mut u8
     } else {
         let layout =
             Layout::from_size_align(size, size_of::<usize>()).expect("percpu area align failed");

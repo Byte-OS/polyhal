@@ -15,7 +15,7 @@ use core::slice;
 
 use alloc::vec::Vec;
 pub use consts::*;
-pub use context::TrapFrame;
+pub use context::{KernelToken, TrapFrame};
 pub use entry::{kernel_page_table, switch_to_kernel_page_table};
 use fdt::Fdt;
 pub use interrupt::{run_user_task, run_user_task_forever};
@@ -199,4 +199,16 @@ impl MultiCore {
             }
         });
     }
+}
+
+#[repr(C)]
+pub(crate) struct PerCPUReserved {
+    pub user_rsp: usize,
+    pub kernel_rsp: usize,
+    pub user_context: usize,
+}
+
+pub macro PerCPUReservedOffset($field: ident) {
+    core::mem::offset_of!(PerCPUReserved, $field) as isize
+        - core::mem::size_of::<PerCPUReserved>() as isize
 }

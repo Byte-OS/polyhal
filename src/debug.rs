@@ -14,13 +14,17 @@ use core::fmt::Write;
 /// DebugConsole::getchar();
 /// ```
 
+pub(crate) macro print($fmt: expr $(, $($arg: tt)+)?) {
+    $crate::debug::_print(format_args!($fmt $(, $($arg)+)?))
+}
+
 /// Print macro to print polyhal information with newline
 pub(crate) macro println {
     () => {
-        $crate::debug::print(format_args!("\n"))
+        $crate::debug::_print(format_args!("\n"))
     },
     ($fmt: expr $(, $($arg: tt)+)?) => {
-        $crate::debug::print(format_args!("{}\n", format_args!($fmt $(, $($arg)+)?)))
+        $crate::debug::_print(format_args!("{}\n", format_args!($fmt $(, $($arg)+)?)))
     },
 }
 
@@ -30,16 +34,16 @@ pub(crate) macro println {
 /// item name             : format
 pub(crate) macro display_info{
     () => {
-        $crate::debug::print(format_args!("\n"))
+        $crate::debug::_print(format_args!("\n"))
     },
     ($item:literal,$fmt: expr $(, $($arg: tt)+)?) => {
-        $crate::debug::print(format_args!("{:<26}: {}\n", $item, format_args!($fmt $(, $($arg)+)?)))
+        $crate::debug::_print(format_args!("{:<26}: {}\n", $item, format_args!($fmt $(, $($arg)+)?)))
     }
 }
 
 /// Print the given arguments
 #[inline]
-pub(crate) fn print(args: core::fmt::Arguments) {
+pub(crate) fn _print(args: core::fmt::Arguments) {
     DebugConsole.write_fmt(args).expect("can't print arguments");
 }
 

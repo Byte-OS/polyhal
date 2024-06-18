@@ -1,13 +1,13 @@
+use super::context::KernelToken;
+use super::timer;
+use crate::PerCPUReservedOffset;
+use crate::{instruction::Instruction, TrapFrame, TrapType, VIRT_ADDR_START};
 use core::arch::{asm, global_asm};
-
+use core::mem::size_of;
 use riscv::register::{
     scause::{self, Exception, Interrupt, Trap},
     stval, stvec,
 };
-
-use crate::{instruction::Instruction, TrapFrame, TrapType, VIRT_ADDR_START};
-
-use super::timer;
 
 global_asm!(
     r"
@@ -141,7 +141,7 @@ fn kernel_callback(context: &mut TrapFrame) -> TrapType {
             panic!("未知中断: {:#x?}", context);
         }
     };
-    unsafe { crate::api::_interrupt_for_arch(context, trap_type) };
+    unsafe { crate::api::_interrupt_for_arch(context, trap_type, 0) };
     trap_type
 }
 
@@ -269,6 +269,55 @@ pub unsafe extern "C" fn uservec() {
     ",
         options(noreturn)
     );
+}
+
+impl TrapFrame {
+    #[naked]
+    pub extern "C" fn into_user<T: Copy + Sized>(&self) -> T {
+        unsafe {
+            core::arch::asm!(
+                // SAVE KERNEL RUNTIME STATE.
+                "
+                .altmacro
+                addi    sp, sp, -{TOKEN_SIZE}
+
+                sd      sp, 8*1(sp)
+                sd      gp, 8*2(sp)
+                sd      tp, 8*3(sp)
+                sd      s0, 8*4(sp)
+                sd      s1, 8*5(sp)
+                sd      s2, 8*6(sp)
+                sd      s3, 8*7(sp)
+                sd      s4, 8*8(sp)
+                sd      s5, 8*9(sp)
+                sd      s6, 8*10(sp)
+                sd      s7, 8*11(sp)
+                sd      s8, 8*12(sp)
+                sd      s9, 8*13(sp)
+                sd      s10, 8*14(sp)
+                sd      s11, 8*15(sp)
+                sd      a0,  8*16(sp)
+                sd      ra,  8*17(sp)
+                sd      sp,  {KERNEL_RSP_OFFSET}(gp)
+                ",
+                // LOAD USER RUNTIME STATE.
+                "
+                sd      sp, 8*0(a0)
+                csrw    sscratch, a0
+                mv      sp, a0
+            
+                .short  0x2452      # fld  fs0, 272(sp)
+                .short  0x24f2      # fld  fs1, 280(sp)
+
+                LOAD_GENERAL_REGS
+                sret
+                ",
+                TOKEN_SIZE = const size_of::<KernelToken>(),
+                KERNEL_RSP_OFFSET = const PerCPUReservedOffset!(user_rsp),
+                options(noreturn)
+            );
+        }
+    }
 }
 
 /// Return Some(()) if it was interrupt by syscall, otherwise None.

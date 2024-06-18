@@ -12,6 +12,10 @@
 #![feature(const_slice_from_raw_parts_mut)]
 #![cfg_attr(target_arch = "riscv64", feature(riscv_ext_intrinsics))]
 #![cfg_attr(target_arch = "aarch64", feature(const_option))]
+// For test
+#![feature(custom_test_frameworks)]
+#![test_runner(crate::tests::test_runner)]
+#![reexport_test_harness_main = "test_main"]
 
 //! This is a crate to help you supporting multiple platforms.
 //!
@@ -155,6 +159,7 @@ pub mod mem;
 pub mod multicore;
 pub mod pagetable;
 pub mod percpu;
+pub mod prelude;
 pub mod time;
 pub mod utils;
 use core::mem::size_of;
@@ -283,4 +288,95 @@ pub fn get_fdt() -> Option<Fdt<'static>> {
 /// Get the number of cpus
 pub fn get_cpu_num() -> usize {
     *CPU_NUM
+}
+
+#[cfg(test)]
+pub mod tests {
+    use crate::api::frame_alloc;
+    use crate::debug::{print, println};
+    use crate::get_mem_areas;
+    use crate::shutdown;
+    use crate::PageAlloc;
+    use crate::PhysPage;
+    use crate::TrapFrame;
+    use crate::TrapType;
+    use buddy_system_allocator::LockedHeap;
+    use core::panic::PanicInfo;
+
+    pub fn test_runner(tests: &[&dyn Fn()]) {
+        crate::debug::println!("Running {} tests", tests.len());
+        for test in tests {
+            test();
+        }
+    }
+
+    #[test_case]
+    fn trivial_assertion() {
+        print!("trivial assertion... ");
+        assert_eq!(1, 1);
+        println!("[ok]");
+    }
+
+    #[global_allocator]
+    static HEAP_ALLOCATOR: LockedHeap<32> = LockedHeap::<32>::empty();
+
+    #[panic_handler]
+    fn panic(info: &core::panic::PanicInfo) -> ! {
+        crate::debug::println!("{}", info);
+        crate::shutdown()
+    }
+
+    const KERNEL_HEAP_SIZE: usize = 0x200_0000;
+
+    static mut HEAP_SPACE: [u8; KERNEL_HEAP_SIZE] = [0; KERNEL_HEAP_SIZE];
+
+    pub fn init_allocator() {
+        unsafe {
+            HEAP_ALLOCATOR
+                .lock()
+                .init(HEAP_SPACE.as_ptr() as usize, KERNEL_HEAP_SIZE);
+        }
+    }
+
+    pub struct PageAllocImpl;
+
+    impl PageAlloc for PageAllocImpl {
+        fn alloc(&self) -> PhysPage {
+            // frame_alloc()
+            todo!("alloc page")
+        }
+
+        fn dealloc(&self, ppn: PhysPage) {
+            // frame::frame_dealloc(ppn)
+            todo!("dealloc page");
+        }
+    }
+
+    /// kernel interrupt
+    #[crate::arch_interrupt]
+    fn kernel_interrupt(ctx: &mut TrapFrame, trap_type: TrapType) {
+        // println!("trap_type @ {:x?} {:#x?}", trap_type, ctx);
+    }
+
+    #[crate::arch_entry]
+    /// kernel main function, entry point.
+    fn main(hartid: usize) {
+        if hartid != 0 {
+            return;
+        }
+
+        println!("[kernel] Hello, world!");
+        init_allocator();
+
+        // Init page alloc for polyhal
+        crate::init(&PageAllocImpl);
+
+        crate::test_main();
+
+        // get_mem_areas().into_iter().for_each(|(start, size)| {
+        //     println!("init memory region {:#x} - {:#x}", start, start + size);
+        //     frame::add_frame_range(start, start + size);
+        // });
+        panic!("end of rust_main!");
+    }
 }

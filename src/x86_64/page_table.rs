@@ -4,6 +4,7 @@ use x86::tlb;
 use x86_64::registers::control::Cr3;
 
 use crate::addr::{PhysAddr, PhysPage, VirtAddr, VirtPage};
+use crate::consts::bit;
 use crate::{
     pagetable::{MappingFlags, PageTable, PTE, TLB},
     VIRT_ADDR_START,

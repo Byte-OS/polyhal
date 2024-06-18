@@ -2,6 +2,7 @@ use bitflags::bitflags;
 use riscv::register::satp;
 
 use crate::addr::{PhysAddr, PhysPage, VirtAddr, VirtPage};
+use crate::consts::bit;
 use crate::kernel_page_table;
 use crate::pagetable::MappingFlags;
 use crate::pagetable::{PageTable, PTE, TLB};

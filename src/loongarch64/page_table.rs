@@ -2,6 +2,7 @@ use loongArch64::register::pgdl;
 
 use crate::{
     addr::{PhysAddr, PhysPage, VirtAddr, VirtPage},
+    consts::bit,
     pagetable::{MappingFlags, PageTable, PTE, TLB},
 };
 

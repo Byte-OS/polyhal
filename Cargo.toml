@@ -42,3 +42,6 @@ arm_gic = { git = "https://github.com/Byte-OS/arm_gic" }
 
 [target.'cfg(target_arch = "loongarch64")'.dependencies]
 loongArch64 = "0.2.2"
+
+[dev-dependencies]
+buddy_system_allocator = "0.9.1"

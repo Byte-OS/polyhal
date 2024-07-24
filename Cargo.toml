@@ -12,8 +12,10 @@ repository = "https://github.com/Byte-OS/polyhal"
 [features]
 kcontext = []
 multicore = []
+interrupt = []
+boot = []
 
-default = ["multicore"]
+default = ["multicore", "interrupt", "boot"]
 
 [dependencies]
 log = "0.4"

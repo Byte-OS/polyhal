@@ -363,6 +363,6 @@ fn loongarch64_trap_handler(tf: &mut TrapFrame) -> TrapType {
         }
     };
     // info!("return to addr: {:#x}", tf.era);
-    unsafe { crate::api::_interrupt_for_arch(tf, trap_type) };
+    unsafe { crate::api::_interrupt_for_arch(tf, trap_type, 0) };
     trap_type
 }

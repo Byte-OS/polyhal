@@ -164,13 +164,10 @@ pub mod time;
 pub mod utils;
 use core::mem::size_of;
 
-use addr::PhysPage;
 use alloc::vec::Vec;
 
 use consts::STACK_SIZE;
 use fdt::Fdt;
-use irq::IRQVector;
-use pagetable::PageTable;
 use utils::LazyInit;
 
 #[cfg_attr(target_arch = "riscv64", path = "riscv64/mod.rs")]
@@ -184,7 +181,19 @@ pub use currrent_arch::TrapFrame;
 
 pub use currrent_arch::*;
 
-pub use polyhal_macro::{arch_entry, arch_interrupt};
+#[cfg(feature = "boot")]
+pub use polyhal_macro::arch_entry;
+#[cfg(feature = "interrupt")]
+pub use polyhal_macro::arch_interrupt;
+
+// Re export the Module like Structure.
+pub use addr::{PhysAddr, PhysPage, VirtAddr, VirtPage};
+pub use debug::DebugConsole;
+pub use irq::{IRQ, IRQVector};
+pub use mem::Barrier;
+pub use multicore::MultiCore;
+pub use pagetable::{MappingFlags, MappingSize, PageTable, PageTableWrapper};
+pub use time::Time;
 
 pub const PAGE_SIZE: usize = PageTable::PAGE_SIZE;
 pub const USER_VADDR_END: usize = PageTable::USER_VADDR_END;

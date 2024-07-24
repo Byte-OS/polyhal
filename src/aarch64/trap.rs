@@ -45,7 +45,7 @@ fn handle_exception(tf: &mut TrapFrame, kind: TrapKind, source: TrapSource) -> T
             }
             _ => TrapType::Irq(irq),
         };
-        unsafe { crate::api::_interrupt_for_arch(tf, trap_type) };
+        unsafe { crate::api::_interrupt_for_arch(tf, trap_type, 0) };
         return trap_type;
     }
     if kind != TrapKind::Synchronous {
@@ -96,7 +96,7 @@ fn handle_exception(tf: &mut TrapFrame, kind: TrapKind, source: TrapSource) -> T
             );
         }
     };
-    unsafe { crate::api::_interrupt_for_arch(tf, trap_type) };
+    unsafe { crate::api::_interrupt_for_arch(tf, trap_type, 0) };
     trap_type
 }
 

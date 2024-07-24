@@ -1,22 +1,18 @@
+//! This is a console for debugging,
+//! If you want to use this logging
+//! You need to use like this:
+//!
+//! #### Put a char to output device(always uart)
+//! ```rust
+//! DebugConsole::putchar(b'3');
+//! ```
+//!
+//! ### Get a char from input device(always uart)
+//! ```rust
+//! DebugConsole::getchar();
+//! ```
+
 use core::fmt::Write;
-
-/// This is a console for debugging,
-/// If you want to use this logging
-/// You need to use like this:
-///
-/// #### Put a char to output device(always uart)
-/// ```rust
-/// DebugConsole::putchar(b'3');
-/// ```
-///
-/// ### Get a char from input device(always uart)
-/// ```rust
-/// DebugConsole::getchar();
-/// ```
-
-pub(crate) macro print($fmt: expr $(, $($arg: tt)+)?) {
-    $crate::debug::_print(format_args!($fmt $(, $($arg)+)?))
-}
 
 /// Print macro to print polyhal information with newline
 pub(crate) macro println {

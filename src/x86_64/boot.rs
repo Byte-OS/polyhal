@@ -69,7 +69,7 @@ pub fn use_multiboot(mboot_ptr: PAddr) -> Option<Multiboot<'static, 'static>> {
 }
 
 global_asm!(
-    include_str!("multiboot.S"),
+    include_str!("asm/multiboot.S"),
     mb_hdr_magic = const MULTIBOOT_HEADER_MAGIC,
     mb_hdr_flags = const MULTIBOOT_HEADER_FLAGS,
     entry = sym rust_tmp_main,
@@ -84,11 +84,11 @@ global_asm!(
     efer = const EFER,
 );
 
-pub fn kernel_page_table() -> PageTable {
+pub fn boot_page_table() -> PageTable {
     extern "C" {
-        fn _kernel_page_table();
+        fn _boot_page_table();
     }
     PageTable(crate::addr::PhysAddr(
-        _kernel_page_table as usize - VIRT_ADDR_START,
+        _boot_page_table as usize - VIRT_ADDR_START,
     ))
 }

@@ -1,10 +1,9 @@
-use core::arch::riscv64::sfence_vma_all;
-
 use crate::pagetable::{PageTable, PTE};
 use crate::VIRT_ADDR_START;
 
 use super::page_table::PTEFlags;
 
+/// TODO: Map the whole memory in the available memory region.
 #[link_section = ".data.prepage.entry"]
 pub(crate) static mut PAGE_TABLE: [PTE; PageTable::PTE_NUM_IN_PAGE] = {
     let mut arr: [PTE; PageTable::PTE_NUM_IN_PAGE] = [PTE(0); PageTable::PTE_NUM_IN_PAGE];
@@ -132,18 +131,7 @@ pub(crate) unsafe extern "C" fn secondary_start() -> ! {
     );
 }
 
-pub fn switch_to_kernel_page_table() {
-    unsafe {
-        riscv::register::satp::set(
-            riscv::register::satp::Mode::Sv39,
-            0,
-            (PAGE_TABLE.as_ptr() as usize & !VIRT_ADDR_START) >> 12,
-        );
-        sfence_vma_all();
-    }
-}
-
-pub fn kernel_page_table() -> PageTable {
+pub fn boot_page_table() -> PageTable {
     PageTable(crate::addr::PhysAddr(unsafe {
         PAGE_TABLE.as_ptr() as usize & !VIRT_ADDR_START
     }))

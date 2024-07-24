@@ -8,7 +8,7 @@ mod interrupt;
 mod irq;
 #[cfg(feature = "kcontext")]
 mod kcontext;
-mod multiboot;
+mod boot;
 mod page_table;
 mod sigtrx;
 mod time;
@@ -23,7 +23,7 @@ pub use context::TrapFrame;
 pub use interrupt::*;
 #[cfg(feature = "kcontext")]
 pub use kcontext::{context_switch, context_switch_pt, read_current_tp, KContext};
-pub use multiboot::kernel_page_table;
+pub use boot::boot_page_table;
 use raw_cpuid::CpuId;
 pub use uart::*;
 
@@ -36,7 +36,7 @@ use x86_64::{
 };
 
 use crate::{
-    currrent_arch::multiboot::use_multiboot,
+    currrent_arch::boot::use_multiboot,
     debug::{display_info, println},
     multicore::MultiCore,
     percpu::set_local_thread_pointer,

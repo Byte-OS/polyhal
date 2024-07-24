@@ -70,7 +70,8 @@ fn main(hartid: usize) {
         println!("init memory region {:#x} - {:#x}", start, start + size);
         frame::add_frame_range(start, start + size);
     });
-    panic!("end of rust_main!");
+    log::info!("Run END. Shutdown successfully.");
+    shutdown();
 }
 
 #[panic_handler]

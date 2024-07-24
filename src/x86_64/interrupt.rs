@@ -103,7 +103,7 @@ fn kernel_callback(context: &mut TrapFrame) {
             );
         }
     };
-    unsafe { crate::api::_interrupt_for_arch(context, trap_type) };
+    unsafe { crate::api::_interrupt_for_arch(context, trap_type, 0) };
 }
 
 #[naked]
@@ -402,7 +402,7 @@ pub fn run_user_task(context: &mut TrapFrame) -> Option<()> {
 
     match context.vector {
         SYSCALL_VECTOR => {
-            unsafe { crate::api::_interrupt_for_arch(context, TrapType::UserEnvCall) };
+            unsafe { crate::api::_interrupt_for_arch(context, TrapType::UserEnvCall, 0) };
             Some(())
         }
         _ => {

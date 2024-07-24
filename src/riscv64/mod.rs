@@ -2,7 +2,7 @@ mod barrier;
 mod boards;
 mod consts;
 mod context;
-mod entry;
+mod boot;
 mod interrupt;
 mod irq;
 #[cfg(feature = "kcontext")]
@@ -16,7 +16,7 @@ use core::slice;
 use alloc::vec::Vec;
 pub use consts::*;
 pub use context::{KernelToken, TrapFrame};
-pub use entry::{kernel_page_table, switch_to_kernel_page_table};
+pub use boot::boot_page_table;
 use fdt::Fdt;
 pub use interrupt::{run_user_task, run_user_task_forever};
 use sbi::*;
@@ -162,7 +162,7 @@ pub fn arch_init() {
 impl MultiCore {
     /// Boot all application cores.
     pub fn boot_all() {
-        use self::entry::secondary_start;
+        use self::boot::secondary_start;
         use crate::{
             addr::VirtPage,
             pagetable::{MappingFlags, MappingSize, PageTable},

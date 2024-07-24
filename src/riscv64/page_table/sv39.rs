@@ -3,7 +3,7 @@ use riscv::register::satp;
 
 use crate::addr::{PhysAddr, PhysPage, VirtAddr, VirtPage};
 use crate::consts::bit;
-use crate::kernel_page_table;
+use crate::boot_page_table;
 use crate::pagetable::MappingFlags;
 use crate::pagetable::{PageTable, PTE, TLB};
 
@@ -54,18 +54,6 @@ impl PTE {
     #[inline]
     pub const fn is_valid(&self) -> bool {
         self.flags().contains(PTEFlags::V) && self.0 > u8::MAX as usize
-    }
-
-    /// 判断是否是大页
-    ///
-    /// 大页判断条件 V 位为 1, R/W/X 位至少有一个不为 0
-    /// PTE 页表范围 1G(0x4000_0000) 2M(0x20_0000) 4K(0x1000)
-    #[inline]
-    pub fn is_huge(&self) -> bool {
-        return self.flags().contains(PTEFlags::V)
-            && (self.flags().contains(PTEFlags::R)
-                || self.flags().contains(PTEFlags::W)
-                || self.flags().contains(PTEFlags::X));
     }
 
     #[inline]
@@ -197,7 +185,7 @@ impl PageTable {
     #[inline]
     pub fn restore(&self) {
         self.release();
-        let kernel_arr = Self::get_pte_list(kernel_page_table().0);
+        let kernel_arr = Self::get_pte_list(boot_page_table().0);
         let arr = Self::get_pte_list(self.0);
         arr[0x100..].copy_from_slice(&kernel_arr[0x100..]);
         // TODO: using map kernel in the boot instead of map here manually

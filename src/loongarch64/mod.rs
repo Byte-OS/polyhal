@@ -12,7 +12,7 @@ mod trap;
 mod unaligned;
 
 use crate::{
-    clear_bss, multicore::MultiCore, percpu::percpu_area_init, CPU_NUM, DTB_BIN, MEM_AREA,
+    clear_bss, debug::{display_info, println}, multicore::MultiCore, percpu::percpu_area_init, CPU_NUM, DTB_BIN, MEM_AREA
 };
 use alloc::vec::Vec;
 pub use consts::*;
@@ -27,6 +27,15 @@ pub fn rust_tmp_main(hart_id: usize) {
     clear_bss();
     percpu_area_init(hart_id);
     console::init();
+
+    display_info!();
+    println!(include_str!("../banner.txt"));
+    display_info!("Platform Name", "loongarch64");
+    display_info!("Platform Virt Mem Offset", "{:#x}", VIRT_ADDR_START);
+    display_info!();
+    display_info!("Boot HART ID", "{}", hart_id);
+    display_info!();
+    
     trap::set_trap_vector_base();
     sigtrx::init();
     // Enable floating point

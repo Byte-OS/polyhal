@@ -2,7 +2,9 @@ use crate::addr::PhysPage;
 use crate::{TrapFrame, TrapType, PAGE_ALLOC};
 
 extern "Rust" {
+    #[cfg(feature = "boot")]
     pub(crate) fn _main_for_arch(hartid: usize);
+    #[cfg(feature = "interrupt")]
     pub(crate) fn _interrupt_for_arch(ctx: &mut TrapFrame, trap_type: TrapType, token: usize);
 }
 

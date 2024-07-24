@@ -91,7 +91,7 @@ pub fn rust_tmp_main(hart_id: usize, device_tree: usize) {
     shutdown();
 }
 
-pub fn kernel_page_table() -> PageTable {
+pub fn boot_page_table() -> PageTable {
     PageTable(crate::addr::PhysAddr(TTBR0_EL1.get_baddr() as _))
 }
 

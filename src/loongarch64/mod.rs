@@ -20,7 +20,7 @@ pub use context::TrapFrame;
 #[cfg(feature = "kcontext")]
 pub use kcontext::{context_switch, context_switch_pt, read_current_tp, KContext};
 use loongArch64::register::euen;
-pub use page_table::kernel_page_table;
+pub use page_table::boot_page_table;
 pub use trap::{disable_irq, enable_external_irq, enable_irq, run_user_task};
 
 pub fn rust_tmp_main(hart_id: usize) {
@@ -51,7 +51,6 @@ pub fn rust_tmp_main(hart_id: usize) {
 }
 
 pub fn shutdown() -> ! {
-    error!("shutdown!");
     loop {
         unsafe { loongArch64::asm::idle() };
     }

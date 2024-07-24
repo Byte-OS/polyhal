@@ -174,7 +174,7 @@ impl TLB {
     }
 }
 
-pub fn kernel_page_table() -> PageTable {
+pub fn boot_page_table() -> PageTable {
     // FIXME: This should return a valid page table.
     // ref solution: create a blank page table in boot stage.
     PageTable(PhysAddr(0))

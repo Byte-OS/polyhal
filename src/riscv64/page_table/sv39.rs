@@ -7,8 +7,6 @@ use crate::consts::bit;
 use crate::pagetable::MappingFlags;
 use crate::pagetable::{PageTable, PTE, TLB};
 
-use super::sigtrx::get_trx_mapping;
-
 impl PTE {
     #[inline]
     pub const fn from_ppn(ppn: usize, flags: PTEFlags) -> Self {
@@ -188,8 +186,6 @@ impl PageTable {
         let kernel_arr = Self::get_pte_list(boot_page_table().0);
         let arr = Self::get_pte_list(self.0);
         arr[0x100..].copy_from_slice(&kernel_arr[0x100..]);
-        // TODO: using map kernel in the boot instead of map here manually
-        arr[0x104] = PTE::from_addr(get_trx_mapping(), PTEFlags::V);
         arr[0..0x100].fill(PTE(0));
     }
 

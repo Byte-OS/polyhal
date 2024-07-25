@@ -1,4 +1,3 @@
-pub mod sigtrx;
 mod sv39;
 
 use core::arch::riscv64::sfence_vma;

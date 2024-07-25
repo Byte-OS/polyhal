@@ -82,7 +82,6 @@ pub fn rust_tmp_main(hart_id: usize) {
     display_info!();
 
     super::trap::set_trap_vector_base();
-    super::sigtrx::init();
     // Enable floating point
     euen::set_fpe(true);
     super::timer::init_timer();

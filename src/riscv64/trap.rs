@@ -83,12 +83,8 @@ static USER_RSP: usize = 0;
 
 // 设置中断
 pub(crate) fn init_interrupt() {
-    crate::currrent_arch::page_table::sigtrx::init();
-    // 输出内核信息
-
     unsafe {
         stvec::write(kernelvec as usize, stvec::TrapMode::Direct);
-        // asm!("csrw stvec, a0", in("a0") kernelvec as usize);
     }
 
     // 初始化定时器

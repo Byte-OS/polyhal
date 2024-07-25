@@ -102,7 +102,6 @@ fn rust_tmp_main(magic: usize, mboot_ptr: usize) {
     super::uart::init_early();
     super::idt::init();
     super::apic::init();
-    super::sigtrx::init();
     // Init allocator
     set_local_thread_pointer(hart_id());
     super::gdt::init();

@@ -6,7 +6,6 @@ mod context;
 #[cfg(feature = "kcontext")]
 mod kcontext;
 mod page_table;
-mod sigtrx;
 mod timer;
 mod trap;
 mod unaligned;

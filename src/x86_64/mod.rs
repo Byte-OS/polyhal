@@ -9,7 +9,6 @@ mod irq;
 #[cfg(feature = "kcontext")]
 mod kcontext;
 mod page_table;
-mod sigtrx;
 mod time;
 mod trap;
 mod uart;

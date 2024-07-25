@@ -6,8 +6,6 @@ use crate::{
     pagetable::{MappingFlags, PageTable, PTE, TLB},
 };
 
-use super::sigtrx::get_trx_mapping;
-
 impl PTE {
     #[inline]
     pub const fn from_addr(ppn: PhysAddr, flags: PTEFlags) -> Self {
@@ -131,7 +129,6 @@ impl PageTable {
     #[inline]
     pub fn restore(&self) {
         self.release();
-        self.0.slice_mut_with_len::<PTE>(0x200)[0x100] = PTE(get_trx_mapping());
 
         TLB::flush_all();
     }

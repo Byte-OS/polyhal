@@ -4,14 +4,12 @@ use aarch64_cpu::registers::{Writeable, ESR_EL1, FAR_EL1, VBAR_EL1};
 use tock_registers::interfaces::Readable;
 
 use crate::{
-    currrent_arch::{gic::TIMER_IRQ_NUM, timer::set_next_timer},
-    instruction::Instruction,
-    TrapType,
+    currrent_arch::{gic::TIMER_IRQ_NUM, timer::set_next_timer}, instruction::Instruction, EscapeReason, TrapType
 };
 
 use super::{gic::get_irq, TrapFrame};
 
-global_asm!(include_str!("trap.S"));
+global_asm!(include_str!("asm/trap.S"));
 
 #[repr(u8)]
 #[derive(Debug, PartialEq)]
@@ -41,7 +39,7 @@ fn handle_exception(tf: &mut TrapFrame, kind: TrapKind, source: TrapSource) -> T
             TIMER_IRQ_NUM => {
                 irq.ack();
                 set_next_timer();
-                TrapType::Time
+                TrapType::Timer
             }
             _ => TrapType::Irq(irq),
         };
@@ -62,7 +60,7 @@ fn handle_exception(tf: &mut TrapFrame, kind: TrapKind, source: TrapSource) -> T
             tf.elr += 4;
             TrapType::Breakpoint
         }
-        Some(ESR_EL1::EC::Value::SVC64) => TrapType::UserEnvCall,
+        Some(ESR_EL1::EC::Value::SVC64) => TrapType::SysCall,
         Some(ESR_EL1::EC::Value::DataAbortLowerEL)
         | Some(ESR_EL1::EC::Value::InstrAbortLowerEL) => {
             let iss = esr.read(ESR_EL1::ISS);
@@ -153,12 +151,9 @@ extern "C" fn user_restore(context: *mut TrapFrame) -> TrapKind {
     }
 }
 
-pub fn run_user_task(cx: &mut TrapFrame) -> Option<()> {
+pub fn run_user_task(cx: &mut TrapFrame) -> EscapeReason {
     let trap_kind = user_restore(cx);
-    match handle_exception(cx, trap_kind, TrapSource::LowerAArch64) {
-        TrapType::UserEnvCall => Some(()),
-        _ => None,
-    }
+    handle_exception(cx, trap_kind, TrapSource::LowerAArch64).into()
 }
 
 /// Implement the instructions for the riscv

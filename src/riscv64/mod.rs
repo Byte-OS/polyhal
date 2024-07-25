@@ -3,7 +3,7 @@ mod boards;
 mod consts;
 mod context;
 mod boot;
-mod interrupt;
+mod trap;
 mod irq;
 #[cfg(feature = "kcontext")]
 mod kcontext;
@@ -18,7 +18,7 @@ pub use consts::*;
 pub use context::{KernelToken, TrapFrame};
 pub use boot::boot_page_table;
 use fdt::Fdt;
-pub use interrupt::{run_user_task, run_user_task_forever};
+pub use trap::{run_user_task, run_user_task_forever};
 use sbi::*;
 
 pub use sbi::shutdown;
@@ -49,7 +49,7 @@ pub(crate) fn rust_main(hartid: usize, device_tree: usize) {
     println!("init success, CPU_ID: {}", CPU_ID.read_current());
     CPU_ID.write_current(hartid);
     // println!("NEWCPU_ID offset: {}", NEW_CPU_ID.offset());
-    interrupt::init_interrupt();
+    trap::init_interrupt();
 
     let (_hartid, device_tree) = boards::init_device(hartid, device_tree | VIRT_ADDR_START);
 
@@ -97,7 +97,7 @@ pub(crate) extern "C" fn rust_secondary_main(hartid: usize) {
     crate::percpu::set_local_thread_pointer(hartid);
     CPU_ID.write_current(hartid);
 
-    interrupt::init_interrupt();
+    trap::init_interrupt();
 
     let (hartid, _device_tree) = boards::init_device(hartid, 0);
 

@@ -6,7 +6,7 @@ use loongArch64::register::{
 };
 
 use crate::instruction::Instruction;
-use crate::TrapType;
+use crate::{EscapeReason, TrapType};
 
 use super::unaligned::emulate_load_store_insn;
 use super::TrapFrame;
@@ -194,12 +194,9 @@ pub fn enable_external_irq() {
     // }
 }
 
-pub fn run_user_task(cx: &mut TrapFrame) -> Option<()> {
+pub fn run_user_task(cx: &mut TrapFrame) -> EscapeReason {
     user_restore(cx);
-    match loongarch64_trap_handler(cx) {
-        TrapType::UserEnvCall => Some(()),
-        _ => None,
-    }
+    loongarch64_trap_handler(cx).into()
 }
 
 #[naked]
@@ -331,12 +328,12 @@ fn loongarch64_trap_handler(tf: &mut TrapFrame) -> TrapType {
                 // TIMER_IRQ
                 11 => {
                     ticlr::clear_timer_interrupt();
-                    TrapType::Time
+                    TrapType::Timer
                 }
                 _ => panic!("unknown interrupt: {}", irq_num),
             }
         }
-        Trap::Exception(Exception::Syscall) => TrapType::UserEnvCall,
+        Trap::Exception(Exception::Syscall) => TrapType::SysCall,
         Trap::Exception(Exception::StorePageFault)
         | Trap::Exception(Exception::PageModifyFault) => {
             TrapType::StorePageFault(badv::read().vaddr())

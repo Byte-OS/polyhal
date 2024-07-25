@@ -11,6 +11,7 @@ use x86::{controlregs::cr2, irq::*};
 use crate::consts::TRAPFRAME_SIZE;
 use crate::currrent_arch::consts::SYSCALL_VECTOR;
 use crate::currrent_arch::gdt::set_tss_kernel_sp;
+use crate::EscapeReason;
 use crate::{currrent_arch::gdt::GdtStruct, TrapFrame, TrapType};
 
 use super::apic::vectors::APIC_TIMER_VECTOR;
@@ -43,7 +44,7 @@ global_asm!(
 "
 );
 
-global_asm!(include_str!("trap.S"));
+global_asm!(include_str!("asm/trap.S"));
 
 bitflags! {
     // https://wiki.osdev.org/Exceptions#Page_Fault
@@ -90,7 +91,7 @@ fn kernel_callback(context: &mut TrapFrame) {
         }
         APIC_TIMER_VECTOR => {
             unsafe { super::apic::local_apic().end_of_interrupt() };
-            TrapType::Time
+            TrapType::Timer
         }
         // PIC IRQS
         0x20..=0x2f => TrapType::Irq(crate::irq::IRQVector(
@@ -382,7 +383,7 @@ unsafe extern "C" fn syscall_entry() {
 }
 
 /// Return Some(()) if it was interrupt by syscall, otherwise None.
-pub fn run_user_task(context: &mut TrapFrame) -> Option<()> {
+pub fn run_user_task(context: &mut TrapFrame) -> EscapeReason {
     // TODO: set tss kernel sp just once, before task run.
     let cx_general_top =
         context as *mut TrapFrame as usize + TRAPFRAME_SIZE - size_of::<FxsaveArea>();
@@ -402,12 +403,12 @@ pub fn run_user_task(context: &mut TrapFrame) -> Option<()> {
 
     match context.vector {
         SYSCALL_VECTOR => {
-            unsafe { crate::api::_interrupt_for_arch(context, TrapType::UserEnvCall, 0) };
-            Some(())
+            unsafe { crate::api::_interrupt_for_arch(context, TrapType::SysCall, 0) };
+            EscapeReason::SysCall
         }
         _ => {
             kernel_callback(context);
-            None
+            EscapeReason::NoReason
         }
     }
 }

@@ -231,8 +231,8 @@ pub enum TrapFrameArgs {
 #[derive(Debug, Clone, Copy)]
 pub enum TrapType {
     Breakpoint,
-    UserEnvCall,
-    Time,
+    SysCall,
+    Timer,
     Unknown,
     SupervisorExternal,
     StorePageFault(usize),
@@ -240,6 +240,24 @@ pub enum TrapType {
     InstructionPageFault(usize),
     IllegalInstruction(usize),
     Irq(IRQVector),
+}
+
+#[derive(Debug, Clone, Copy)]
+pub enum EscapeReason {
+    NoReason,
+    IRQ,
+    Timer,
+    SysCall
+}
+
+// TODO: Implement Into EscapeReason
+impl Into<EscapeReason> for TrapType {
+    fn into(self) -> EscapeReason {
+        match self {
+            TrapType::SysCall => EscapeReason::SysCall,
+            _ => EscapeReason::NoReason
+        }
+    }
 }
 
 #[link_section = ".bss.stack"]
@@ -259,8 +277,11 @@ pub(crate) fn clear_bss() {
     }
 }
 
+/// Page Allocation trait for privoids that page allocation
 pub trait PageAlloc: Sync {
+    /// Allocate a physical page
     fn alloc(&self) -> PhysPage;
+    /// Release a physical page
     fn dealloc(&self, ppn: PhysPage);
 }
 

@@ -1,6 +1,6 @@
 use super::context::KernelToken;
 use super::timer;
-use crate::PerCPUReservedOffset;
+use crate::{EscapeReason, PerCPUReservedOffset};
 use crate::{instruction::Instruction, TrapFrame, TrapType, VIRT_ADDR_START};
 use core::arch::{asm, global_asm};
 use core::mem::size_of;
@@ -119,11 +119,11 @@ fn kernel_callback(context: &mut TrapFrame) -> TrapType {
             }
             TrapType::Unknown
         }
-        Trap::Exception(Exception::UserEnvCall) => TrapType::UserEnvCall,
+        Trap::Exception(Exception::UserEnvCall) => TrapType::SysCall,
         // 时钟中断
         Trap::Interrupt(Interrupt::SupervisorTimer) => {
             timer::set_next_timeout();
-            TrapType::Time
+            TrapType::Timer
         }
         Trap::Exception(Exception::StorePageFault) => TrapType::StorePageFault(stval),
         Trap::Exception(Exception::InstructionPageFault) => TrapType::InstructionPageFault(stval),
@@ -321,12 +321,9 @@ impl TrapFrame {
 }
 
 /// Return Some(()) if it was interrupt by syscall, otherwise None.
-pub fn run_user_task(context: &mut TrapFrame) -> Option<()> {
+pub fn run_user_task(context: &mut TrapFrame) -> EscapeReason {
     user_restore(context);
-    match kernel_callback(context) {
-        TrapType::UserEnvCall => Some(()),
-        _ => None,
-    }
+    kernel_callback(context).into()
 }
 
 pub fn run_user_task_forever(context: &mut TrapFrame) -> ! {

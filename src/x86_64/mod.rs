@@ -4,7 +4,7 @@ mod consts;
 mod context;
 mod gdt;
 mod idt;
-mod interrupt;
+mod trap;
 mod irq;
 #[cfg(feature = "kcontext")]
 mod kcontext;
@@ -20,7 +20,7 @@ use ::multiboot::information::MemoryType;
 use alloc::vec::Vec;
 pub use consts::VIRT_ADDR_START;
 pub use context::TrapFrame;
-pub use interrupt::*;
+pub use trap::*;
 #[cfg(feature = "kcontext")]
 pub use kcontext::{context_switch, context_switch_pt, read_current_tp, KContext};
 pub use boot::boot_page_table;
@@ -63,7 +63,7 @@ fn rust_tmp_main(magic: usize, mboot_ptr: usize) {
     // Init allocator
     set_local_thread_pointer(hart_id());
     gdt::init();
-    interrupt::init_syscall();
+    trap::init_syscall();
     time::init_early();
 
     // enable avx extend instruction set and sse if support avx

@@ -189,7 +189,7 @@ pub use polyhal_macro::arch_interrupt;
 // Re export the Module like Structure.
 pub use addr::{PhysAddr, PhysPage, VirtAddr, VirtPage};
 pub use debug::DebugConsole;
-pub use irq::{IRQ, IRQVector};
+pub use irq::{IRQVector, IRQ};
 pub use mem::Barrier;
 pub use multicore::MultiCore;
 pub use pagetable::{MappingFlags, MappingSize, PageTable, PageTableWrapper};
@@ -247,7 +247,7 @@ pub enum EscapeReason {
     NoReason,
     IRQ,
     Timer,
-    SysCall
+    SysCall,
 }
 
 // TODO: Implement Into EscapeReason
@@ -255,7 +255,7 @@ impl Into<EscapeReason> for TrapType {
     fn into(self) -> EscapeReason {
         match self {
             TrapType::SysCall => EscapeReason::SysCall,
-            _ => EscapeReason::NoReason
+            _ => EscapeReason::NoReason,
         }
     }
 }

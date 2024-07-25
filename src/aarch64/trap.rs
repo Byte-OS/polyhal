@@ -4,7 +4,9 @@ use aarch64_cpu::registers::{Writeable, ESR_EL1, FAR_EL1, VBAR_EL1};
 use tock_registers::interfaces::Readable;
 
 use crate::{
-    currrent_arch::{gic::TIMER_IRQ_NUM, timer::set_next_timer}, instruction::Instruction, EscapeReason, TrapType
+    currrent_arch::{gic::TIMER_IRQ_NUM, timer::set_next_timer},
+    instruction::Instruction,
+    EscapeReason, TrapType,
 };
 
 use super::{gic::get_irq, TrapFrame};

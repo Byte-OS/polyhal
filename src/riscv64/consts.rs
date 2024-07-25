@@ -1,5 +1,4 @@
 pub const VIRT_ADDR_START: usize = 0xffff_ffc0_0000_0000;
-pub const SIG_RETURN_ADDR: usize = 0xFFFF_FFC1_0000_0000;
 
 /// Every core has a unique area of memory.
 /// Just using pagetable to map multi core area.

@@ -3,13 +3,13 @@ use core::ops::Range;
 #[derive(Debug, Clone)]
 pub struct AddrRegion {
     pub start: usize,
-    pub size: usize
+    pub size: usize,
 }
 
 /// Implementation of `AddrRegion`
 impl AddrRegion {
     /// Subtracts a region from the original region.
-    pub(crate) fn sub_region(&mut self, mut other: AddrRegion) -> Option<AddrRegion> { 
+    pub(crate) fn sub_region(&mut self, mut other: AddrRegion) -> Option<AddrRegion> {
         // If the region was not overlapped.
         if self.start + self.size < other.start || other.start + other.size < self.start {
             return None;

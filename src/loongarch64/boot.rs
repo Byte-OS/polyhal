@@ -1,3 +1,13 @@
+use loongArch64::register::euen;
+
+use crate::{
+    clear_bss,
+    currrent_arch::console,
+    debug::{display_info, println},
+    percpu::percpu_area_init,
+    CPU_NUM, VIRT_ADDR_START,
+};
+
 /// The earliest entry point for the primary CPU.
 ///
 /// We can't use bl to jump to higher address, so we use jirl to jump to higher address.
@@ -34,7 +44,7 @@ unsafe extern "C" fn _start() -> ! {
         ",
         boot_stack_size = const crate::STACK_SIZE,
         boot_stack = sym crate::BOOT_STACK,
-        entry = sym super::rust_tmp_main,
+        entry = sym rust_tmp_main,
         options(noreturn),
     )
 }
@@ -54,3 +64,36 @@ unsafe extern "C" fn _start_secondary() -> ! {
         options(noreturn),
     )
 }
+
+/// Rust temporary entry point
+///
+/// This function will be called after assembly boot stage.
+pub fn rust_tmp_main(hart_id: usize) {
+    clear_bss();
+    percpu_area_init(hart_id);
+    console::init();
+
+    display_info!();
+    println!(include_str!("../banner.txt"));
+    display_info!("Platform Name", "loongarch64");
+    display_info!("Platform Virt Mem Offset", "{:#x}", VIRT_ADDR_START);
+    display_info!();
+    display_info!("Boot HART ID", "{}", hart_id);
+    display_info!();
+
+    super::trap::set_trap_vector_base();
+    super::sigtrx::init();
+    // Enable floating point
+    euen::set_fpe(true);
+    super::timer::init_timer();
+    super::trap::tlb_init(super::trap::tlb_fill as _);
+
+    CPU_NUM.init_by(2);
+
+    unsafe { crate::api::_main_for_arch(hart_id) };
+
+    crate::shutdown();
+}
+
+/// The entry point for the second core.
+pub(crate) extern "C" fn _rust_secondary_main(_hartid: usize) {}

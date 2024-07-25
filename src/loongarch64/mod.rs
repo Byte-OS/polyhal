@@ -11,44 +11,14 @@ mod timer;
 mod trap;
 mod unaligned;
 
-use crate::{
-    clear_bss, debug::{display_info, println}, multicore::MultiCore, percpu::percpu_area_init, CPU_NUM, DTB_BIN, MEM_AREA
-};
+use crate::{multicore::MultiCore, DTB_BIN, MEM_AREA};
 use alloc::vec::Vec;
 pub use consts::*;
 pub use context::TrapFrame;
 #[cfg(feature = "kcontext")]
 pub use kcontext::{context_switch, context_switch_pt, read_current_tp, KContext};
-use loongArch64::register::euen;
 pub use page_table::boot_page_table;
 pub use trap::{disable_irq, enable_external_irq, enable_irq, run_user_task};
-
-pub fn rust_tmp_main(hart_id: usize) {
-    clear_bss();
-    percpu_area_init(hart_id);
-    console::init();
-
-    display_info!();
-    println!(include_str!("../banner.txt"));
-    display_info!("Platform Name", "loongarch64");
-    display_info!("Platform Virt Mem Offset", "{:#x}", VIRT_ADDR_START);
-    display_info!();
-    display_info!("Boot HART ID", "{}", hart_id);
-    display_info!();
-    
-    trap::set_trap_vector_base();
-    sigtrx::init();
-    // Enable floating point
-    euen::set_fpe(true);
-    timer::init_timer();
-    trap::tlb_init(trap::tlb_fill as _);
-
-    CPU_NUM.init_by(2);
-
-    unsafe { crate::api::_main_for_arch(hart_id) };
-
-    shutdown();
-}
 
 pub fn shutdown() -> ! {
     loop {
@@ -69,8 +39,6 @@ pub(crate) fn arch_init() {
 pub fn hart_id() -> usize {
     loongArch64::register::cpuid::read().core_id()
 }
-
-pub(crate) extern "C" fn _rust_secondary_main(_hartid: usize) {}
 
 #[cfg(feature = "multicore")]
 impl MultiCore {

@@ -1,7 +1,7 @@
 use super::context::KernelToken;
 use super::timer;
-use crate::{EscapeReason, PerCPUReservedOffset};
 use crate::{instruction::Instruction, TrapFrame, TrapType, VIRT_ADDR_START};
+use crate::{EscapeReason, PerCPUReservedOffset};
 use core::arch::{asm, global_asm};
 use core::mem::size_of;
 use riscv::register::{
@@ -320,12 +320,13 @@ impl TrapFrame {
     }
 }
 
-/// Return Some(()) if it was interrupt by syscall, otherwise None.
+/// Return EscapeReson related to interrupt type.
 pub fn run_user_task(context: &mut TrapFrame) -> EscapeReason {
     user_restore(context);
     kernel_callback(context).into()
 }
 
+/// Run user task until interrupt is received.
 pub fn run_user_task_forever(context: &mut TrapFrame) -> ! {
     loop {
         user_restore(context);

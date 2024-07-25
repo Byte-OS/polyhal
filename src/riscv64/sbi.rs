@@ -37,6 +37,7 @@ pub fn set_timer(time: usize) {
     sbi_rt::set_timer(time as _);
 }
 
+/// Debug console function.
 impl DebugConsole {
     #[inline]
     #[allow(deprecated)]

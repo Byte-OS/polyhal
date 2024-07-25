@@ -1,5 +1,10 @@
+use fdt::Fdt;
+use riscv::register::{sie, sstatus};
+
+use crate::currrent_arch::{boards, trap, CPU_ID, DTB_PTR};
+use crate::debug::{display_info, println};
 use crate::pagetable::{PageTable, PTE};
-use crate::VIRT_ADDR_START;
+use crate::{shutdown, CPU_NUM, VIRT_ADDR_START};
 
 use super::page_table::PTEFlags;
 
@@ -85,7 +90,7 @@ unsafe extern "C" fn _start() -> ! {
         stack_size = const crate::STACK_SIZE,
         boot_stack = sym crate::BOOT_STACK,
         page_table = sym PAGE_TABLE,
-        entry = sym super::rust_main,
+        entry = sym rust_main,
         virt_addr_start = const VIRT_ADDR_START,
         options(noreturn),
     )
@@ -125,10 +130,82 @@ pub(crate) unsafe extern "C" fn secondary_start() -> ! {
             jalr    a2                      // call rust_main
         ",
         page_table = sym PAGE_TABLE,
-        entry = sym super::rust_secondary_main,
+        entry = sym rust_secondary_main,
         virt_addr_start = const VIRT_ADDR_START,
         options(noreturn)
     );
+}
+
+pub(crate) fn rust_main(hartid: usize, device_tree: usize) {
+    crate::clear_bss();
+    // Init allocator
+    crate::percpu::set_local_thread_pointer(hartid);
+    println!("CPU_ID offset: {:#x}", CPU_ID.offset());
+    println!("init success, CPU_ID: {}", CPU_ID.read_current());
+    CPU_ID.write_current(hartid);
+    // println!("NEWCPU_ID offset: {}", NEW_CPU_ID.offset());
+    trap::init_interrupt();
+
+    let (_hartid, device_tree) = boards::init_device(hartid, device_tree | VIRT_ADDR_START);
+
+    println!("CPU_ID offset: {:#x}", CPU_ID.offset());
+
+    // 开启 SUM
+    unsafe {
+        // 开启浮点运算
+        sstatus::set_fs(sstatus::FS::Dirty);
+        sie::set_sext();
+        sie::set_ssoft();
+    }
+
+    CPU_NUM.init_by(match unsafe { Fdt::from_ptr(device_tree as *const u8) } {
+        Ok(fdt) => fdt.cpus().count(),
+        Err(_) => 1,
+    });
+
+    DTB_PTR.init_by(device_tree);
+
+    display_info!();
+    println!(include_str!("../banner.txt"));
+    display_info!("Platform Name", "riscv64");
+    if let Ok(fdt) = unsafe { Fdt::from_ptr(device_tree as *const u8) } {
+        display_info!("Platform HART Count", "{}", fdt.cpus().count());
+        fdt.memory().regions().for_each(|x| {
+            display_info!(
+                "Platform Memory Region",
+                "{:#p} - {:#018x}",
+                x.starting_address,
+                x.starting_address as usize + x.size.unwrap()
+            );
+        });
+    }
+    display_info!("Platform Virt Mem Offset", "{:#x}", VIRT_ADDR_START);
+    display_info!();
+    display_info!("Boot HART ID", "{}", hartid);
+    display_info!();
+
+    unsafe { crate::api::_main_for_arch(hartid) };
+    shutdown();
+}
+
+pub(crate) extern "C" fn rust_secondary_main(hartid: usize) {
+    crate::percpu::set_local_thread_pointer(hartid);
+    CPU_ID.write_current(hartid);
+
+    trap::init_interrupt();
+
+    let (hartid, _device_tree) = boards::init_device(hartid, 0);
+
+    unsafe {
+        // 开启浮点运算
+        sstatus::set_fs(sstatus::FS::Dirty);
+        sie::set_sext();
+        sie::set_ssoft();
+    }
+
+    info!("secondary hart {} started", hartid);
+    unsafe { crate::api::_main_for_arch(hartid) };
+    shutdown();
 }
 
 pub fn boot_page_table() -> PageTable {

@@ -4,6 +4,8 @@ use aarch64_cpu::registers::{Writeable, ESR_EL1, FAR_EL1, VBAR_EL1};
 use tock_registers::interfaces::Readable;
 
 use crate::components::instruction::Instruction;
+use crate::components::irq::{get_irq, TIMER_IRQ_NUM};
+use crate::components::timer::set_next_timer;
 use crate::components::trapframe::TrapFrame;
 
 use crate::components::trap::{EscapeReason, TrapType};
@@ -33,19 +35,17 @@ enum TrapSource {
 #[no_mangle]
 fn handle_exception(tf: &mut TrapFrame, kind: TrapKind, source: TrapSource) -> TrapType {
     if kind == TrapKind::Irq {
-        // TODO: Handle interrupt
-        todo!("Hnadle IRQ Method");
-        // let irq = get_irq();
-        // let trap_type = match irq.irq_num() {
-        //     TIMER_IRQ_NUM => {
-        //         irq.ack();
-        //         set_next_timer();
-        //         TrapType::Timer
-        //     }
-        //     _ => TrapType::Irq(irq),
-        // };
-        // unsafe { crate::components::trap::_interrupt_for_arch(tf, trap_type, 0) };
-        // return trap_type;
+        let irq = get_irq();
+        let trap_type = match irq.irq_num() {
+            TIMER_IRQ_NUM => {
+                irq.ack();
+                set_next_timer();
+                TrapType::Timer
+            }
+            _ => TrapType::Irq(irq),
+        };
+        unsafe { crate::components::trap::_interrupt_for_arch(tf, trap_type, 0) };
+        return trap_type;
     }
     if kind != TrapKind::Synchronous {
         panic!(

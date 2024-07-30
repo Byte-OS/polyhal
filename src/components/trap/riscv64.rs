@@ -1,4 +1,4 @@
-use crate::components::{consts::VIRT_ADDR_START, trapframe::TrapFrame};
+use crate::components::{consts::VIRT_ADDR_START, timer, trapframe::TrapFrame};
 use core::arch::{asm, global_asm};
 use riscv::register::{
     scause::{self, Exception, Interrupt, Trap},
@@ -88,8 +88,6 @@ pub(crate) fn init() {
 
     // Initialize the timer component
     crate::components::timer::init();
-    // TODO: Initialize the timer in timer module.
-    // timer::init();
 }
 
 // 内核中断回调
@@ -119,8 +117,7 @@ fn kernel_callback(context: &mut TrapFrame) -> TrapType {
         Trap::Exception(Exception::UserEnvCall) => TrapType::SysCall,
         // 时钟中断
         Trap::Interrupt(Interrupt::SupervisorTimer) => {
-            // TODO: Set next timer interrupt.
-            // timer::set_next_timeout();
+            timer::set_next_timeout();
             TrapType::Timer
         }
         Trap::Exception(Exception::StorePageFault) => TrapType::StorePageFault(stval),

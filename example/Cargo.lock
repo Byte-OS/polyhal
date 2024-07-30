@@ -12,9 +12,10 @@ dependencies = [
 ]
 
 [[package]]
-name = "arm_gic"
+name = "arm_gicv2"
 version = "0.1.0"
-source = "git+https://github.com/Byte-OS/arm_gic#7a0693ebe4113cfeb2f5ee93920e6e7ea3afe99a"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "47d25e73c949c69f75d1b9dba39c5475523403b31eb8c2fdc99da4dc33bc1aca"
 dependencies = [
  "tock-registers",
 ]
@@ -22,7 +23,8 @@ dependencies = [
 [[package]]
 name = "arm_pl011"
 version = "0.1.0"
-source = "git+https://github.com/Byte-OS/arm_pl011.git#8a66e24c7e6ac2a01841cd29c5e1690323aa1d8d"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "efcf6afca4502993a737ba1e00952d1321078689da92bf7aab27d4e5756c0bec"
 dependencies = [
  "tock-registers",
 ]
@@ -158,7 +160,7 @@ name = "polyhal"
 version = "0.1.0"
 dependencies = [
  "aarch64-cpu",
- "arm_gic",
+ "arm_gicv2",
  "arm_pl011",
  "bitflags 2.5.0",
  "cfg-if",

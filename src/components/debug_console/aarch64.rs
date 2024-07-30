@@ -1,6 +1,6 @@
 //! PL011 UART.
 
-use arm_pl011::pl011::Pl011Uart;
+use arm_pl011::Pl011Uart;
 
 use crate::{addr::PhysAddr, components::debug_console::DebugConsole, utils::MutexNoIrq};
 

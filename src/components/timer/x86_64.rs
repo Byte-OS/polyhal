@@ -17,7 +17,7 @@ impl Time {
     }
 }
 
-pub(super) fn init_early() {
+pub(crate) fn init_early() {
     info!("freq1: {:#x?}", CpuId::new().get_tsc_info());
     debug!("cpuid: {:#x?}", CpuId::new().get_vendor_info());
     if let Some(freq) = CpuId::new()

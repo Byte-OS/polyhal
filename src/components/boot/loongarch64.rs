@@ -79,7 +79,7 @@ pub fn rust_tmp_main(hart_id: usize) {
     crate::components::trap::set_trap_vector_base();
     // Enable floating point
     euen::set_fpe(true);
-    super::timer::init_timer();
+    crate::components::timer::init_timer();
     crate::components::trap::tlb_init(crate::components::trap::tlb_fill as _);
 
     CPU_NUM.init_by(2);

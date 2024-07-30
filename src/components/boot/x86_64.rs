@@ -107,7 +107,7 @@ fn rust_tmp_main(magic: usize, mboot_ptr: usize) {
     set_local_thread_pointer(hart_id());
     crate::components::arch::gdt::init();
     crate::components::trap::init_syscall();
-    super::timer::init_early();
+    crate::components::timer::init_early();
 
     // enable avx extend instruction set and sse if support avx
     // TIPS: QEMU not support avx, so we can't enable avx here

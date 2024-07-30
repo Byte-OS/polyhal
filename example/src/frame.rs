@@ -1,5 +1,5 @@
 use buddy_system_allocator::LockedFrameAllocator;
-use polyhal::{addr::PhysPage, PAGE_SIZE};
+use polyhal::{addr::PhysPage, components::pagetable::PAGE_SIZE};
 use spin::Lazy;
 
 static LOCK_FRAME_ALLOCATOR: Lazy<LockedFrameAllocator<32>> =

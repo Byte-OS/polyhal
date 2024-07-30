@@ -1,7 +1,7 @@
 use core::ops::{Deref, DerefMut};
 use spin::{Mutex, MutexGuard};
 
-use crate::irq::IRQ;
+use crate::components::irq::IRQ;
 
 pub struct MutexNoIrq<T: ?Sized> {
     lock: Mutex<T>,
@@ -23,7 +23,9 @@ impl Drop for IrqStatus {
     }
 }
 
+/// Implement Sync for MutexNoIrq
 unsafe impl<T: ?Sized + Send> Sync for MutexNoIrq<T> {}
+/// Implement Send for MutexNoIrq
 unsafe impl<T: ?Sized + Send> Send for MutexNoIrq<T> {}
 
 impl<T> MutexNoIrq<T> {
@@ -43,9 +45,8 @@ impl<T: ?Sized> MutexNoIrq<T> {
     #[inline]
     pub fn lock(&self) -> MutexNoIrqGuard<T> {
         loop {
-            match self.try_lock() {
-                Some(guard) => return guard,
-                _ => {}
+            if let Some(guard) = self.try_lock() {
+                return guard;
             }
         }
     }

@@ -10,8 +10,10 @@ use core::panic::PanicInfo;
 
 use frame::frame_alloc;
 use polyhal::addr::PhysPage;
-use polyhal::{get_mem_areas, PageAlloc, TrapFrame, TrapType};
-use polyhal::{shutdown, TrapType::*};
+use polyhal::components::common::{get_mem_areas, PageAlloc};
+use polyhal::components::instruction::Instruction;
+use polyhal::components::trap::TrapType::{self, *};
+use polyhal::components::trapframe::TrapFrame;
 
 pub struct PageAllocImpl;
 
@@ -31,7 +33,7 @@ fn kernel_interrupt(ctx: &mut TrapFrame, trap_type: TrapType) {
     // println!("trap_type @ {:x?} {:#x?}", trap_type, ctx);
     match trap_type {
         Breakpoint => return,
-        UserEnvCall => {
+        SysCall => {
             // jump to next instruction anyway
             ctx.syscall_ok();
             log::info!("Handle a syscall");
@@ -42,7 +44,7 @@ fn kernel_interrupt(ctx: &mut TrapFrame, trap_type: TrapType) {
         IllegalInstruction(_) => {
             log::info!("illegal instruction");
         }
-        Time => {
+        Timer => {
             log::info!("Timer");
         }
         _ => {
@@ -64,14 +66,13 @@ fn main(hartid: usize) {
     println!("init logging");
 
     // Init page alloc for polyhal
-    polyhal::init(&PageAllocImpl);
-
+    polyhal::components::common::init(&PageAllocImpl);
     get_mem_areas().into_iter().for_each(|(start, size)| {
         println!("init memory region {:#x} - {:#x}", start, start + size);
         frame::add_frame_range(start, start + size);
     });
     log::info!("Run END. Shutdown successfully.");
-    shutdown();
+    Instruction::shutdown();
 }
 
 #[panic_handler]
@@ -86,5 +87,5 @@ fn panic(info: &PanicInfo) -> ! {
     } else {
         log::error!("[kernel] Panicked: {}", info.message().unwrap());
     }
-    shutdown()
+    Instruction::shutdown()
 }

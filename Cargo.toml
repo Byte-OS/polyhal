@@ -15,7 +15,7 @@ multicore = []
 interrupt = []
 boot = []
 
-default = ["multicore", "interrupt", "boot"]
+default = ["multicore", "interrupt", "boot", "kcontext"]
 
 [dependencies]
 log = "0.4"

@@ -102,6 +102,8 @@ pub fn boot_page_table() -> PageTable {
 
 fn rust_tmp_main(magic: usize, mboot_ptr: usize) {
     crate::clear_bss();
+    #[cfg(feature = "logger")]
+    crate::components::debug_console::DebugConsole::log_init();
     crate::components::debug_console::init_early();
     crate::components::arch::idt::init();
     crate::components::arch::apic::init();

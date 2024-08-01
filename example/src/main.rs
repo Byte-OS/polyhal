@@ -39,8 +39,8 @@ fn kernel_interrupt(ctx: &mut TrapFrame, trap_type: TrapType) {
             ctx.syscall_ok();
             log::info!("Handle a syscall");
         }
-        StorePageFault(_paddr) | LoadPageFault(_paddr) | InstructionPageFault(_paddr) => {
-            log::info!("page fault");
+        StorePageFault(paddr) | LoadPageFault(paddr) | InstructionPageFault(paddr) => {
+            log::info!("page fault: {:#x}", paddr);
         }
         IllegalInstruction(_) => {
             log::info!("illegal instruction");

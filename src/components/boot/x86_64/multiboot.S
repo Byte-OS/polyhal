@@ -1,6 +1,15 @@
 # Bootstrapping from 32-bit with the Multiboot specification.
 # See https://www.gnu.org/software/grub/manual/multiboot/multiboot.html
 
+# Build the 2M Table Mapper.
+.macro Page2MTable base
+    .set    n, \base
+    .rept   512
+        .quad n + 0x83
+    .set    n, n + 0x200000
+    .endr
+.endm
+
 .section .text.entry
 .code32
 .global _start
@@ -107,14 +116,13 @@ _boot_mapping_pdpt:
     .quad _boot_mapping_pd - {offset} + 0x3 # PRESENT | WRITABLE | paddr(0x0)
     .quad 0x40000000 | 0x83                 # PRESENT | WRITABLE | HUGE_PAGE | paddr(0x4000_0000)
     .quad 0x80000000 | 0x83                 # PRESENT | WRITABLE | HUGE_PAGE | paddr(0x8000_0000)
-    .quad 0xc0000000 | 0x83                 # PRESENT | WRITABLE | HUGE_PAGE | paddr(0xc000_0000)
+    .quad _boot_mapping_pd4 - {offset} + 0x3# PRESENT | WRITABLE | HUGE_PAGE | paddr(0xc000_0000)
     .zero 8 * 508
 
 .balign 4096
 .global _boot_mapping_pd
 _boot_mapping_pd:
-    .set    n, 0
-    .rept   512
-        .quad n + 0x83
-    .set    n, n + 0x200000
-    .endr
+    Page2MTable 0
+.global _boot_mapping_pd4
+_boot_mapping_pd4:
+    Page2MTable    0xc0000000

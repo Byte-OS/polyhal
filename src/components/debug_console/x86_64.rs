@@ -3,6 +3,7 @@
 // use irq_safety::MutexIrqSafe;
 use x86_64::instructions::port::{Port, PortReadOnly, PortWriteOnly};
 
+use crate::components::arch::get_com_port;
 use crate::utils::MutexNoIrq;
 
 use crate::components::debug_console::DebugConsole;
@@ -101,5 +102,7 @@ impl DebugConsole {
 }
 
 pub fn init_early() {
+    // FIXME: Use dynamic port
+    COM1.lock().data = Port::new(get_com_port(1).unwrap());
     COM1.lock().init(115200);
 }

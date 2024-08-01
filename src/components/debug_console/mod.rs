@@ -34,7 +34,7 @@ pub(crate) macro display_info{
     () => {
         $crate::components::debug_console::_print(format_args!("\n"))
     },
-    ($item:literal,$fmt: expr $(, $($arg: tt)+)?) => {
+    ($item:expr,$fmt: expr $(, $($arg: tt)+)?) => {
         $crate::components::debug_console::_print(format_args!("{:<26}: {}\n", $item, format_args!($fmt $(, $($arg)+)?)))
     }
 }

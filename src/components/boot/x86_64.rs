@@ -6,13 +6,13 @@ use x86_64::registers::control::{Cr0Flags, Cr4, Cr4Flags};
 use x86_64::registers::model_specific::EferFlags;
 use x86_64::registers::xcontrol::{XCr0, XCr0Flags};
 
-use crate::components::arch::{hart_id, MBOOT_PTR};
+use crate::components::arch::{get_com_port, hart_id, MBOOT_PTR};
 use crate::components::common::{CPU_ID, CPU_NUM};
 use crate::components::consts::VIRT_ADDR_START;
 use crate::components::debug_console::{display_info, println};
 use crate::components::instruction::Instruction;
-use crate::components::percpu::set_local_thread_pointer;
 use crate::components::pagetable::PageTable;
+use crate::components::percpu::set_local_thread_pointer;
 
 /// Flags set in the 'flags' member of the multiboot header.
 ///
@@ -153,8 +153,15 @@ fn rust_tmp_main(magic: usize, mboot_ptr: usize) {
     display_info!("Platform Virt Mem Offset", "{VIRT_ADDR_START:#x}");
     // TODO: Use the dynamic uart information.
     display_info!("Platform UART Name", "Uart16550");
-    display_info!("Platform UART Port", "0x3f8");
     display_info!("Platform UART IRQ", "0x4");
+    // TODO: Display Uart Ports and IRQs
+    (1..5)
+        .map(get_com_port)
+        .filter(Option::is_some)
+        .map(Option::unwrap)
+        .for_each(|port| {
+            display_info!("Platform UART Port", "{port:#X}");
+        });
     if let Some(mboot) = use_multiboot(mboot_ptr as _) {
         mboot
             .command_line()

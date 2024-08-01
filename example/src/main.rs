@@ -53,6 +53,11 @@ fn kernel_interrupt(ctx: &mut TrapFrame, trap_type: TrapType) {
     }
 }
 
+#[cfg(target_arch = "x86_64")]
+fn txt_draw_char() {
+
+}
+
 #[polyhal::arch_entry]
 /// kernel main function, entry point.
 fn main(hartid: usize) {
@@ -71,6 +76,10 @@ fn main(hartid: usize) {
         println!("init memory region {:#x} - {:#x}", start, start + size);
         frame::add_frame_range(start, start + size);
     });
+    
+    #[cfg(target_arch = "x86_64")]
+    txt_draw_char();
+
     log::info!("Run END. Shutdown successfully.");
     Instruction::shutdown();
 }

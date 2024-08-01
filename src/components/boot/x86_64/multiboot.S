@@ -20,6 +20,7 @@ multiboot_header:
     .int    _load_end - {offset}                   # load_end
     .int    end - {offset}                    # bss_end_addr
     .int    _start - {offset}                   # entry_addr
+    .int    1
 
 # Common code in 32-bit, prepare states to enter 64-bit.
 .code32
@@ -99,11 +100,21 @@ _boot_page_table:
     # 0xffff_ff80_0000_0000 ~ 0xffff_ff80_ffff_ffff
     .quad _boot_mapping_pdpt - {offset} + 0x3  # PRESENT | WRITABLE | paddr(tmp_pdpt)
 
+.balign 4096
 .global _boot_mapping_pdpt
 # FIXME: may not work on macOS using hvf as the CPU does not support 1GB page (pdpe1gb)
 _boot_mapping_pdpt:
-    .quad 0x0000 | 0x83         # PRESENT | WRITABLE | HUGE_PAGE | paddr(0x0)
-    .quad 0x40000000 | 0x83     # PRESENT | WRITABLE | HUGE_PAGE | paddr(0x4000_0000)
-    .quad 0x80000000 | 0x83     # PRESENT | WRITABLE | HUGE_PAGE | paddr(0x8000_0000)
-    .quad 0xc0000000 | 0x83     # PRESENT | WRITABLE | HUGE_PAGE | paddr(0xc000_0000)
+    .quad _boot_mapping_pd - {offset} + 0x3 # PRESENT | WRITABLE | paddr(0x0)
+    .quad 0x40000000 | 0x83                 # PRESENT | WRITABLE | HUGE_PAGE | paddr(0x4000_0000)
+    .quad 0x80000000 | 0x83                 # PRESENT | WRITABLE | HUGE_PAGE | paddr(0x8000_0000)
+    .quad 0xc0000000 | 0x83                 # PRESENT | WRITABLE | HUGE_PAGE | paddr(0xc000_0000)
     .zero 8 * 508
+
+.balign 4096
+.global _boot_mapping_pd
+_boot_mapping_pd:
+    .set    n, 0
+    .rept   512
+        .quad n + 0x83
+    .set    n, n + 0x200000
+    .endr

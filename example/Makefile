@@ -1,6 +1,7 @@
 # Building
 ARCH := riscv64
 TEST := false
+GUI  := false
 
 ifeq ($(TEST), true)
 QEMU_EXEC := timeout 40
@@ -65,7 +66,10 @@ clean:
 
 run: run-inner
 
-QEMU_EXEC += -nographic -smp 1 
+ifneq ($(GUI), true)
+QEMU_EXEC += -nographic
+endif 
+QEMU_EXEC += -smp 1 
 QEMU_EXEC += -D qemu.log -d in_asm,int,pcall,cpu_reset,guest_errors
 ifeq ($(TEST), true)
 QEMU_EXEC += >output.log 2>&1 || echo "QEMU exited"
@@ -82,5 +86,12 @@ test:
 	make ARCH=riscv64 run
 	make ARCH=x86_64 run
 	make ARCH=loongarch64 run
+
+iso: build
+	cp $(KERNEL_ELF) iso/example
+	grub-mkrescue -o bootable.iso iso
+
+boot-iso: iso
+	qemu-system-x86_64 -cdrom bootable.iso
 
 .PHONY: build env kernel clean run-inner

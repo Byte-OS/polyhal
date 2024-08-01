@@ -13,11 +13,13 @@ use crate::components::debug_console::{display_info, println};
 use crate::components::instruction::Instruction;
 use crate::components::pagetable::PageTable;
 use crate::components::percpu::set_local_thread_pointer;
+use crate::utils::bit;
 
 /// Flags set in the 'flags' member of the multiboot header.
 ///
 /// (bits 1, 16: memory information, address fields in header)
-const MULTIBOOT_HEADER_FLAGS: usize = 0x0001_0002;
+/// bits 2 graphic information
+const MULTIBOOT_HEADER_FLAGS: usize = bit!(1) | bit!(16) | bit!(2);
 
 /// The magic field should contain this.
 const MULTIBOOT_HEADER_MAGIC: usize = 0x1BADB002;

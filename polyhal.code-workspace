@@ -1,0 +1,14 @@
+{
+	"folders": [
+		{
+			"path": "."
+		},
+		{
+			"path": "example"
+		}
+	],
+	"settings": {
+		"rust-analyzer.check.allTargets": false,
+		"rust-analyzer.check.extraArgs": [],
+	}
+}

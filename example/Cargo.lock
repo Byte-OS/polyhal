@@ -75,16 +75,6 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "baf1de4339761588bc0619e3cbc0120ee582ebb74b53b4efbf79117bd2da40fd"
 
 [[package]]
-name = "crate_interface"
-version = "0.1.1"
-source = "git+https://github.com/Byte-OS/crate_interface.git#d4580bd225c6d1f9a3760428d65e553cd4a25ee7"
-dependencies = [
- "proc-macro2",
- "quote",
- "syn",
-]
-
-[[package]]
 name = "critical-section"
 version = "1.1.2"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -101,7 +91,6 @@ name = "example"
 version = "0.1.0"
 dependencies = [
  "buddy_system_allocator",
- "crate_interface",
  "fdt",
  "log",
  "polyhal",

@@ -7,7 +7,6 @@ edition = "2021"
 
 [dependencies]
 polyhal = { path = ".."}
-crate_interface = { git = "https://github.com/Byte-OS/crate_interface.git" }
 
 log = "0.4"
 fdt = "0.1.5"

@@ -38,6 +38,8 @@ const CR4: u64 = Cr4Flags::PHYSICAL_ADDRESS_EXTENSION.bits()
     | Cr4Flags::PAGE_GLOBAL.bits()
     // OS support for fxsave and fxrstor instructions
     | Cr4Flags::OSFXSR.bits()
+    // Add Support for 2M Huge Page Support.
+    | Cr4Flags::PAGE_SIZE_EXTENSION.bits()
     // XSAVE And Processor Extended States Enable
     // This bit should open if the processor was supported.
     // | Cr4Flags::OSXSAVE.bits()
@@ -45,7 +47,9 @@ const CR4: u64 = Cr4Flags::PHYSICAL_ADDRESS_EXTENSION.bits()
     | Cr4Flags::OSXMMEXCPT_ENABLE.bits();
 
 /// EFER registers introduction: https://wiki.osdev.org/CPU_Registers_x86-64#IA32_EFER
-const EFER: u64 = EferFlags::LONG_MODE_ENABLE.bits() | EferFlags::NO_EXECUTE_ENABLE.bits();
+const EFER: u64 = EferFlags::LONG_MODE_ENABLE.bits();
+// TODO: enable if it supports NO_EXECUTE_ENABLE
+// | EferFlags::NO_EXECUTE_ENABLE.bits()
 
 static mut MEM: Mem = Mem;
 
@@ -156,8 +160,15 @@ fn rust_tmp_main(magic: usize, mboot_ptr: usize) {
     }
     display_info!("Platform Virt Mem Offset", "{VIRT_ADDR_START:#x}");
     // TODO: Use the dynamic uart information.
-    display_info!("Platform UART Name", "Uart16550");
-    display_info!("Platform UART IRQ", "0x4");
+    #[cfg(not(feature = "vga_text"))]
+    {
+        display_info!("Platform UART Name", "Uart16550");
+        display_info!("Platform UART IRQ", "0x4");
+    }
+    #[cfg(feature = "vga_text")]
+    {
+        display_info!("Platform Console", "VGA Text Mode");
+    }
     // TODO: Display Uart Ports and IRQs
     (1..5)
         .map(get_com_port)

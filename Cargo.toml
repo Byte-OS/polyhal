@@ -16,6 +16,8 @@ interrupt = []
 boot = []
 logger = []
 
+vga_text = []
+
 default = ["multicore", "interrupt", "boot", "kcontext"]
 
 [dependencies]

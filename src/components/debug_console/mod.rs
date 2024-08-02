@@ -55,7 +55,7 @@ impl Write for DebugConsole {
     }
 }
 
-#[cfg(target_arch = "logger")]
+#[cfg(feature = "logger")]
 impl log::Log for DebugConsole {
     fn enabled(&self, _metadata: &log::Metadata) -> bool {
         true
@@ -87,7 +87,7 @@ impl log::Log for DebugConsole {
     fn flush(&self) {}
 }
 
-#[cfg(target_arch = "logger")]
+#[cfg(feature = "logger")]
 impl DebugConsole {
     pub(crate) fn log_init() {
         use log::LevelFilter;

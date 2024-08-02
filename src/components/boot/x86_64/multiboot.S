@@ -11,13 +11,6 @@
 .endm
 
 .section .text.entry
-.code32
-.global _start
-_start:
-    mov     edi, eax        # arg1: magic: 0x2BADB002
-    mov     esi, ebx        # arg2: multiboot info
-    jmp     bsp_entry32
-
 .balign 4
 .type multiboot_header, STT_OBJECT
 multiboot_header:
@@ -33,7 +26,11 @@ multiboot_header:
 
 # Common code in 32-bit, prepare states to enter 64-bit.
 .code32
-bsp_entry32:
+.global _start
+_start:
+    mov     edi, eax        # arg1: magic: 0x2BADB002
+    mov     esi, ebx        # arg2: multiboot info
+
     lgdt    [.Ltmp_gdt_desc - {offset}]             # load the temporary GDT
     # set data segment selectors
     mov     ax, 0x18
@@ -44,7 +41,8 @@ bsp_entry32:
     mov     gs, ax
 
     # set PAE, PGE bit in CR4
-    mov     eax, {cr4}
+    mov     eax, cr4
+    or      eax, {cr4}
     mov     cr4, eax
 
     # load the temporary page table
@@ -53,13 +51,15 @@ bsp_entry32:
 
     # set LME, NXE bit in IA32_EFER
     mov     ecx, {efer_msr}
-    mov     edx, 0
-    mov     eax, {efer}
+    rdmsr
+    or      eax, {efer}
     wrmsr
 
     # set protected mode, write protect, paging bit in CR0
-    mov     eax, {cr0}
+    mov     eax, cr0
+    or      eax, {cr0}
     mov     cr0, eax
+
     ljmp    0x10, offset bsp_entry64 - {offset}    # 0x10 is code64 segment
 
 .code64
@@ -110,7 +110,6 @@ _boot_page_table:
     .quad _boot_mapping_pdpt - {offset} + 0x3  # PRESENT | WRITABLE | paddr(tmp_pdpt)
 
 .balign 4096
-.global _boot_mapping_pdpt
 # FIXME: may not work on macOS using hvf as the CPU does not support 1GB page (pdpe1gb)
 _boot_mapping_pdpt:
     .quad _boot_mapping_pd - {offset} + 0x3 # PRESENT | WRITABLE | paddr(0x0)
@@ -120,9 +119,9 @@ _boot_mapping_pdpt:
     .zero 8 * 508
 
 .balign 4096
-.global _boot_mapping_pd
 _boot_mapping_pd:
     Page2MTable 0
+
 .global _boot_mapping_pd4
 _boot_mapping_pd4:
     Page2MTable    0xc0000000

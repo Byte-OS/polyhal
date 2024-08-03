@@ -121,7 +121,7 @@ fn rust_tmp_main(magic: usize, mboot_ptr: usize) {
     // Init allocator
     set_local_thread_pointer(hart_id());
     crate::components::arch::gdt::init();
-    #[cfg(target_arch = "trap")]
+    #[cfg(feature = "trap")]
     crate::components::trap::init_syscall();
     crate::components::timer::init_early();
 

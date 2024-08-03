@@ -78,12 +78,12 @@ pub fn rust_tmp_main(hart_id: usize) {
     display_info!("Boot HART ID", "{}", hart_id);
     display_info!();
 
-    #[cfg(target_arch = "trap")]
+    #[cfg(feature = "trap")]
     crate::components::trap::set_trap_vector_base();
     // Enable floating point
     euen::set_fpe(true);
     crate::components::timer::init_timer();
-    #[cfg(target_arch = "trap")]
+    #[cfg(feature = "trap")]
     crate::components::trap::tlb_init(crate::components::trap::tlb_fill as _);
 
     CPU_NUM.init_by(2);

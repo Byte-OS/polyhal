@@ -145,7 +145,7 @@ pub(crate) fn rust_main(hartid: usize, device_tree: usize) {
     println!("CPU_ID offset: {:#x}", CPU_ID.offset());
     println!("init success, CPU_ID: {}", CPU_ID.read_current());
     CPU_ID.write_current(hartid);
-    #[cfg(target_arch = "trap")]
+    #[cfg(feature = "trap")]
     crate::components::trap::init();
 
     println!("CPU_ID offset: {:#x}", CPU_ID.offset());
@@ -196,7 +196,7 @@ pub(crate) extern "C" fn rust_secondary_main(hartid: usize) {
     CPU_ID.write_current(hartid);
 
     // Initialize the trap.
-    #[cfg(target_arch = "trap")]
+    #[cfg(feature = "trap")]
     crate::components::trap::init();
 
     // TODO: Get the hart_id and device_tree for the specified device.

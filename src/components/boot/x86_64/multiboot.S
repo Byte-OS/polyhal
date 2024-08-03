@@ -113,6 +113,7 @@ _boot_page_table:
     .quad _boot_mapping_pdpt - {offset} + 0x3  # PRESENT | WRITABLE | paddr(tmp_pdpt)
 
 .balign 4096
+.global _boot_mapping_pdpt
 # FIXME: may not work on macOS using hvf as the CPU does not support 1GB page (pdpe1gb)
 _boot_mapping_pdpt:
     .quad _boot_mapping_pd - {offset} + 0x3 # PRESENT | WRITABLE | paddr(0x0)

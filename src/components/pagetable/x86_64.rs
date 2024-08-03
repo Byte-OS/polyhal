@@ -130,10 +130,10 @@ impl PageTable {
         self.release();
 
         extern "C" {
-            fn _kernel_mapping_pdpt();
+            fn _boot_mapping_pdpt();
         }
         let pml4 = self.0.slice_mut_with_len::<PTE>(Self::PTE_NUM_IN_PAGE);
-        pml4[0x1ff] = PTE((_kernel_mapping_pdpt as usize - VIRT_ADDR_START as usize) | 0x3);
+        pml4[0x1ff] = PTE((_boot_mapping_pdpt as usize - VIRT_ADDR_START as usize) | 0x3);
         TLB::flush_all();
     }
 

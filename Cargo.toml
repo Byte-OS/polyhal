@@ -1,6 +1,6 @@
 [package]
 name = "polyhal"
-version = "0.1.0"
+version = "0.1.1"
 edition = "2021"
 description = "This crate provides the interface for multiple platforms."
 authors = ["yfblock@321353225@qq.com"]
@@ -19,7 +19,7 @@ logger = []
 vga_text = []
 graphic = []
 
-default = ["boot", "trap", "kcontext"]
+default = ["boot", "kcontext"]
 
 [dependencies]
 log = "0.4"

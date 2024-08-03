@@ -158,7 +158,7 @@ use core::mem::size_of;
 
 #[cfg(feature = "boot")]
 pub use polyhal_macro::arch_entry;
-#[cfg(feature = "interrupt")]
+#[cfg(feature = "trap")]
 pub use polyhal_macro::arch_interrupt;
 
 // Re export the Module like Structure.

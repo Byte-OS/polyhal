@@ -16,6 +16,7 @@ pub mod multicore;
 pub mod pagetable;
 pub mod percpu;
 pub mod timer;
+#[cfg(target_arch = "trap")]
 pub mod trap;
 pub mod trapframe;
 

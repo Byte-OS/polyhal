@@ -13,7 +13,7 @@ use crate::{
         instruction::Instruction,
         pagetable::{PTEFlags, TLB},
         percpu::percpu_area_init,
-        timer, trap,
+        timer,
     },
 };
 
@@ -167,7 +167,8 @@ pub fn rust_tmp_main(hart_id: usize, device_tree: usize) {
     crate::components::debug_console::init_early();
     #[cfg(feature = "logger")]
     crate::components::debug_console::DebugConsole::log_init();
-    trap::init();
+    #[cfg(target_arch = "trap")]
+    crate::components::trap::init();
     // Init GIC interrupt controller.
     crate::components::irq::init();
 

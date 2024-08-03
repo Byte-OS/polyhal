@@ -12,8 +12,8 @@ use polyhal::addr::PhysPage;
 use polyhal::common::{get_mem_areas, PageAlloc};
 use polyhal::debug_console::DebugConsole;
 use polyhal::instruction::Instruction;
-use polyhal::trap::TrapType::{self, *};
-use polyhal::trapframe::TrapFrame;
+// use polyhal::trap::TrapType::{self, *};
+// use polyhal::trapframe::TrapFrame;
 
 pub struct PageAllocImpl;
 
@@ -28,30 +28,30 @@ impl PageAlloc for PageAllocImpl {
 }
 
 /// kernel interrupt
-#[polyhal::arch_interrupt]
-fn kernel_interrupt(ctx: &mut TrapFrame, trap_type: TrapType) {
-    // println!("trap_type @ {:x?} {:#x?}", trap_type, ctx);
-    match trap_type {
-        Breakpoint => return,
-        SysCall => {
-            // jump to next instruction anyway
-            ctx.syscall_ok();
-            log::info!("Handle a syscall");
-        }
-        StorePageFault(paddr) | LoadPageFault(paddr) | InstructionPageFault(paddr) => {
-            log::info!("page fault: {:#x}", paddr);
-        }
-        IllegalInstruction(_) => {
-            log::info!("illegal instruction");
-        }
-        Timer => {
-            log::info!("Timer");
-        }
-        _ => {
-            log::warn!("unsuspended trap type: {:?}", trap_type);
-        }
-    }
-}
+// #[polyhal::arch_interrupt]
+// fn kernel_interrupt(ctx: &mut TrapFrame, trap_type: TrapType) {
+//     // println!("trap_type @ {:x?} {:#x?}", trap_type, ctx);
+//     match trap_type {
+//         Breakpoint => return,
+//         SysCall => {
+//             // jump to next instruction anyway
+//             ctx.syscall_ok();
+//             log::info!("Handle a syscall");
+//         }
+//         StorePageFault(paddr) | LoadPageFault(paddr) | InstructionPageFault(paddr) => {
+//             log::info!("page fault: {:#x}", paddr);
+//         }
+//         IllegalInstruction(_) => {
+//             log::info!("illegal instruction");
+//         }
+//         Timer => {
+//             log::info!("Timer");
+//         }
+//         _ => {
+//             log::warn!("unsuspended trap type: {:?}", trap_type);
+//         }
+//     }
+// }
 
 #[polyhal::arch_entry]
 /// kernel main function, entry point.

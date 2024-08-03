@@ -101,7 +101,7 @@ impl DebugConsole {
     }
 }
 
-pub(super) fn init() {
+pub(crate) fn init() {
     // FIXME: Use dynamic port
     if let Some(port) = get_com_port(1) {
         COM1.lock().data = Port::new(port);

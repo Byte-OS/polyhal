@@ -5,8 +5,6 @@
 mod allocator;
 mod frame;
 mod logging;
-#[cfg(target_arch = "x86_64")]
-mod vga;
 use core::panic::PanicInfo;
 
 use frame::frame_alloc;
@@ -64,6 +62,11 @@ fn main(hartid: usize) {
 
     println!("[kernel] Hello, world!");
     allocator::init_allocator();
+    log::debug!("Test Logger DEBUG!");
+    log::info!("Test Logger INFO!");
+    log::warn!("Test Logger WARN!");
+    log::error!("Test Logger ERROR!");
+
 
     // Init page alloc for polyhal
     polyhal::components::common::init(&PageAllocImpl);
@@ -78,9 +81,6 @@ fn main(hartid: usize) {
             DebugConsole::putchar(c);
         }
     }
-
-    #[cfg(target_arch = "x86_64")]
-    vga::main_func();
 
     log::info!("Run END. Shutdown successfully.");
     Instruction::shutdown();

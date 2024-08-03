@@ -63,25 +63,48 @@ impl log::Log for DebugConsole {
 
     fn log(&self, record: &log::Record) {
         use log::Level;
-        let color_code = match record.level() {
-            Level::Error => 31u8, // Red
-            Level::Warn => 93,    // BrightYellow
-            Level::Info => 34,    // Blue
-            Level::Debug => 32,   // Green
-            Level::Trace => 90,   // BrightBlack
-        };
+        
         let file = record.file();
-            let line = record.line();
+        let line = record.line();
+        #[cfg(all(target_arch = "x86_64", feature = "graphic"))]
+        {
+            let color_code = match record.level() {
+                Level::Error => 0xff0000u32, // Red
+                Level::Warn => 0xFFFF00,    // BrightYellow
+                Level::Info => 0x33ccff,    // Blue
+                Level::Debug => 0x00ff00,   // Green
+                Level::Trace => 0xaaaaaa,   // BrightBlack
+            };
+            DebugConsole::set_color(color_code);
+            println!(
+                "[{}] {}:{} {}",
+                record.level(),
+                file.unwrap(),
+                line.unwrap(),
+                record.args()
+            );
+            DebugConsole::set_color(0xffffff);
+        }
+        #[cfg(not(all(target_arch = "x86_64", feature = "graphic")))]
+        {
+            let color_code = match record.level() {
+                Level::Error => 31u8, // Red
+                Level::Warn => 93,    // BrightYellow
+                Level::Info => 34,    // Blue
+                Level::Debug => 32,   // Green
+                Level::Trace => 90,   // BrightBlack
+            };
             println!(
                 "\u{1B}[{}m\
-                [{}] {}:{} {}\
-                \u{1B}[0m",
+                    [{}] {}:{} {}\
+                    \u{1B}[0m",
                 color_code,
                 record.level(),
                 file.unwrap(),
                 line.unwrap(),
                 record.args()
             );
+        }
     }
 
     fn flush(&self) {}

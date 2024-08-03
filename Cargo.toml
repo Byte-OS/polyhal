@@ -17,6 +17,7 @@ boot = []
 logger = []
 
 vga_text = []
+graphic = []
 
 default = ["multicore", "interrupt", "boot", "kcontext"]
 

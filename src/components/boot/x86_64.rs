@@ -106,9 +106,16 @@ pub fn boot_page_table() -> PageTable {
 
 fn rust_tmp_main(magic: usize, mboot_ptr: usize) {
     crate::clear_bss();
+    #[cfg(feature = "graphic")]
+    if let Some(mboot) = use_multiboot(mboot_ptr as _)  {
+        if let Some(ft) = mboot.framebuffer_table() {
+            crate::components::debug_console::init_early(ft.addr as _, ft.width as _, ft.height as _, ft.pitch as _);
+        }
+    }
+    #[cfg(not(feature = "graphic"))]
+    crate::components::debug_console::init_early();
     #[cfg(feature = "logger")]
     crate::components::debug_console::DebugConsole::log_init();
-    crate::components::debug_console::init_early();
     crate::components::arch::idt::init();
     crate::components::arch::apic::init();
     // Init allocator
@@ -191,6 +198,13 @@ fn rust_tmp_main(magic: usize, mboot_ptr: usize) {
                     mm.memory_type()
                 )
             });
+        }
+        if let Some(ft) = mboot.framebuffer_table() {
+            display_info!("Platform VBE Addr", "{:#x}", ft.addr);
+            display_info!("Platform VBE Width", "{}", ft.width);
+            display_info!("Platform VBE Pitch", "{}", ft.pitch);
+            display_info!("Platform VBE Height", "{}", ft.height);
+            display_info!("Platform VBE BPB", "{}", ft.bpp);
         }
         display_info!();
         display_info!(

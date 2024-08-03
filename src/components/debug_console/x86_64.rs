@@ -1,11 +1,17 @@
-#[cfg(not(feature = "vga_text"))]
+#[cfg(not(any(feature = "vga_text", feature = "graphic")))]
 mod com;
 #[cfg(feature = "vga_text")]
 mod vga_text;
+#[cfg(feature = "graphic")]
+mod font;
+#[cfg(feature = "graphic")]
+mod graphic;
 
-pub fn init_early() {
-    #[cfg(not(feature = "vga_text"))]
-    com::init();
-    #[cfg(feature = "vga_text")]
-    vga_text::init();
-}
+#[cfg(not(any(feature = "vga_text", feature = "graphic")))]
+pub(crate) use com::init as init_early;
+
+#[cfg(feature = "vga_text")]
+pub(crate) use vga_text::init as init_early;
+
+#[cfg(feature = "graphic")]
+pub(crate) use graphic::init as init_early;

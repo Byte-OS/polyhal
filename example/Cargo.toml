@@ -6,8 +6,7 @@ edition = "2021"
 # See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
 
 [dependencies]
-polyhal = { path = ".."}
-
+polyhal = { path = "..", features = ["graphic", "logger"] }
 log = "0.4"
 fdt = "0.1.5"
 buddy_system_allocator = "0.9.1"

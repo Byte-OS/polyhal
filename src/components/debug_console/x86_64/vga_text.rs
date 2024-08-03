@@ -5,7 +5,7 @@ use crate::{components::debug_console::{println, DebugConsole}, utils::MutexNoIr
 // 键盘扫描码到 ASCII 字符的映射表
 const SCAN_CODE_TO_ASCII: [u8; 58] = [
     0, 27, b'1', b'2', b'3', b'4', b'5', b'6', b'7', b'8', b'9', b'0', b'-', b'+', 08,
-    b'\t', b'q', b'w', b'e', b'r', b't', b'y', b'u', b'i', b'o', b'p', b'[', b']', 13, 0,
+    b'\t', b'q', b'w', b'e', b'r', b't', b'y', b'u', b'i', b'o', b'p', b'[', b']', 10, 0,
     b'a', b's', b'd', b'f', b'g', b'h', b'j', b'k', b'l', b';', b'\'', b'`', 0, b'\\',
     b'z', b'x', b'c', b'v', b'b', b'n', b'm', b',', b'.', b'/', 0, b'*', 0,  b' '
 ];
@@ -132,7 +132,7 @@ impl DebugConsole {
 }
 
 /// Init VBE Text Mode configuration
-pub(super) fn init() {
+pub(crate) fn init() {
     let cursor_start = 14;
     let cursor_end = 15;
 

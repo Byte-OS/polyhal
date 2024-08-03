@@ -22,7 +22,10 @@ multiboot_header:
     .int    _load_end - {offset}                   # load_end
     .int    end - {offset}                    # bss_end_addr
     .int    _start - {offset}                   # entry_addr
-    .int    1
+    .int    0
+    .int    0
+    .int    0
+    .int    32
 
 # Common code in 32-bit, prepare states to enter 64-bit.
 .code32

@@ -138,6 +138,8 @@ pub(crate) unsafe extern "C" fn secondary_start() -> ! {
 
 pub(crate) fn rust_main(hartid: usize, device_tree: usize) {
     crate::clear_bss();
+    #[cfg(feature = "logger")]
+    crate::components::debug_console::DebugConsole::log_init();
     // Init allocator
     crate::components::percpu::set_local_thread_pointer(hartid);
     println!("CPU_ID offset: {:#x}", CPU_ID.offset());
@@ -145,15 +147,13 @@ pub(crate) fn rust_main(hartid: usize, device_tree: usize) {
     CPU_ID.write_current(hartid);
     crate::components::trap::init();
 
-    // TODO: Get the hart_id and device_tree for the specified device.
-    // TODO: Call set_sum() for riscv version up than 1.0
-    // let (_hartid, device_tree) = boards::init_device(hartid, device_tree | VIRT_ADDR_START);
-
     println!("CPU_ID offset: {:#x}", CPU_ID.offset());
 
-    // 开启 SUM
     unsafe {
-        // 开启浮点运算
+        // Enable SUM for access user memory directly.
+        // TODO: Call set_sum() for riscv version up than 1.0, Close when below 1.0
+        sstatus::set_sum();
+        // Open float point support.
         sstatus::set_fs(sstatus::FS::Dirty);
         sie::set_sext();
         sie::set_ssoft();
@@ -201,7 +201,10 @@ pub(crate) extern "C" fn rust_secondary_main(hartid: usize) {
     // let (hartid, _device_tree) = boards::init_device(hartid, 0);
 
     unsafe {
-        // 开启浮点运算
+        // Enable SUM for access user memory directly.
+        // TODO: Call set_sum() for riscv version up than 1.0, Close when below 1.0
+        sstatus::set_sum();
+        // Open float point support.        
         sstatus::set_fs(sstatus::FS::Dirty);
         sie::set_sext();
         sie::set_ssoft();

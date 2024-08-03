@@ -9,11 +9,11 @@ use core::panic::PanicInfo;
 
 use frame::frame_alloc;
 use polyhal::addr::PhysPage;
-use polyhal::components::common::{get_mem_areas, PageAlloc};
-use polyhal::components::debug_console::DebugConsole;
-use polyhal::components::instruction::Instruction;
-use polyhal::components::trap::TrapType::{self, *};
-use polyhal::components::trapframe::TrapFrame;
+use polyhal::common::{get_mem_areas, PageAlloc};
+use polyhal::debug_console::DebugConsole;
+use polyhal::instruction::Instruction;
+use polyhal::trap::TrapType::{self, *};
+use polyhal::trapframe::TrapFrame;
 
 pub struct PageAllocImpl;
 
@@ -67,16 +67,15 @@ fn main(hartid: usize) {
     log::warn!("Test Logger WARN!");
     log::error!("Test Logger ERROR!");
 
-
     // Init page alloc for polyhal
-    polyhal::components::common::init(&PageAllocImpl);
+    polyhal::common::init(&PageAllocImpl);
 
     get_mem_areas().into_iter().for_each(|(start, size)| {
         println!("init memory region {:#x} - {:#x}", start, start + size);
         // frame::add_frame_range(start, start + size);
     });
 
-    loop{
+    loop {
         if let Some(c) = DebugConsole::getchar() {
             DebugConsole::putchar(c);
         }

@@ -1,6 +1,6 @@
 use core::fmt::{self, Write};
 
-use polyhal::components::debug_console::DebugConsole;
+use polyhal::debug_console::DebugConsole;
 
 pub struct Logger;
 
@@ -13,7 +13,6 @@ impl Write for Logger {
         Ok(())
     }
 }
-
 
 pub fn print(args: fmt::Arguments) {
     Logger.write_fmt(args).unwrap();

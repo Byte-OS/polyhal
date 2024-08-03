@@ -165,6 +165,8 @@ pub fn rust_tmp_main(hart_id: usize, device_tree: usize) {
     // pl011::init_early();
     // Init DebugConsole early.
     crate::components::debug_console::init_early();
+    #[cfg(feature = "logger")]
+    crate::components::debug_console::DebugConsole::log_init();
     trap::init();
     // Init GIC interrupt controller.
     crate::components::irq::init();

@@ -67,6 +67,8 @@ unsafe extern "C" fn _start_secondary() -> ! {
 pub fn rust_tmp_main(hart_id: usize) {
     clear_bss();
     percpu_area_init(hart_id);
+    #[cfg(feature = "logger")]
+    crate::components::debug_console::DebugConsole::log_init();
 
     display_info!();
     println!(include_str!("../../banner.txt"));

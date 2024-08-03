@@ -149,7 +149,8 @@ extern crate alloc;
 extern crate log;
 
 pub mod addr;
-pub mod components;
+mod components;
+pub use components::*;
 pub(crate) mod drivers;
 pub mod time;
 pub mod utils;

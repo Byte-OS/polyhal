@@ -4,7 +4,6 @@ use bitflags::bitflags;
 use riscv::register::satp;
 
 use crate::addr::{PhysAddr, PhysPage, VirtAddr, VirtPage};
-use crate::components::boot::boot_page_table;
 
 use crate::components::pagetable::{MappingFlags, PageTable, PTE, TLB};
 use crate::utils::bit;
@@ -185,7 +184,7 @@ impl PageTable {
     #[inline]
     pub fn restore(&self) {
         self.release();
-        let kernel_arr = Self::get_pte_list(boot_page_table().0);
+        let kernel_arr = Self::get_pte_list(crate::boot::boot_page_table().0);
         let arr = Self::get_pte_list(self.0);
         arr[0x100..].copy_from_slice(&kernel_arr[0x100..]);
         arr[0..0x100].fill(PTE(0));

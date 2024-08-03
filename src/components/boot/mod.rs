@@ -15,6 +15,5 @@ pub(crate) static mut BOOT_STACK: [u8; STACK_SIZE] = [0; STACK_SIZE];
 
 // Declare the _main_for_arch exists.
 extern "Rust" {
-    #[cfg(feature = "boot")]
     pub(crate) fn _main_for_arch(hartid: usize);
 }

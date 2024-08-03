@@ -11,15 +11,15 @@ repository = "https://github.com/Byte-OS/polyhal"
 
 [features]
 kcontext = []
-multicore = []
-interrupt = []
+multicore = ["boot"]
+trap = []
 boot = []
 logger = []
 
 vga_text = []
 graphic = []
 
-default = ["multicore", "interrupt", "boot", "kcontext"]
+default = ["boot", "trap", "kcontext"]
 
 [dependencies]
 log = "0.4"

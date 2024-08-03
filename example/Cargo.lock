@@ -171,6 +171,8 @@ dependencies = [
 [[package]]
 name = "polyhal-macro"
 version = "0.1.0"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "d5cee39179815e92d0109327456e59eaed6021d0377c2fd84d02f2c6c345b122"
 dependencies = [
  "proc-macro2",
  "quote",

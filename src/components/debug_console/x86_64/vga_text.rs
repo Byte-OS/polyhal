@@ -1,14 +1,6 @@
 use x86::io::{inb, outb};
 
-use crate::{components::debug_console::{println, DebugConsole}, utils::MutexNoIrq};
-
-// 键盘扫描码到 ASCII 字符的映射表
-const SCAN_CODE_TO_ASCII: [u8; 58] = [
-    0, 27, b'1', b'2', b'3', b'4', b'5', b'6', b'7', b'8', b'9', b'0', b'-', b'+', 08,
-    b'\t', b'q', b'w', b'e', b'r', b't', b'y', b'u', b'i', b'o', b'p', b'[', b']', 10, 0,
-    b'a', b's', b'd', b'f', b'g', b'h', b'j', b'k', b'l', b';', b'\'', b'`', 0, b'\\',
-    b'z', b'x', b'c', b'v', b'b', b'n', b'm', b',', b'.', b'/', 0, b'*', 0,  b' '
-];
+use crate::{components::debug_console::DebugConsole, debug_console::println, utils::MutexNoIrq};
 
 static VGA_BUFFER: MutexNoIrq<VGAPos> = MutexNoIrq::new(VGAPos::new());
 
@@ -32,7 +24,7 @@ impl VGAPos {
     /// How many rows in the screen.
     const COL_C_MAX: usize = 25;
     /// Buffer pointer of the vga buffer.
-    const VGA_BUFFER_PTR: *mut FChar = 0xb8000 as *mut FChar;
+    const VGA_BUFFER_PTR: *mut FChar = (0xb8000 | crate::consts::VIRT_ADDR_START) as *mut FChar;
 
     /// Create a new VGA Buffer include the position information.
     pub const fn new() -> Self {
@@ -47,9 +39,8 @@ impl VGAPos {
                 self.x = 0;
                 self.y += 1;
             }
-            b'\r' => {
-                self.x = 0;
-            }
+            b'\r' => self.x = 0,
+            0x7f => println!("putchar: {:#x}", c),
             _ => {
                 unsafe {
                     vga_buffer.add(self.offset()).write_volatile(FChar(c, 0x7));
@@ -119,15 +110,14 @@ impl VGAPos {
 
 /// Implement for debug console.
 impl DebugConsole {
+    #[inline]
     pub fn putchar(c: u8) {
         VGA_BUFFER.lock().putchar(c);
     }
 
+    #[inline]
     pub fn getchar() -> Option<u8> {
-        let c = unsafe {
-            inb(0x60)
-        };
-        SCAN_CODE_TO_ASCII.get(c as usize).cloned()
+        super::keyboard::get_key()
     }
 }
 

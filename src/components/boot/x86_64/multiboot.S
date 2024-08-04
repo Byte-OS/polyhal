@@ -22,7 +22,7 @@ multiboot_header:
     .int    _load_end - {offset}                   # load_end
     .int    end - {offset}                    # bss_end_addr
     .int    _start - {offset}                   # entry_addr
-    .int    0
+    .int    {graphic_mode}
     .int    0
     .int    0
     .int    32
@@ -116,16 +116,19 @@ _boot_page_table:
 .global _boot_mapping_pdpt
 # FIXME: may not work on macOS using hvf as the CPU does not support 1GB page (pdpe1gb)
 _boot_mapping_pdpt:
-    .quad _boot_mapping_pd - {offset} + 0x3 # PRESENT | WRITABLE | paddr(0x0)
-    .quad 0x40000000 | 0x83                 # PRESENT | WRITABLE | HUGE_PAGE | paddr(0x4000_0000)
-    .quad 0x80000000 | 0x83                 # PRESENT | WRITABLE | HUGE_PAGE | paddr(0x8000_0000)
-    .quad _boot_mapping_pd4 - {offset} + 0x3# PRESENT | WRITABLE | HUGE_PAGE | paddr(0xc000_0000)
+    .quad _boot_mapping_pd  - {offset} + 0x3 # PRESENT | WRITABLE | paddr(0x0)
+    .quad _boot_mapping_pd2 - {offset} + 0x3 # PRESENT | WRITABLE | HUGE_PAGE | paddr(0x4000_0000)
+    .quad _boot_mapping_pd3 - {offset} + 0x3 # PRESENT | WRITABLE | HUGE_PAGE | paddr(0x8000_0000)
+    .quad _boot_mapping_pd4 - {offset} + 0x3 # PRESENT | WRITABLE | HUGE_PAGE | paddr(0xc000_0000)
     .zero 8 * 508
 
 .balign 4096
 _boot_mapping_pd:
     Page2MTable 0
-
+_boot_mapping_pd2:
+    Page2MTable 0x40000000
+_boot_mapping_pd3:
+    Page2MTable 0x80000000
 .global _boot_mapping_pd4
 _boot_mapping_pd4:
-    Page2MTable    0xc0000000
+    Page2MTable 0xc0000000

@@ -6,6 +6,7 @@ mod vga_text;
 mod font;
 #[cfg(feature = "graphic")]
 mod graphic;
+mod keyboard;
 
 #[cfg(not(any(feature = "vga_text", feature = "graphic")))]
 pub(crate) use com::init as init_early;

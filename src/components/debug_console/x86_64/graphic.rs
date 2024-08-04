@@ -1,8 +1,5 @@
-use x86::io::inb;
-
 use crate::{
-    components::debug_console::DebugConsole,
-    utils::MutexNoIrq,
+    components::debug_console::DebugConsole, consts::VIRT_ADDR_START, debug_console::println, utils::MutexNoIrq
 };
 
 use super::font::BIT_FONTS;
@@ -10,21 +7,23 @@ use super::font::BIT_FONTS;
 /// TIPS: This should always be a multiple of 2, or 1, But not 0.
 const SCALE: usize = 1;
 
-const SCAN_CODE_TO_ASCII: [u8; 58] = [
-    0, 27, b'1', b'2', b'3', b'4', b'5', b'6', b'7', b'8', b'9', b'0', b'-', b'+', 08, b'\t', b'q',
-    b'w', b'e', b'r', b't', b'y', b'u', b'i', b'o', b'p', b'[', b']', 10, 0, b'a', b's', b'd',
-    b'f', b'g', b'h', b'j', b'k', b'l', b';', b'\'', b'`', 0, b'\\', b'z', b'x', b'c', b'v', b'b',
-    b'n', b'm', b',', b'.', b'/', 0, b'*', 0, b' ',
-];
-
 pub struct GraphicConsole {
     x: usize,
     y: usize,
+    /// The pixels in the row.
     width: usize,
+    /// The number of rows.
     height: usize,
+    /// The bytes of a line.
     pitch: usize,
+    /// Frame buuffer pointer.
     ptr: usize,
+    /// The font color.
     color: u32,
+    /// Is ANSI Control mode.
+    control: bool,
+    step: usize,
+    value: usize,
 }
 
 impl GraphicConsole {
@@ -43,6 +42,9 @@ impl GraphicConsole {
             height: 768,
             pitch: 1366,
             color: 0xffffffff,
+            control: false,
+            step: 0,
+            value: 0
         }
     }
 
@@ -61,13 +63,55 @@ impl GraphicConsole {
 
     /// Put a character to the Screen.
     fn put_char(&mut self, c: u8) {
+        // Check the ansi settings.
+        if self.control { 
+            match self.step {
+                0 => {
+                    if c == b'[' {
+                        self.step += 1;
+                        return;
+                    } else {
+                        self.control = false;
+                    }
+                }
+                1 => {
+                    if c >= b'0' && c <= b'9' {
+                        self.value = (self.value * 10) + (c - b'0') as usize;
+                        return;
+                    } else if c == b'J' {
+                        self.control = false;
+                        return;
+                    } else if c == b'm' {
+                        match self.value {
+                            0 => self.color = 0xffffff,
+                            32 => self.color = 0x00ff00,
+                            34 => self.color = 0x33ccff,
+                            _ => {}
+                        }
+                        self.control = false;
+                        return;
+                    } else {
+                        self.control = false;
+                    }
+                }
+                _ => self.control = false,
+            }
+        }
+
         match c {
             b'\n' => {
                 self.y += Self::F_HEIGHT;
                 self.x = 0;
             }
-            b'\r' => {
-                self.x = 0;
+            b'\r' => self.x = 0,
+            b'\t' => self.x = Self::F_WIDTH * 4,
+            // Backspace character
+            0x08 => self.backspace(),
+            // ANSI Control Mode
+            0x1b => {
+                self.control = true;
+                self.step = 0;
+                self.value = 0;
             }
             _ => {
                 let bit_offset = match c as usize * 0x10 < BIT_FONTS.len() {
@@ -106,6 +150,23 @@ impl GraphicConsole {
         }
     }
 
+    /// Backspace character.
+    fn backspace(&mut self) {
+        // println!("backspace character");
+        if self.x > Self::F_WIDTH {
+            self.x -= Self::F_WIDTH;
+
+            let ptr = self.current_ptr();
+            for y in 0..16 {
+                for x in 0..8 {
+                    unsafe {
+                        ptr.add(self.line_offset(y, x)).write_volatile(0);
+                    }
+                }
+            }
+        }
+    }
+
     #[inline]
     fn clear(&self) {
         unsafe {
@@ -135,8 +196,7 @@ impl DebugConsole {
 
     #[inline]
     pub fn getchar() -> Option<u8> {
-        let c = unsafe { inb(0x60) };
-        SCAN_CODE_TO_ASCII.get(c as usize).cloned()
+        super::keyboard::get_key()
     }
 
 
@@ -150,7 +210,7 @@ impl DebugConsole {
 /// Init the graphics console's information, includes frame buffer addresse, width and height.
 pub(crate) fn init(addr: usize, width: usize, height: usize, pitch: usize) {
     let mut g_console = GRAPHIC_CONSOLE.lock();
-    g_console.ptr = addr;
+    g_console.ptr = addr | VIRT_ADDR_START;
     g_console.width = width;
     g_console.height = height;
     g_console.pitch = pitch;

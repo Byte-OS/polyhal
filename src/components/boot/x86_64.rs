@@ -51,6 +51,11 @@ const EFER: u64 = EferFlags::LONG_MODE_ENABLE.bits();
 // TODO: enable if it supports NO_EXECUTE_ENABLE
 // | EferFlags::NO_EXECUTE_ENABLE.bits()
 
+#[cfg(feature = "graphic")]
+const GRAPHIC_MODE: usize = 0;
+#[cfg(not(feature = "graphic"))]
+const GRAPHIC_MODE: usize = 1;
+
 static mut MEM: Mem = Mem;
 
 struct Mem;
@@ -92,6 +97,7 @@ global_asm!(
     cr0 = const CR0,
     cr4 = const CR4,
     efer_msr = const x86::msr::IA32_EFER,
+    graphic_mode = const GRAPHIC_MODE,
     efer = const EFER,
 );
 

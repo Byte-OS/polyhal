@@ -184,7 +184,7 @@ impl PageTable {
     #[inline]
     pub fn restore(&self) {
         self.release();
-        let kernel_arr = Self::get_pte_list(crate::boot::boot_page_table().0);
+        let kernel_arr = Self::get_pte_list(Self::current().0);
         let arr = Self::get_pte_list(self.0);
         arr[0x100..].copy_from_slice(&kernel_arr[0x100..]);
         arr[0..0x100].fill(PTE(0));
@@ -193,7 +193,7 @@ impl PageTable {
     #[inline]
     pub fn change(&self) {
         // Write page table entry for
-        satp::write((8 << 60) | (self.0 .0 >> 12));
+        satp::write((8 << 60) | (self.0.0 >> 12));
         TLB::flush_all();
     }
 }

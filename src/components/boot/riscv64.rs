@@ -142,13 +142,9 @@ pub(crate) fn rust_main(hartid: usize, device_tree: usize) {
     crate::components::debug_console::DebugConsole::log_init();
     // Init allocator
     crate::components::percpu::set_local_thread_pointer(hartid);
-    println!("CPU_ID offset: {:#x}", CPU_ID.offset());
-    println!("init success, CPU_ID: {}", CPU_ID.read_current());
     CPU_ID.write_current(hartid);
     #[cfg(feature = "trap")]
     crate::components::trap::init();
-
-    println!("CPU_ID offset: {:#x}", CPU_ID.offset());
 
     unsafe {
         // Enable SUM for access user memory directly.

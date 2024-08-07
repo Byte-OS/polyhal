@@ -1,0 +1,1 @@
+window.SIDEBAR_ITEMS = {"fn":["get_cpu_num","get_fdt","get_mem_areas","init"],"trait":["PageAlloc"]};

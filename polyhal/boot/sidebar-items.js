@@ -1,0 +1,1 @@
+window.SIDEBAR_ITEMS = {"constant":["STACK_SIZE"],"fn":["boot_page_table"]};

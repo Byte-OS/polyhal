@@ -1,0 +1,4 @@
+var srcIndex = JSON.parse('{\
+"polyhal":["",[["components",[["arch",[],["mod.rs","riscv64.rs"]],["boot",[],["mod.rs","riscv64.rs"]],["consts",[],["mod.rs","riscv64.rs"]],["debug_console",[],["mod.rs","riscv64.rs"]],["instruction",[["riscv64",[],["shutdown.rs"]]],["mod.rs","riscv64.rs"]],["irq",[],["mod.rs","riscv64.rs"]],["kcontext",[],["mod.rs","riscv64.rs"]],["mem",[],["mod.rs","riscv64.rs"]],["multicore",[],["mod.rs","riscv64.rs"]],["pagetable",[],["mod.rs","riscv64.rs"]],["percpu",[],["mod.rs","riscv64.rs"]],["timer",[],["mod.rs","riscv64.rs"]],["trap",[],["mod.rs","riscv64.rs"]],["trapframe",[],["mod.rs","riscv64.rs"]]],["common.rs","mod.rs"]],["drivers",[["interrupt",[],["mod.rs"]],["uart",[],["mod.rs"]]],["mod.rs"]],["utils",[],["lazy_init.rs","macros.rs","mod.rs","mutex_no_irq.rs","region.rs"]]],["addr.rs","lib.rs","time.rs"]]\
+}');
+createSrcSidebar();

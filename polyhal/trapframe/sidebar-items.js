@@ -1,0 +1,1 @@
+window.SIDEBAR_ITEMS = {"constant":["TRAPFRAME_SIZE"],"enum":["TrapFrameArgs"],"struct":["KernelToken","TrapFrame"]};

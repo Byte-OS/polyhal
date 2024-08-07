@@ -33,6 +33,11 @@ impl PhysAddr {
     }
 
     #[inline]
+    pub fn write_volatile<T>(&self, v: T) {
+        unsafe { self.get_mut_ptr::<T>().write_volatile(v) }
+    }
+
+    #[inline]
     pub fn slice_with_len<T>(&self, len: usize) -> &'static [T] {
         unsafe { core::slice::from_raw_parts(self.get_ptr(), len) }
     }

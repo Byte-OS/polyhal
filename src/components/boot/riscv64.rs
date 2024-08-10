@@ -8,9 +8,12 @@ use crate::components::instruction::Instruction;
 use crate::components::pagetable::{PTEFlags, PTE};
 use crate::PageTable;
 
+#[repr(align(4096))]
+pub(crate) struct PageAlignment([PTE; PageTable::PTE_NUM_IN_PAGE]);
+
 /// TODO: Map the whole memory in the available memory region.
 #[link_section = ".data.prepage.entry"]
-pub(crate) static mut PAGE_TABLE: [PTE; PageTable::PTE_NUM_IN_PAGE] = {
+pub(crate) static mut PAGE_TABLE: PageAlignment = {
     let mut arr: [PTE; PageTable::PTE_NUM_IN_PAGE] = [PTE(0); PageTable::PTE_NUM_IN_PAGE];
     // 初始化页表信息
     // 0x00000000_80000000 -> 0x80000000 (1G)
@@ -28,7 +31,7 @@ pub(crate) static mut PAGE_TABLE: [PTE; PageTable::PTE_NUM_IN_PAGE] = {
     arr[0x104] = PTE::from_addr(0x1_0000_0000, PTEFlags::ADGVRWX);
     arr[0x105] = PTE::from_addr(0x1_4000_0000, PTEFlags::ADGVRWX);
     arr[0x106] = PTE::from_addr(0x8000_0000, PTEFlags::ADVRWX);
-    arr
+    PageAlignment(arr)
 };
 
 /// 汇编入口函数
@@ -215,6 +218,6 @@ pub(crate) extern "C" fn rust_secondary_main(hartid: usize) {
 
 pub fn boot_page_table() -> PageTable {
     PageTable(crate::addr::PhysAddr(unsafe {
-        PAGE_TABLE.as_ptr() as usize & !VIRT_ADDR_START
+        PAGE_TABLE.0.as_ptr() as usize & !VIRT_ADDR_START
     }))
 }

@@ -10,6 +10,14 @@
     .endr
 .endm
 
+.macro Page1GHugeTable before
+    .set    n, \before * 0x40000000
+    .rept   512 - \before
+        .quad n + 0x83
+    .set    n, n + 0x40000000
+    .endr
+.endm
+
 .section .text.entry
 .balign 4
 .type multiboot_header, STT_OBJECT
@@ -120,7 +128,8 @@ _boot_mapping_pdpt:
     .quad _boot_mapping_pd2 - {offset} + 0x3 # PRESENT | WRITABLE | HUGE_PAGE | paddr(0x4000_0000)
     .quad _boot_mapping_pd3 - {offset} + 0x3 # PRESENT | WRITABLE | HUGE_PAGE | paddr(0x8000_0000)
     .quad _boot_mapping_pd4 - {offset} + 0x3 # PRESENT | WRITABLE | HUGE_PAGE | paddr(0xc000_0000)
-    .zero 8 * 508
+    # .zero 8 * 508
+    Page1GHugeTable 4
 
 .balign 4096
 _boot_mapping_pd:

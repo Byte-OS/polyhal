@@ -63,17 +63,17 @@ impl log::Log for DebugConsole {
 
     fn log(&self, record: &log::Record) {
         use log::Level;
-        
+
         let file = record.file();
         let line = record.line();
         #[cfg(all(target_arch = "x86_64", feature = "graphic"))]
         {
             let color_code = match record.level() {
                 Level::Error => 0xff0000u32, // Red
-                Level::Warn => 0xFFFF00,    // BrightYellow
-                Level::Info => 0x33ccff,    // Blue
-                Level::Debug => 0x00ff00,   // Green
-                Level::Trace => 0xaaaaaa,   // BrightBlack
+                Level::Warn => 0xFFFF00,     // BrightYellow
+                Level::Info => 0x33ccff,     // Blue
+                Level::Debug => 0x00ff00,    // Green
+                Level::Trace => 0xaaaaaa,    // BrightBlack
             };
             DebugConsole::set_color(color_code);
             println!(

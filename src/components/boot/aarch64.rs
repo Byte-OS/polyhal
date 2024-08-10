@@ -14,11 +14,13 @@ use crate::{
         pagetable::{PTEFlags, TLB},
         percpu::percpu_area_init,
         timer,
-    },
+    }, pagetable::PTE, PageTable, PhysPage,
 };
 
-#[link_section = ".data.prepage"]
-static mut BOOT_PT_L1: [usize; 512] = [0; 512];
+use super::PageAlignment;
+
+#[link_section = ".data"]
+static mut BOOT_PT_L1: PageAlignment = PageAlignment([PTE(0); PageTable::PTE_NUM_IN_PAGE]);
 
 unsafe fn switch_to_el1() {
     SPSel.write(SPSel::SP::ELx);
@@ -84,7 +86,7 @@ unsafe fn init_mmu() {
 
     // Set both TTBR0 and TTBR1
     // let root_paddr = PhysAddr::from(BOOT_PT_L0.as_ptr() as usize).addr() as _;
-    let root_paddr = (BOOT_PT_L1.as_ptr() as usize & 0xFFFF_FFFF_F000) as _;
+    let root_paddr = (BOOT_PT_L1.0.as_ptr() as usize & 0xFFFF_FFFF_F000) as _;
     TTBR0_EL1.set(root_paddr);
     TTBR1_EL1.set(root_paddr);
 
@@ -98,10 +100,8 @@ unsafe fn init_mmu() {
 
 unsafe fn init_boot_page_table() {
     // Level 1 Entry for Huge Page
-    BOOT_PT_L1[0] =
-        0 | (PTEFlags::VALID | PTEFlags::AF | PTEFlags::ATTR_INDX | PTEFlags::NG).bits();
-    BOOT_PT_L1[1] = (0x4000_0000)
-        | (PTEFlags::VALID | PTEFlags::AF | PTEFlags::ATTR_INDX | PTEFlags::NG).bits();
+    BOOT_PT_L1.0[0] = PTE::new_page(PhysPage::from_addr(0), PTEFlags::VALID | PTEFlags::AF | PTEFlags::ATTR_INDX | PTEFlags::NG);
+    BOOT_PT_L1.0[1] = PTE::new_page(PhysPage::from_addr(0x4000_0000), PTEFlags::VALID | PTEFlags::AF | PTEFlags::ATTR_INDX | PTEFlags::NG);
 }
 /// The earliest entry point for the primary CPU.
 #[naked]

@@ -8,11 +8,10 @@ use crate::components::instruction::Instruction;
 use crate::components::pagetable::{PTEFlags, PTE};
 use crate::PageTable;
 
-#[repr(align(4096))]
-pub(crate) struct PageAlignment([PTE; PageTable::PTE_NUM_IN_PAGE]);
+use super::PageAlignment;
 
 /// TODO: Map the whole memory in the available memory region.
-#[link_section = ".data.prepage.entry"]
+#[link_section = ".data"]
 pub(crate) static mut PAGE_TABLE: PageAlignment = {
     let mut arr: [PTE; PageTable::PTE_NUM_IN_PAGE] = [PTE(0); PageTable::PTE_NUM_IN_PAGE];
     // 初始化页表信息

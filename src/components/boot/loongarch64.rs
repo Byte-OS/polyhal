@@ -1,7 +1,15 @@
 use loongArch64::register::euen;
 
 use crate::{
-    clear_bss, components::{common::CPU_NUM, consts::VIRT_ADDR_START, debug_console::{display_info, println}, instruction::Instruction, percpu::percpu_area_init}
+    clear_bss,
+    components::{
+        common::CPU_NUM,
+        consts::VIRT_ADDR_START,
+        debug_console::{display_info, println},
+        instruction::Instruction,
+        percpu::percpu_area_init,
+    },
+    PageTable, PhysAddr,
 };
 
 /// The earliest entry point for the primary CPU.
@@ -95,3 +103,9 @@ pub fn rust_tmp_main(hart_id: usize) {
 
 /// The entry point for the second core.
 pub(crate) extern "C" fn _rust_secondary_main(_hartid: usize) {}
+
+pub fn boot_page_table() -> PageTable {
+    // FIXME: This should return a valid page table.
+    // ref solution: create a blank page table in boot stage.
+    PageTable(PhysAddr(0))
+}

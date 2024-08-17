@@ -211,3 +211,9 @@ pub fn rust_tmp_main(hart_id: usize, device_tree: usize) {
 
     Instruction::shutdown();
 }
+
+pub fn boot_page_table() -> PageTable {
+    PageTable(crate::addr::PhysAddr(unsafe {
+        BOOT_PT_L1.0.as_ptr() as usize & !VIRT_ADDR_START
+    }))
+}

@@ -24,6 +24,7 @@ pub enum TrapType {
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
 pub enum EscapeReason {
     NoReason,
+    Exception(usize),
     IRQ,
     Timer,
     SysCall,
@@ -34,6 +35,11 @@ impl Into<EscapeReason> for TrapType {
     fn into(self) -> EscapeReason {
         match self {
             TrapType::SysCall => EscapeReason::SysCall,
+            TrapType::Timer   => EscapeReason::Timer,
+            TrapType::StorePageFault(e)|
+            TrapType::LoadPageFault(e)|
+            TrapType::InstructionPageFault(e)|
+            TrapType::IllegalInstruction(e)=>EscapeReason::Exception(e),
             _ => EscapeReason::NoReason,
         }
     }

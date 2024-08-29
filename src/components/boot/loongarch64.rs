@@ -78,6 +78,7 @@ pub fn rust_tmp_main(hart_id: usize) {
     #[cfg(feature = "logger")]
     crate::components::debug_console::DebugConsole::log_init();
 
+    // Display Information.
     display_info!();
     println!(include_str!("../../banner.txt"));
     display_info!("Platform Name", "loongarch64");
@@ -88,17 +89,24 @@ pub fn rust_tmp_main(hart_id: usize) {
 
     #[cfg(feature = "trap")]
     crate::components::trap::set_trap_vector_base();
-    // Enable floating point
-    euen::set_fpe(true);
+    // Initialize CPU Configuration.
+    init_cpu();
     crate::components::timer::init_timer();
     #[cfg(feature = "trap")]
     crate::components::trap::tlb_init(crate::components::trap::tlb_fill as _);
 
+    // TODO: Detect CPU Num dynamically.
     CPU_NUM.init_by(2);
 
     unsafe { crate::components::boot::_main_for_arch(hart_id) };
 
     Instruction::shutdown();
+}
+
+/// Initialize CPU Configuration.
+fn init_cpu() {
+    // Enable floating point
+    euen::set_fpe(true);
 }
 
 /// The entry point for the second core.

@@ -64,7 +64,7 @@ impl log::Log for DebugConsole {
     fn log(&self, record: &log::Record) {
         use log::Level;
 
-        let file = record.file();
+        let file = record.module_path();
         let line = record.line();
         #[cfg(all(target_arch = "x86_64", feature = "graphic"))]
         {
@@ -77,7 +77,7 @@ impl log::Log for DebugConsole {
             };
             DebugConsole::set_color(color_code);
             println!(
-                "[{}] {}:{} {}",
+                "[{}] <{}:{}> {}",
                 record.level(),
                 file.unwrap(),
                 line.unwrap(),
@@ -96,7 +96,7 @@ impl log::Log for DebugConsole {
             };
             println!(
                 "\u{1B}[{}m\
-                    [{}] {}:{} {}\
+                    [{}] <{}:{}> {}\
                     \u{1B}[0m",
                 color_code,
                 record.level(),

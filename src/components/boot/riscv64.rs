@@ -11,31 +11,26 @@ use crate::PageTable;
 use super::PageAlignment;
 
 /// TODO: Map the whole memory in the available memory region.
-#[link_section = ".data"]
 pub(crate) static mut PAGE_TABLE: PageAlignment = {
     let mut arr: [PTE; PageTable::PTE_NUM_IN_PAGE] = [PTE(0); PageTable::PTE_NUM_IN_PAGE];
-    // 初始化页表信息
-    // 0x00000000_80000000 -> 0x80000000 (1G)
-    // 高半核
-    // 0xffffffc0_00000000 -> 0x00000000 (1G)
-    // 0xffffffc0_80000000 -> 0x80000000 (1G)
-
-    // arr[0] = PTE::from_addr(0x0000_0000, PTEFlags::VRWX);
-    // arr[1] = PTE::from_addr(0x4000_0000, PTEFlags::VRWX);
-    arr[2] = PTE::from_addr(0x8000_0000, PTEFlags::ADVRWX);
-    arr[0x100] = PTE::from_addr(0x0000_0000, PTEFlags::ADGVRWX);
-    arr[0x101] = PTE::from_addr(0x4000_0000, PTEFlags::ADGVRWX);
-    arr[0x102] = PTE::from_addr(0x8000_0000, PTEFlags::ADGVRWX);
-    arr[0x103] = PTE::from_addr(0xc000_0000, PTEFlags::ADGVRWX);
-    arr[0x104] = PTE::from_addr(0x1_0000_0000, PTEFlags::ADGVRWX);
-    arr[0x105] = PTE::from_addr(0x1_4000_0000, PTEFlags::ADGVRWX);
-    arr[0x106] = PTE::from_addr(0x8000_0000, PTEFlags::ADVRWX);
+    // Init Page Table
+    // 0x00000000_00000000 -> 0x00000000_00000000 (256G)
+    // 0xffffffc0_00000000 -> 0x00000000_00000000 (256G)
+    // Const Loop, Can't use for i in 0..
+    let mut i = 0;
+    while i < 0x100 {
+        // Base Address
+        arr[i] = PTE::from_addr(i * 0x4000_0000, PTEFlags::ADVRWX);
+        // Higher Half Kernel
+        arr[i + 0x100] = PTE::from_addr(i * 0x4000_0000, PTEFlags::ADGVRWX);
+        i += 1;
+    }
     PageAlignment(arr)
 };
 
-/// 汇编入口函数
+/// Assembly Entry Function
 ///
-/// 分配栈 初始化页表信息 并调到rust入口函数
+/// Initialize Stack, Page Table and call rust entry.
 #[naked]
 #[no_mangle]
 #[link_section = ".text.entry"]
@@ -45,25 +40,7 @@ unsafe extern "C" fn _start() -> ! {
         "
             beqz    a0, 2f
         ",
-        // Ensure that boot core is 0
-        "1:
-            // li      a7, 0x48534D
-            // li      a6, 0
-            // li      a0, 0
-            // mv      a2, a1
-            // la      a1, _start
-            // ecall
-            // li      a7, 0x48534D
-            // li      a6, 1   // 0: START, 1: STOP, 2: STATUS
-            // li      a0, 0
-            // mv      a2, a1
-            // la      a1, _start
-            // ecall
-            // wfi
-            // la      ra, 1b
-            // ret
-        ",
-        // 1. 设置栈信息
+        // 1. Set Stack Pointer.
         // sp = bootstack + (hartid + 1) * 0x10000
         "2:
             la      sp, {boot_stack}
@@ -73,7 +50,7 @@ unsafe extern "C" fn _start() -> ! {
             li      s0, {virt_addr_start}   // add virtual address
             or      sp, sp, s0
         ",
-        // 2. 开启分页模式
+        // 2. Open Paging Mode
         // satp = (8 << 60) | PPN(page_table)
         "
             la      t0, {page_table}
@@ -83,7 +60,7 @@ unsafe extern "C" fn _start() -> ! {
             csrw    satp, t0
             sfence.vma
         ",
-        // 3. 跳到 rust_main 函数，绝对路径
+        // 3. Call rust_main function.
         "
             la      a2, {entry}
             or      a2, a2, s0
@@ -98,15 +75,15 @@ unsafe extern "C" fn _start() -> ! {
     )
 }
 
-/// 汇编函数入口
+/// Assembly Entry Function
 ///
-/// 初始化也表信息 并调到 rust_secondary_main 入口函数
+/// Initialize Page Information. Call rust_secondary_main entry function.
 #[naked]
 #[no_mangle]
 pub(crate) unsafe extern "C" fn secondary_start() -> ! {
     core::arch::asm!(
-        // 1. 设置栈信息
-        // sp = bootstack + (hartid + 1) * 0x10000
+        // 1. Set Stack Pointer.
+        // sp = a1(given Stack Pointer.)
         "
             mv      s6, a0
             mv      sp, a1
@@ -114,7 +91,7 @@ pub(crate) unsafe extern "C" fn secondary_start() -> ! {
             li      s0, {virt_addr_start}   // add virtual address
             or      sp, sp, s0
         ",
-        // 2. 开启分页模式
+        // 2. Call Paging Mode
         // satp = (8 << 60) | PPN(page_table)
         "
             la      t0, {page_table}
@@ -124,7 +101,7 @@ pub(crate) unsafe extern "C" fn secondary_start() -> ! {
             csrw    satp, t0
             sfence.vma
         ", 
-        // 3. 跳到 secondary_entry
+        // 3. Call secondary_entry
         "
             la      a2, {entry}
             or      a2, a2, s0
@@ -148,27 +125,18 @@ pub(crate) fn rust_main(hartid: usize, device_tree: usize) {
     #[cfg(feature = "trap")]
     crate::components::trap::init();
 
-    unsafe {
-        // Enable SUM for access user memory directly.
-        // TODO: Call set_sum() for riscv version up than 1.0, Close when below 1.0
-        sstatus::set_sum();
-        // Open float point support.
-        sstatus::set_fs(sstatus::FS::Dirty);
-        sie::set_sext();
-        sie::set_ssoft();
-    }
+    // Initialize CPU Configuration.
+    init_cpu();
 
-    CPU_NUM.init_by(match unsafe { Fdt::from_ptr(device_tree as *const u8) } {
-        Ok(fdt) => fdt.cpus().count(),
-        Err(_) => 1,
-    });
+    let fdt = unsafe { Fdt::from_ptr(device_tree as *const u8) };
+    CPU_NUM.init_by(fdt.map(|fdt| fdt.cpus().count()).unwrap_or(1));
 
     DTB_PTR.init_by(device_tree);
 
     display_info!();
     println!(include_str!("../../banner.txt"));
     display_info!("Platform Name", "riscv64");
-    if let Ok(fdt) = unsafe { Fdt::from_ptr(device_tree as *const u8) } {
+    if let Ok(fdt) = fdt {
         display_info!("Platform HART Count", "{}", fdt.cpus().count());
         fdt.memory().regions().for_each(|x| {
             display_info!(
@@ -189,6 +157,9 @@ pub(crate) fn rust_main(hartid: usize, device_tree: usize) {
     Instruction::shutdown();
 }
 
+/// Secondary Main function Entry.
+/// 
+/// Supports MultiCore, Boot in this function.
 pub(crate) extern "C" fn rust_secondary_main(hartid: usize) {
     crate::components::percpu::set_local_thread_pointer(hartid);
     CPU_ID.write_current(hartid);
@@ -200,21 +171,28 @@ pub(crate) extern "C" fn rust_secondary_main(hartid: usize) {
     // TODO: Get the hart_id and device_tree for the specified device.
     // let (hartid, _device_tree) = boards::init_device(hartid, 0);
 
-    unsafe {
-        // Enable SUM for access user memory directly.
-        // TODO: Call set_sum() for riscv version up than 1.0, Close when below 1.0
-        sstatus::set_sum();
-        // Open float point support.        
-        sstatus::set_fs(sstatus::FS::Dirty);
-        sie::set_sext();
-        sie::set_ssoft();
-    }
+    // Initialize CPU Configuration.
+    init_cpu();
 
     info!("secondary hart {} started", hartid);
     unsafe { crate::components::boot::_main_for_arch(hartid) };
     Instruction::shutdown();
 }
 
+#[inline]
+fn init_cpu() {
+    unsafe {
+        // Enable SUM for access user memory directly.
+        // TODO: Call set_sum() for riscv version up than 1.0, Close when below 1.0
+        sstatus::set_sum();
+        // Open float point support.
+        sstatus::set_fs(sstatus::FS::Dirty);
+        sie::set_sext();
+        sie::set_ssoft();
+    }
+}
+
+/// Get Boot Page Table.
 pub fn boot_page_table() -> PageTable {
     PageTable(crate::addr::PhysAddr(unsafe {
         PAGE_TABLE.0.as_ptr() as usize & !VIRT_ADDR_START

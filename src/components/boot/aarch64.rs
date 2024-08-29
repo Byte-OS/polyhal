@@ -14,7 +14,9 @@ use crate::{
         pagetable::{PTEFlags, TLB},
         percpu::percpu_area_init,
         timer,
-    }, pagetable::PTE, PageTable, PhysPage,
+    },
+    pagetable::PTE,
+    PageTable, PhysPage,
 };
 
 use super::PageAlignment;
@@ -100,8 +102,12 @@ unsafe fn init_mmu() {
 
 unsafe fn init_boot_page_table() {
     // Level 1 Entry for Huge Page
-    BOOT_PT_L1.0[0] = PTE::new_page(PhysPage::from_addr(0), PTEFlags::VALID | PTEFlags::AF | PTEFlags::ATTR_INDX | PTEFlags::NG);
-    BOOT_PT_L1.0[1] = PTE::new_page(PhysPage::from_addr(0x4000_0000), PTEFlags::VALID | PTEFlags::AF | PTEFlags::ATTR_INDX | PTEFlags::NG);
+    for i in 0..0x200 {
+        BOOT_PT_L1.0[i] = PTE::new_page(
+            PhysPage::from_addr(i * 0x4000_0000),
+            PTEFlags::VALID | PTEFlags::AF | PTEFlags::ATTR_INDX | PTEFlags::NG,
+        );
+    }
 }
 /// The earliest entry point for the primary CPU.
 #[naked]

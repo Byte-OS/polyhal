@@ -93,7 +93,11 @@ impl Uart16550 {
 
 impl DebugConsole {
     pub fn putchar(c: u8) {
-        COM1.lock().putchar(c);
+        let mut com = COM1.lock();
+        if c == b'\n' {
+            com.putchar(b'\r');
+        }
+        com.putchar(c);
     }
 
     pub fn getchar() -> Option<u8> {
@@ -105,6 +109,9 @@ pub(crate) fn init() {
     // FIXME: Use dynamic port
     if let Some(port) = get_com_port(1) {
         COM1.lock().data = Port::new(port);
+        COM1.lock().init(115200);
+    } else {
+        COM1.lock().data = Port::new(0x2f8);
         COM1.lock().init(115200);
     }
 }

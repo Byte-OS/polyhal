@@ -1,6 +1,6 @@
 use x86::io::{inb, outb};
 
-use crate::{components::debug_console::DebugConsole, debug_console::println, utils::MutexNoIrq};
+use crate::{debug_console::println, utils::MutexNoIrq};
 
 static VGA_BUFFER: MutexNoIrq<VGAPos> = MutexNoIrq::new(VGAPos::new());
 
@@ -109,16 +109,9 @@ impl VGAPos {
 }
 
 /// Implement for debug console.
-impl DebugConsole {
-    #[inline]
-    pub fn putchar(c: u8) {
-        VGA_BUFFER.lock().putchar(c);
-    }
-
-    #[inline]
-    pub fn getchar() -> Option<u8> {
-        super::keyboard::get_key()
-    }
+#[inline]
+pub(crate) fn putchar(c: u8) {
+    VGA_BUFFER.lock().putchar(c);
 }
 
 /// Init VBE Text Mode configuration

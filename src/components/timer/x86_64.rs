@@ -18,13 +18,10 @@ impl Time {
 }
 
 pub(crate) fn init_early() {
-    info!("freq1: {:#x?}", CpuId::new().get_tsc_info());
-    debug!("cpuid: {:#x?}", CpuId::new().get_vendor_info());
     if let Some(freq) = CpuId::new()
         .get_processor_frequency_info()
         .map(|info| info.processor_base_frequency())
     {
-        debug!("freq: {}", freq);
         if freq > 0 {
             info!("Got TSC frequency by CPUID: {} MHz", freq);
             unsafe { CPU_FREQ_MHZ = freq as _ }
@@ -91,21 +88,13 @@ pub(crate) fn init_early() {
             }
         }
         let end = lapic.timer_current();
-        log::info!(
-            "end {:#x} start: {:#x}, interval: {:#x}",
-            end,
-            0xFFFF_FFFFu32,
-            0xFFFF_FFFF - end
-        );
 
         let ticks10ms = 0xFFFF_FFFF - end;
         // lapic.set_timer_initial(0x20_000);
         // Set ticks 1s
-        log::info!("ticks 50us: {}", ticks10ms / 10 / 20);
         // lapic.set_timer_initial(ticks10ms * 0x100);
         // Set 500us ticks
         lapic.set_timer_initial(ticks10ms / 20);
-        debug!("count: {}", lapic.timer_current());
         // set_oneshot_timer(2000);
     }
 }

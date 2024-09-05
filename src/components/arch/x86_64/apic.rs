@@ -85,8 +85,6 @@ pub(crate) fn pic_eoi() {
 
 /// Init APIC
 pub(crate) fn init() {
-    info!("Initialize Local APIC...");
-
     // Remap and init pic controller.
     unsafe {
         let mut pic1_command = Port::<u8>::new(0x20);
@@ -115,10 +113,8 @@ pub(crate) fn init() {
         .spurious_vector(APIC_SPURIOUS_VECTOR as _);
 
     if cpu_has_x2apic() {
-        info!("Using x2APIC.");
         unsafe { IS_X2APIC = true };
     } else {
-        info!("Using xAPIC.");
         builder.set_xapic_base(unsafe { xapic_base() } | VIRT_ADDR_START as u64);
     }
 
@@ -128,7 +124,6 @@ pub(crate) fn init() {
         LOCAL_APIC = Some(lapic);
     }
 
-    info!("Initialize IO APIC...");
     let mut io_apic = unsafe { IoApic::new(IO_APIC_BASE) };
     // Remap the PIC irqs, Default disabled.
     for irq in 0..cmp::min(unsafe { io_apic.max_table_entry() }, 0x10) {

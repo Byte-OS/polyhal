@@ -2,10 +2,6 @@
 //!
 //!
 
-use crate::PageTable;
-
-use super::pagetable::PTE;
-
 // Define multi-architecture modules and pub use them.
 super::define_arch_mods!();
 
@@ -17,8 +13,9 @@ pub const STACK_SIZE: usize = 0x8_0000;
 #[link_section = ".bss.stack"]
 pub(crate) static mut BOOT_STACK: [u8; STACK_SIZE] = [0; STACK_SIZE];
 
+#[cfg(any(target_arch = "riscv64", target_arch = "aarch64"))]
 #[repr(align(4096))]
-pub(crate) struct PageAlignment([PTE; PageTable::PTE_NUM_IN_PAGE]);
+pub(crate) struct PageAlignment([crate::pagetable::PTE; crate::PageTable::PTE_NUM_IN_PAGE]);
 
 // Declare the _main_for_arch exists.
 extern "Rust" {

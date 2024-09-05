@@ -123,6 +123,5 @@ impl DebugConsole {
             Some("trace") => LevelFilter::Trace,
             _ => LevelFilter::Debug,
         });
-        info!("logging module initialized");
     }
 }

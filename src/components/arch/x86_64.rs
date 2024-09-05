@@ -2,16 +2,24 @@ pub(crate) mod apic;
 pub(crate) mod gdt;
 pub(crate) mod idt;
 
+use core::sync::atomic::AtomicUsize;
+
 use alloc::vec::Vec;
 use multiboot::information::MemoryType;
 
-use crate::{components::{boot::use_multiboot, common::{DTB_BIN, MEM_AREA}, consts::VIRT_ADDR_START}, utils::LazyInit};
+use crate::components::{
+    boot::use_multiboot,
+    common::{DTB_BIN, MEM_AREA},
+    consts::VIRT_ADDR_START,
+};
 
-pub(crate) static MBOOT_PTR: LazyInit<usize> = LazyInit::new();
+// pub(crate) static MBOOT_PTR: LazyInit<usize> = LazyInit::new();
+
+pub(crate) static MBOOT_PTR: AtomicUsize = AtomicUsize::new(0);
 
 pub(crate) fn arch_init() {
     DTB_BIN.init_by(Vec::new());
-    if let Some(mboot) = use_multiboot(*MBOOT_PTR as _) {
+    if let Some(mboot) = use_multiboot(MBOOT_PTR.load(core::sync::atomic::Ordering::SeqCst) as _) {
         let mut mem_area = Vec::new();
         if mboot.has_memory_map() {
             mboot
@@ -42,9 +50,9 @@ pub(crate) fn get_com_port(i: usize) -> Option<u16> {
     if i > 0x4 || i == 0 {
         return None;
     }
-    let port = unsafe { (0x400 as *const u16).add(i-1).read_volatile() };
+    let port = unsafe { (0x400 as *const u16).add(i - 1).read_volatile() };
     match port {
         0 => None,
-        n => Some(n)
+        n => Some(n),
     }
 }

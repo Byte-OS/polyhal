@@ -16,7 +16,6 @@ trap = []
 boot = []
 logger = []
 
-vga_text = []
 graphic = []
 
 default = ["boot", "kcontext"]

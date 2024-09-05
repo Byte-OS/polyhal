@@ -1,4 +1,5 @@
 use core::arch::global_asm;
+use core::sync::atomic::Ordering;
 use core::{mem, slice};
 use multiboot::information::{MemoryManagement, Multiboot, PAddr};
 use raw_cpuid::CpuId;
@@ -115,11 +116,12 @@ fn rust_tmp_main(magic: usize, mboot_ptr: usize) {
     #[cfg(feature = "graphic")]
     if let Some(mboot) = use_multiboot(mboot_ptr as _)  {
         if let Some(ft) = mboot.framebuffer_table() {
-            crate::components::debug_console::init_early(ft.addr as _, ft.width as _, ft.height as _, ft.pitch as _);
+            crate::components::debug_console::init_fb(ft.addr as _, ft.width as _, ft.height as _, ft.pitch as _);
+        } else {
+            crate::components::debug_console::init_vga();
         }
     }
-    #[cfg(not(feature = "graphic"))]
-    crate::components::debug_console::init_early();
+    crate::components::debug_console::init_com();
     #[cfg(feature = "logger")]
     crate::components::debug_console::DebugConsole::log_init();
     crate::components::arch::idt::init();
@@ -136,15 +138,12 @@ fn rust_tmp_main(magic: usize, mboot_ptr: usize) {
     // IF you want to use avx in the qemu, you can use -cpu IvyBridge-v2 to
     // select a cpu with avx support
     CpuId::new().get_feature_info().map(|features| {
-        info!("is there a avx feature: {}", features.has_avx());
-        info!("is there a xsave feature: {}", features.has_xsave());
         // Add OSXSave flag to cr4 register if supported
         if features.has_xsave() {
             unsafe {
                 Cr4::write(Cr4::read() | Cr4Flags::OSXSAVE);
             }
         }
-        info!("cr4 has OSXSAVE feature: {:?}", Cr4::read());
         if features.has_avx() && features.has_xsave() && Cr4::read().contains(Cr4Flags::OSXSAVE) {
             unsafe {
                 XCr0::write(XCr0::read() | XCr0Flags::AVX | XCr0Flags::SSE | XCr0Flags::X87);
@@ -155,10 +154,10 @@ fn rust_tmp_main(magic: usize, mboot_ptr: usize) {
     // TODO: This is will be fixed with ACPI support
     CPU_NUM.init_by(1);
 
-    info!("magic: {magic:#x}, mboot_ptr: {mboot_ptr:#x}");
-
+    // Check Multiboot Magic Number.
+    assert_eq!(magic, 0x2BADB002);
     // Set the multiboot pointer.
-    MBOOT_PTR.init_by(mboot_ptr);
+    MBOOT_PTR.store(mboot_ptr, Ordering::SeqCst);
 
     // Print PolyHAL information.
     display_info!();
@@ -172,17 +171,10 @@ fn rust_tmp_main(magic: usize, mboot_ptr: usize) {
         );
         display_info!("Platform FPU Support", "{}", features.has_fpu());
     }
+    display_info!("Platform Boot Header", "{mboot_ptr:#018x}");
     display_info!("Platform Virt Mem Offset", "{VIRT_ADDR_START:#x}");
-    // TODO: Use the dynamic uart information.
-    #[cfg(not(feature = "vga_text"))]
-    {
-        display_info!("Platform UART Name", "Uart16550");
-        display_info!("Platform UART IRQ", "0x4");
-    }
-    #[cfg(feature = "vga_text")]
-    {
-        display_info!("Platform Console", "VGA Text Mode");
-    }
+    display_info!("Platform UART Name", "Uart16550");
+    display_info!("Platform UART IRQ", "0x4");
     // TODO: Display Uart Ports and IRQs
     (1..5)
         .map(get_com_port)

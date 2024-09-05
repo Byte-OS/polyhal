@@ -6,12 +6,10 @@ use x86_64::instructions::port::{Port, PortReadOnly, PortWriteOnly};
 use crate::components::arch::get_com_port;
 use crate::utils::MutexNoIrq;
 
-use crate::components::debug_console::DebugConsole;
-
 const UART_CLOCK_FACTOR: usize = 16;
 const OSC_FREQ: usize = 1_843_200;
 
-static COM1: MutexNoIrq<Uart16550> = MutexNoIrq::new(Uart16550::new(0x3f8));
+static COM1: MutexNoIrq<Uart16550> = MutexNoIrq::new(Uart16550::new(0x2f9));
 
 bitflags::bitflags! {
     /// Line status flags
@@ -82,26 +80,13 @@ impl Uart16550 {
         unsafe { self.data.write(c) };
     }
 
+    #[cfg(not(feature = "graphic"))]
     fn getchar(&mut self) -> Option<u8> {
         if self.line_sts().contains(LineStsFlags::INPUT_FULL) {
             unsafe { Some(self.data.read()) }
         } else {
             None
         }
-    }
-}
-
-impl DebugConsole {
-    pub fn putchar(c: u8) {
-        let mut com = COM1.lock();
-        if c == b'\n' {
-            com.putchar(b'\r');
-        }
-        com.putchar(c);
-    }
-
-    pub fn getchar() -> Option<u8> {
-        COM1.lock().getchar()
     }
 }
 
@@ -114,4 +99,15 @@ pub(crate) fn init() {
         COM1.lock().data = Port::new(0x2f8);
         COM1.lock().init(115200);
     }
+}
+
+#[inline]
+pub(super) fn putchar(c: u8) {
+    COM1.lock().putchar(c);
+}
+
+#[cfg(not(feature = "graphic"))]
+#[inline]
+pub(super) fn getchar() -> Option<u8> {
+    COM1.lock().getchar()
 }

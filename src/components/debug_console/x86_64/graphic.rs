@@ -1,6 +1,4 @@
-use crate::{
-    components::debug_console::DebugConsole, consts::VIRT_ADDR_START, debug_console::println, utils::MutexNoIrq
-};
+use crate::{consts::VIRT_ADDR_START, utils::MutexNoIrq};
 
 use super::font::BIT_FONTS;
 
@@ -44,7 +42,7 @@ impl GraphicConsole {
             color: 0xffffffff,
             control: false,
             step: 0,
-            value: 0
+            value: 0,
         }
     }
 
@@ -64,7 +62,7 @@ impl GraphicConsole {
     /// Put a character to the Screen.
     fn put_char(&mut self, c: u8) {
         // Check the ansi settings.
-        if self.control { 
+        if self.control {
             match self.step {
                 0 => {
                     if c == b'[' {
@@ -75,24 +73,47 @@ impl GraphicConsole {
                     }
                 }
                 1 => {
-                    if c >= b'0' && c <= b'9' {
-                        self.value = (self.value * 10) + (c - b'0') as usize;
-                        return;
-                    } else if c == b'J' {
-                        self.control = false;
-                        return;
-                    } else if c == b'm' {
-                        match self.value {
-                            0 => self.color = 0xffffff,
-                            32 => self.color = 0x00ff00,
-                            34 => self.color = 0x33ccff,
-                            _ => {}
+                    match c {
+                        b'0'..=b'9' => {
+                            self.step = 0;
+                            self.control = false;
+                            self.scroll_up(self.value as usize);
+                            self.y = (self.y / Self::F_HEIGHT) * Self::F_HEIGHT;
                         }
-                        self.control = false;
-                        return;
-                    } else {
-                        self.control = false;
+                        b'J' => {
+                            self.control = false;
+                            return;
+                        }
+                        b'm' => {
+                            match self.value {
+                                0 => self.color = 0xffffff,
+                                32 => self.color = 0x00ff00,
+                                34 => self.color = 0x33ccff,
+                                _ => {}
+                            }
+                            self.control = false;
+                            return;
+                        }
+                        _ => self.control = false,
                     }
+                    // if c >= b'0' && c <= b'9' {
+                    //     self.value = (self.value * 10) + (c - b'0') as usize;
+                    //     return;
+                    // } else if c == b'J' {
+                    //     self.control = false;
+                    //     return;
+                    // } else if c == b'm' {
+                    //     match self.value {
+                    //         0 => self.color = 0xffffff,
+                    //         32 => self.color = 0x00ff00,
+                    //         34 => self.color = 0x33ccff,
+                    //         _ => {}
+                    //     }
+                    //     self.control = false;
+                    //     return;
+                    // } else {
+                    //     self.control = false;
+                    // }
                 }
                 _ => self.control = false,
             }
@@ -119,8 +140,6 @@ impl GraphicConsole {
                     _ => 0,
                 };
 
-                let ptr = self.current_ptr();
-
                 for y in 0..16 {
                     let word = BIT_FONTS[bit_offset + y];
 
@@ -129,9 +148,8 @@ impl GraphicConsole {
                             true => self.color,
                             false => 0,
                         };
-                        unsafe {
-                            ptr.add(self.line_offset(y, x)).write_volatile(color);
-                        }
+
+                        self.write_pixel(y, x, color);
                     }
                 }
 
@@ -167,11 +185,22 @@ impl GraphicConsole {
         }
     }
 
+    /// Clear the screen.
     #[inline]
     fn clear(&self) {
         unsafe {
             core::slice::from_raw_parts_mut(self.ptr as *mut u64, self.height * self.pitch / 4 / 2)
                 .fill(0);
+        }
+    }
+
+    /// Write a Pixel to graphic frame buffer.
+    #[inline]
+    fn write_pixel(&self, y: usize, x: usize, color: u32) {
+        unsafe {
+            self.current_ptr()
+                .add(self.line_offset(y, x))
+                .write_volatile(color);
         }
     }
 
@@ -188,23 +217,22 @@ impl GraphicConsole {
 
 static GRAPHIC_CONSOLE: MutexNoIrq<GraphicConsole> = MutexNoIrq::new(GraphicConsole::new());
 
-impl DebugConsole {
-    #[inline]
-    pub fn putchar(c: u8) {
-        GRAPHIC_CONSOLE.lock().put_char(c);
-    }
+#[inline]
+pub(super) fn putchar(c: u8) {
+    GRAPHIC_CONSOLE.lock().put_char(c);
+}
 
-    #[inline]
-    pub fn getchar() -> Option<u8> {
-        super::keyboard::get_key()
-    }
+/// Set the color of the current state.
+#[inline]
+pub(super) fn set_color(color: u32) {
+    GRAPHIC_CONSOLE.lock().color = color;
+}
 
-
-    /// Set the color of the current state.
-    #[inline]
-    pub(crate) fn set_color(color: u32) {
-        GRAPHIC_CONSOLE.lock().color = color;
-    }
+static mut GRAPHIC: bool = false;
+/// Check graphic support.
+#[inline]
+pub(super) fn is_graphic() -> bool {
+    unsafe { GRAPHIC }
 }
 
 /// Init the graphics console's information, includes frame buffer addresse, width and height.
@@ -216,4 +244,7 @@ pub(crate) fn init(addr: usize, width: usize, height: usize, pitch: usize) {
     g_console.pitch = pitch;
     g_console.clear();
     drop(g_console);
+    unsafe {
+        GRAPHIC = true;
+    }
 }

@@ -47,7 +47,6 @@ impl IdtStruct {
 }
 
 pub fn init() {
-    info!("Initializing IDT...");
     let idt = IdtStruct::new();
     IDT.call_once(|| idt);
     unsafe {

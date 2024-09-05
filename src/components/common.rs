@@ -1,3 +1,5 @@
+use core::sync::atomic::AtomicUsize;
+
 use alloc::vec::Vec;
 use fdt::Fdt;
 
@@ -8,7 +10,8 @@ use crate::{utils::LazyInit, PhysPage};
 pub(crate) static CPU_ID: usize = 0;
 
 // TODO: Hide DTB_PTR For arch not yet supported.
-pub(crate) static DTB_PTR: LazyInit<usize> = LazyInit::new();
+#[allow(dead_code)]
+pub(crate) static DTB_PTR: AtomicUsize = AtomicUsize::new(0);
 
 /// Page Allocation trait for privoids that page allocation
 pub trait PageAlloc: Sync {

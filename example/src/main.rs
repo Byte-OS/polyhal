@@ -58,6 +58,10 @@ fn kernel_interrupt(ctx: &mut TrapFrame, trap_type: TrapType) {
 /// kernel main function, entry point.
 fn main(hartid: usize) {
     if hartid != 0 {
+        log::info!("Hello Other Hart: {}", hartid);
+        loop {}
+    }
+    if hartid != 0 {
         return;
     }
 
@@ -75,6 +79,9 @@ fn main(hartid: usize) {
         println!("init memory region {:#x} - {:#x}", start, start + size);
         // frame::add_frame_range(start, start + size);
     });
+
+    polyhal::multicore::MultiCore::boot_all();
+
 
     crate::pci::init();
 

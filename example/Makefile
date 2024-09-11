@@ -2,6 +2,7 @@
 ARCH := riscv64
 TEST := false
 GUI  := false
+SMP  := 1
 
 ifeq ($(TEST), true)
 QEMU_EXEC := timeout 40
@@ -35,7 +36,7 @@ else ifeq ($(ARCH), loongarch64)
   TARGET := loongarch64-unknown-none
   KERNEL_ELF := target/$(TARGET)/release/example
   KERNEL_BIN := $(KERNEL_ELF).bin
-  QEMU_EXEC += qemu-system-$(ARCH) -kernel $(KERNEL_ELF)
+  QEMU_EXEC += qemu-system-$(ARCH) -kernel $(KERNEL_ELF) -M virt -m 1G
   BUILD_ARGS += -Z build-std=core,alloc
   BUS := pci
 else
@@ -69,8 +70,8 @@ run: run-inner
 ifneq ($(GUI), true)
 QEMU_EXEC += -nographic
 endif 
-QEMU_EXEC += -smp 1 
-QEMU_EXEC += -D qemu.log -d in_asm,int,pcall,cpu_reset,guest_errors
+QEMU_EXEC += -smp $(SMP)
+QEMU_EXEC += -D qemu-%d.log -d in_asm,int,pcall,cpu_reset,guest_errors,tid
 ifeq ($(TEST), true)
 QEMU_EXEC += >output.log 2>&1 || echo "QEMU exited"
 endif
@@ -81,6 +82,9 @@ ifeq ($(TEST), true)
 	grep "\[kernel\] Hello, world!" output.log
 endif
 
+debug: build
+	$(QEMU_EXEC) -s -S
+
 test:
 	make ARCH=aarch64 run
 	make ARCH=riscv64 run
@@ -89,9 +93,15 @@ test:
 
 iso: build
 	cp $(KERNEL_ELF) iso/example
-	grub-mkrescue -o bootable.iso iso
+	grub2-mkrescue -o bootable.iso iso
 
 boot-iso: iso
-	qemu-system-x86_64 -cdrom bootable.iso
+	qemu-system-x86_64 -cdrom bootable.iso -serial stdio
+
+gdb:
+	gdb \
+	-ex 'file $(KERNEL_ELF)' \
+	-ex 'set arch x86_64' \
+	-ex 'target remote localhost:1234'
 
 .PHONY: build env kernel clean run-inner

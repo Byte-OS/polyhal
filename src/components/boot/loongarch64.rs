@@ -27,9 +27,6 @@ unsafe extern "C" fn _start() -> ! {
         lu52i.d     $t0, $t0, -1792     # CA, PLV0, 0x9000 xxxx xxxx xxxx
         csrwr       $t0, 0x181          # LOONGARCH_CSR_DMWIN1
 
-        // csrrd       $t1, 0x20       # read cpu from csr
-        // bnez        $t1, _start_secondary
-
         # Enable PG 
         li.w		$t0, 0xb0		# PLV=0, IE=0, PG=1
         csrwr		$t0, 0x0        # LOONGARCH_CSR_CRMD
@@ -56,16 +53,33 @@ unsafe extern "C" fn _start() -> ! {
 /// The earliest entry point for the primary CPU.
 ///
 /// We can't use bl to jump to higher address, so we use jirl to jump to higher address.
+/// TODO: Dynamic Stack Pointer.
 #[naked]
 #[no_mangle]
 #[link_section = ".text.entry"]
-unsafe extern "C" fn _start_secondary() -> ! {
+pub(crate) unsafe extern "C" fn _start_secondary() -> ! {
     core::arch::asm!(
         "
-        idle    1
-        b       _start_secondary
+        ori          $t0, $zero, 0x1     # CSR_DMW1_PLV0
+        lu52i.d      $t0, $t0, -2048     # UC, PLV0, 0x8000 xxxx xxxx xxxx
+        csrwr        $t0, 0x180          # LOONGARCH_CSR_DMWIN0
+        ori          $t0, $zero, 0x11    # CSR_DMW1_MAT | CSR_DMW1_PLV0
+        lu52i.d      $t0, $t0, -1792     # CA, PLV0, 0x9000 xxxx xxxx xxxx
+        csrwr        $t0, 0x181          # LOONGARCH_CSR_DMWIN1
+
+        la.abs       $sp, {sec_boot_stack_top}
+        li.d         $t0, {boot_stack_size}
+        add.d        $sp, $sp, $t0       # setup boot stack
+
+        csrrd $a0, 0x20                  # cpuid
+        la.global $t0, {entry}
+
+        jirl $zero,$t0,0
         ",
         options(noreturn),
+        sec_boot_stack_top = sym crate::components::boot::BOOT_STACK,
+        boot_stack_size = const crate::components::boot::STACK_SIZE,
+        entry = sym _rust_secondary_main,
     )
 }
 
@@ -110,7 +124,19 @@ fn init_cpu() {
 }
 
 /// The entry point for the second core.
-pub(crate) extern "C" fn _rust_secondary_main(_hartid: usize) {}
+pub(crate) extern "C" fn _rust_secondary_main(hart_id: usize) {
+    percpu_area_init(hart_id);
+
+    #[cfg(feature = "trap")]
+    crate::components::trap::set_trap_vector_base();
+    // Initialize CPU Configuration.
+    init_cpu();
+    crate::components::timer::init_timer();
+    #[cfg(feature = "trap")]
+    crate::components::trap::tlb_init(crate::components::trap::tlb_fill as _);
+    
+    unsafe { crate::components::boot::_main_for_arch(hart_id) };
+}
 
 pub fn boot_page_table() -> PageTable {
     // FIXME: This should return a valid page table.

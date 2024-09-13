@@ -1,4 +1,4 @@
-name: Build Example CI
+name: Cargo Build Test
 
 on:
   workflow_dispatch:
@@ -28,6 +28,6 @@ jobs:
     - name: Install generaic tools
       run: yes | pacman -Syy make cmake rustup gcc
     - name: setup rust toolchain
-      run: rustup default nightly && cargo install cargo-binutils
+      run: rustup default nightly && cargo install cargo-binutils && rustup target add ${{ matrix.target }}
     - name: Test Build ${{ matrix.arch }}
-      run: cargo build --release --target ${{ matrix.target}}
+      run: cargo build --release --target ${{ matrix.target}} --all-features

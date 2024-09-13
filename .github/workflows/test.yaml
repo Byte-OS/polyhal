@@ -1,0 +1,33 @@
+name: Build Example CI
+
+on:
+  workflow_dispatch:
+  push:
+jobs:
+  test-build:
+    runs-on: ubuntu-latest
+    container:
+      image: archlinux:base
+      volumes:
+        - .:/code
+    strategy:
+      fail-fast: false
+      matrix:
+        arch: [x86_64, riscv64, aarch64, loongarch64]
+        include:
+          - arch: aarch64
+            target: aarch64-unknown-none-softfloat
+          - arch: riscv64
+            target: riscv64gc-unknown-none-elf
+          - arch: x86_64
+            target: x86_64-unknown-none
+          - arch: loongarch64
+            target: loongarch64-unknown-none
+    steps:
+    - uses: actions/checkout@v4
+    - name: Install generaic tools
+      run: yes | pacman -Syy make cmake rustup gcc
+    - name: setup rust toolchain
+      run: rustup default nightly && cargo install cargo-binutils
+    - name: Test Build ${{ matrix.arch }}
+      run: cargo build --release --target ${{ matrix.target}}

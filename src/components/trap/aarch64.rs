@@ -3,7 +3,6 @@ use core::arch::{asm, global_asm};
 use aarch64_cpu::registers::{Writeable, ESR_EL1, FAR_EL1, VBAR_EL1};
 use tock_registers::interfaces::Readable;
 
-use crate::components::instruction::Instruction;
 use crate::components::irq::{get_irq, TIMER_IRQ_NUM};
 use crate::components::timer::set_next_timer;
 use crate::components::trapframe::TrapFrame;
@@ -56,8 +55,6 @@ fn handle_exception(tf: &mut TrapFrame, kind: TrapKind, source: TrapSource) -> T
     let esr = ESR_EL1.extract();
     let trap_type = match esr.read_as_enum(ESR_EL1::EC) {
         Some(ESR_EL1::EC::Value::Brk64) => {
-            let iss = esr.read(ESR_EL1::ISS);
-            log::debug!("BRK #{:#x} @ {:#x} ", iss, tf.elr);
             tf.elr += 4;
             TrapType::Breakpoint
         }
@@ -155,13 +152,4 @@ extern "C" fn user_restore(context: *mut TrapFrame) -> TrapKind {
 pub fn run_user_task(cx: &mut TrapFrame) -> EscapeReason {
     let trap_kind = user_restore(cx);
     handle_exception(cx, trap_kind, TrapSource::LowerAArch64).into()
-}
-
-/// Implement the instructions for the riscv
-impl Instruction {
-    /// ebreak instruction to trigger the breakpoint exception.
-    #[inline]
-    pub fn ebreak() {
-        unsafe { asm!("brk 0") }
-    }
 }

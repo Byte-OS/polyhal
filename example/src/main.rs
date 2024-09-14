@@ -11,16 +11,19 @@ use core::panic::PanicInfo;
 use frame::frame_alloc;
 use polyhal::addr::PhysPage;
 use polyhal::common::{get_mem_areas, PageAlloc};
+use polyhal::consts::VIRT_ADDR_START;
 use polyhal::debug_console::DebugConsole;
-use polyhal::instruction::Instruction;
+use polyhal::instruction::{ebreak, shutdown};
+use polyhal::multicore::boot_core;
+use polyhal::pagetable::PAGE_SIZE;
 use polyhal::trap::TrapType::{self, *};
-use polyhal::trapframe::TrapFrame;
+use polyhal::trapframe::{TrapFrame, TrapFrameArgs};
 
 pub struct PageAllocImpl;
 
 impl PageAlloc for PageAllocImpl {
     fn alloc(&self) -> PhysPage {
-        frame_alloc()
+        frame_alloc(1)
     }
 
     fn dealloc(&self, ppn: PhysPage) {
@@ -33,7 +36,9 @@ impl PageAlloc for PageAllocImpl {
 fn kernel_interrupt(ctx: &mut TrapFrame, trap_type: TrapType) {
     // println!("trap_type @ {:x?} {:#x?}", trap_type, ctx);
     match trap_type {
-        Breakpoint => return,
+        Breakpoint => {
+            log::info!("@BP @ {:#x}", ctx[TrapFrameArgs::SEPC]);
+        }
         SysCall => {
             // jump to next instruction anyway
             ctx.syscall_ok();
@@ -77,11 +82,15 @@ fn main(hartid: usize) {
 
     get_mem_areas().into_iter().for_each(|(start, size)| {
         println!("init memory region {:#x} - {:#x}", start, start + size);
-        // frame::add_frame_range(start, start + size);
+        frame::add_frame_range(start, start + size);
     });
 
-    polyhal::multicore::MultiCore::boot_all();
+    // Boot another core that id is 1.
+    let sp = frame_alloc(16);
+    boot_core(1, (sp.to_addr() | VIRT_ADDR_START) + 16 * PAGE_SIZE);
 
+    // Test BreakPoint
+    ebreak();
 
     crate::pci::init();
 
@@ -92,7 +101,7 @@ fn main(hartid: usize) {
     }
 
     log::info!("Run END. Shutdown successfully.");
-    Instruction::shutdown();
+    shutdown();
 }
 
 #[panic_handler]
@@ -107,5 +116,5 @@ fn panic(info: &PanicInfo) -> ! {
     } else {
         log::error!("[kernel] Panicked: {}", info.message().unwrap());
     }
-    Instruction::shutdown()
+    shutdown()
 }

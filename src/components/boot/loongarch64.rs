@@ -1,21 +1,21 @@
-use loongArch64::{
-    consts::{LOONGARCH_CSR_MAIL_BUF0, LOONGARCH_CSR_MAIL_BUF1},
-    iocsr::iocsr_read_d,
-    register::euen,
-};
+use loongArch64::register::euen;
 
 use crate::{
     arch::hart_id,
-    clear_bss,
     components::{
         common::CPU_NUM,
         consts::VIRT_ADDR_START,
-        debug_console::{display_info, println},
-        instruction::Instruction,
+        debug_console::{display_info, println, DebugConsole},
         percpu::percpu_area_init,
+        timer,
     },
+    instruction,
+    multicore::CpuCore,
     PageTable, PhysAddr,
 };
+
+#[cfg(feature = "trap")]
+use crate::components::trap;
 
 /// The earliest entry point for the primary CPU.
 ///
@@ -103,10 +103,14 @@ pub(crate) unsafe extern "C" fn _start_secondary() -> ! {
 ///
 /// This function will be called after assembly boot stage.
 pub fn rust_tmp_main(hart_id: usize) {
-    clear_bss();
-    percpu_area_init(hart_id);
+    super::clear_bss();
+    // Initialize CPU Configuration.
+    init_cpu();
+
+    CpuCore::init(hart_id);
+
     #[cfg(feature = "logger")]
-    crate::components::debug_console::DebugConsole::log_init();
+    DebugConsole::log_init();
 
     // Display Information.
     display_info!();
@@ -117,45 +121,39 @@ pub fn rust_tmp_main(hart_id: usize) {
     display_info!("Boot HART ID", "{}", hart_id);
     display_info!();
 
-    #[cfg(feature = "trap")]
-    crate::components::trap::set_trap_vector_base();
-    // Initialize CPU Configuration.
-    init_cpu();
-    crate::components::timer::init_timer();
-    #[cfg(feature = "trap")]
-    crate::components::trap::tlb_init(crate::components::trap::tlb_fill as _);
-
     // TODO: Detect CPU Num dynamically.
     CPU_NUM.init_by(2);
 
-    unsafe { crate::components::boot::_main_for_arch(hart_id) };
+    unsafe { super::_main_for_arch(hart_id) };
 
-    Instruction::shutdown();
+    instruction::shutdown();
 }
 
 /// Initialize CPU Configuration.
 fn init_cpu() {
     // Enable floating point
     euen::set_fpe(true);
+
+    // Initialize the percpu area for this hart.
+    percpu_area_init(hart_id());
+
+    // Initialzie Timer
+    timer::init_timer();
+
+    // Initialize the trap and tlb fill function
+    #[cfg(feature = "trap")]
+    {
+        trap::set_trap_vector_base();
+        trap::tlb_init(trap::tlb_fill as _);
+    }
 }
 
 /// The entry point for the second core.
 pub(crate) extern "C" fn _rust_secondary_main() {
-    let hart_id = hart_id();
-    percpu_area_init(hart_id);
-
-    log::info!("mailbox: {:#x}", iocsr_read_d(LOONGARCH_CSR_MAIL_BUF0));
-    log::info!("mailbox: {:#x}", iocsr_read_d(LOONGARCH_CSR_MAIL_BUF1));
-
-    #[cfg(feature = "trap")]
-    crate::components::trap::set_trap_vector_base();
     // Initialize CPU Configuration.
     init_cpu();
-    crate::components::timer::init_timer();
-    #[cfg(feature = "trap")]
-    crate::components::trap::tlb_init(crate::components::trap::tlb_fill as _);
 
-    unsafe { crate::components::boot::_main_for_arch(hart_id) };
+    unsafe { super::_main_for_arch(hart_id()) };
 }
 
 pub fn boot_page_table() -> PageTable {

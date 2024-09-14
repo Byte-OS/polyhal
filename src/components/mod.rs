@@ -12,7 +12,6 @@ pub mod irq;
 pub mod kcontext;
 pub mod macros;
 pub mod mem;
-#[cfg(feature = "multicore")]
 pub mod multicore;
 pub mod pagetable;
 pub mod percpu;

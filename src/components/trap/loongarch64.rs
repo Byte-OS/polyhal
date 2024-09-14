@@ -11,6 +11,7 @@ use unaligned::emulate_load_store_insn;
 use crate::components::trapframe::TrapFrame;
 
 use crate::components::trap::{EscapeReason, TrapType};
+use crate::irq::TIMER_IRQ;
 
 global_asm!(
     r"
@@ -179,13 +180,6 @@ pub fn disable_irq() {
     prmd::set_pie(false);
 }
 
-#[inline(always)]
-pub fn enable_external_irq() {
-    // unsafe {
-    //     sie::set_sext();
-    // }
-}
-
 pub fn run_user_task(cx: &mut TrapFrame) -> EscapeReason {
     user_restore(cx);
     loongarch64_trap_handler(cx).into()
@@ -305,7 +299,6 @@ fn loongarch64_trap_handler(tf: &mut TrapFrame) -> TrapType {
     let estat = estat::read();
     let trap_type = match estat.cause() {
         Trap::Exception(Exception::Breakpoint) => {
-            log::debug!("Exception(Breakpoint) @ {:#x} ", tf.era);
             tf.era += 4;
             TrapType::Breakpoint
         }
@@ -318,7 +311,7 @@ fn loongarch64_trap_handler(tf: &mut TrapFrame) -> TrapType {
             let irq_num: usize = estat.is().trailing_zeros() as usize;
             match irq_num {
                 // TIMER_IRQ
-                11 => {
+                TIMER_IRQ => {
                     ticlr::clear_timer_interrupt();
                     TrapType::Timer
                 }
@@ -330,17 +323,17 @@ fn loongarch64_trap_handler(tf: &mut TrapFrame) -> TrapType {
         | Trap::Exception(Exception::PageModifyFault) => {
             TrapType::StorePageFault(badv::read().vaddr())
         }
-        Trap::Exception(Exception::PageNonReadableFault)
-        | Trap::Exception(Exception::PageNonExecutableFault) => {
-            // info!("page none readable: {tf:#x?}");
-            // let badv = badv::read().vaddr();
-
-            // TrapType::Un
-            TrapType::StorePageFault(badv::read().vaddr())
+        Trap::Exception(Exception::PageNonExecutableFault)
+        | Trap::Exception(Exception::FetchPageFault) => {
+            TrapType::InstructionPageFault(badv::read().vaddr())
         }
-        Trap::Exception(Exception::FetchPageFault) | Trap::Exception(Exception::LoadPageFault) => {
+        // Load Fault
+        Trap::Exception(Exception::LoadPageFault)
+        | Trap::Exception(Exception::PageNonReadableFault) => {
             TrapType::LoadPageFault(badv::read().vaddr())
         }
+        Trap::MachineError(_) => todo!(),
+        Trap::Unknown => todo!(),
         _ => {
             panic!(
                 "Unhandled trap {:?} @ {:#x} BADV: {:#x}:\n{:#x?}",

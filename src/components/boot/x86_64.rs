@@ -7,13 +7,15 @@ use x86_64::registers::control::{Cr0Flags, Cr4, Cr4Flags};
 use x86_64::registers::model_specific::EferFlags;
 use x86_64::registers::xcontrol::{XCr0, XCr0Flags};
 
-use crate::components::arch::{get_com_port, hart_id, MBOOT_PTR};
+use crate::components::arch::{self, get_com_port, hart_id, MBOOT_PTR};
 use crate::components::common::{CPU_ID, CPU_NUM};
 use crate::components::consts::VIRT_ADDR_START;
-use crate::components::debug_console::{display_info, println};
-use crate::components::instruction::Instruction;
+use crate::components::debug_console::{self, display_info, println};
 use crate::components::pagetable::PageTable;
 use crate::components::percpu::set_local_thread_pointer;
+use crate::components::timer;
+use crate::instruction;
+use crate::multicore::CpuCore;
 use crate::utils::bit;
 
 /// Flags set in the 'flags' member of the multiboot header.
@@ -112,26 +114,31 @@ pub fn boot_page_table() -> PageTable {
 }
 
 fn rust_tmp_main(magic: usize, mboot_ptr: usize) {
-    crate::clear_bss();
+    super::clear_bss();
     #[cfg(feature = "graphic")]
-    if let Some(mboot) = use_multiboot(mboot_ptr as _)  {
+    if let Some(mboot) = use_multiboot(mboot_ptr as _) {
         if let Some(ft) = mboot.framebuffer_table() {
-            crate::components::debug_console::init_fb(ft.addr as _, ft.width as _, ft.height as _, ft.pitch as _);
+            debug_console::init_fb(ft.addr as _, ft.width as _, ft.height as _, ft.pitch as _);
         } else {
-            crate::components::debug_console::init_vga();
+            debug_console::init_vga();
         }
     }
-    crate::components::debug_console::init_com();
+
+    CpuCore::init(hart_id());
+
+    debug_console::init_com();
     #[cfg(feature = "logger")]
-    crate::components::debug_console::DebugConsole::log_init();
-    crate::components::arch::idt::init();
-    crate::components::arch::apic::init();
+    debug_console::DebugConsole::log_init();
+
+    // Init PerCPU Information.
+    arch::idt::init();
+    arch::apic::init();
     // Init allocator
     set_local_thread_pointer(hart_id());
-    crate::components::arch::gdt::init();
+    arch::gdt::init();
     #[cfg(feature = "trap")]
     crate::components::trap::init_syscall();
-    crate::components::timer::init_early();
+    timer::init_early();
 
     // enable avx extend instruction set and sse if support avx
     // TIPS: QEMU not support avx, so we can't enable avx here
@@ -215,7 +222,7 @@ fn rust_tmp_main(magic: usize, mboot_ptr: usize) {
     display_info!("Boot HART ID", "{:#x}", CPU_ID.read_current());
     display_info!();
 
-    unsafe { crate::components::boot::_main_for_arch(0) };
+    unsafe { crate::components::boot::_main_for_arch(hart_id()) };
 
-    Instruction::shutdown()
+    instruction::shutdown()
 }

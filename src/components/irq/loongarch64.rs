@@ -1,5 +1,7 @@
 use crate::components::irq::IRQ;
 
+/// Timer IRQ of loongarch64
+pub const TIMER_IRQ: usize = 11;
 
 /// Implement IRQ operations for the IRQ interface.
 impl IRQ {

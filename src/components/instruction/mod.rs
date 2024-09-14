@@ -3,9 +3,8 @@
 //! This module contains the instruction of the different architectures.
 //!
 
+use crate::pub_use_arch;
+
 super::define_arch_mods!();
 
-/// Platform Instruction
-/// [Instruction::ebreak] Intruction Breakpoint
-///
-pub struct Instruction;
+pub_use_arch!(shutdown, ebreak);

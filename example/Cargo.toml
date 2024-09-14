@@ -11,8 +11,7 @@ polyhal = { version = "0.1.2", features = [
   "logger",
   "boot",
   "trap",
-  "graphic",
-  "multicore"
+  "graphic"
 ] }
 log = "0.4"
 fdt = "0.1.5"

@@ -4,8 +4,9 @@ use riscv::register::{sie, sstatus};
 use crate::components::common::{CPU_ID, CPU_NUM, DTB_PTR};
 use crate::components::consts::VIRT_ADDR_START;
 use crate::components::debug_console::{display_info, println};
-use crate::components::instruction::Instruction;
+use crate::components::instruction;
 use crate::components::pagetable::{PTEFlags, PTE};
+use crate::multicore::CpuCore;
 use crate::PageTable;
 
 use super::PageAlignment;
@@ -116,7 +117,7 @@ pub(crate) unsafe extern "C" fn secondary_start() -> ! {
 }
 
 pub(crate) fn rust_main(hartid: usize, device_tree: usize) {
-    crate::clear_bss();
+    super::clear_bss();
     #[cfg(feature = "logger")]
     crate::components::debug_console::DebugConsole::log_init();
     // Init allocator
@@ -124,6 +125,8 @@ pub(crate) fn rust_main(hartid: usize, device_tree: usize) {
     CPU_ID.write_current(hartid);
     #[cfg(feature = "trap")]
     crate::components::trap::init();
+
+    CpuCore::init(hartid);
 
     // Initialize CPU Configuration.
     init_cpu();
@@ -154,7 +157,7 @@ pub(crate) fn rust_main(hartid: usize, device_tree: usize) {
     display_info!();
 
     unsafe { crate::components::boot::_main_for_arch(hartid) };
-    Instruction::shutdown();
+    instruction::shutdown();
 }
 
 /// Secondary Main function Entry.
@@ -176,7 +179,7 @@ pub(crate) extern "C" fn rust_secondary_main(hartid: usize) {
 
     log::info!("secondary hart {} started", hartid);
     unsafe { crate::components::boot::_main_for_arch(hartid) };
-    Instruction::shutdown();
+    instruction::shutdown();
 }
 
 #[inline]

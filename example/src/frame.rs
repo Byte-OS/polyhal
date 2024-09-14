@@ -11,10 +11,10 @@ pub fn add_frame_range(mm_start: usize, mm_end: usize) {
     LOCK_FRAME_ALLOCATOR.lock().add_frame(start, end);
 }
 
-pub fn frame_alloc() -> PhysPage {
+pub fn frame_alloc(count: usize) -> PhysPage {
     let ppn = LOCK_FRAME_ALLOCATOR
         .lock()
-        .alloc(1)
+        .alloc(count)
         .expect("can't find memory page");
     PhysPage::new(ppn)
 }

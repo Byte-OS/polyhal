@@ -11,7 +11,6 @@ use x86::{controlregs::cr2, irq::*};
 use crate::components::arch::apic::{local_apic, vectors::*};
 use crate::components::arch::gdt::{set_tss_kernel_sp, GdtStruct};
 use crate::components::consts::{PIC_VECTOR_OFFSET, SYSCALL_VECTOR};
-use crate::components::instruction::Instruction;
 use crate::components::irq;
 use crate::components::trapframe::{FxsaveArea, TrapFrame, TRAPFRAME_SIZE};
 use crate::components::percpu::PerCPUReserved;
@@ -65,7 +64,6 @@ fn kernel_callback(context: &mut TrapFrame) {
     let trap_type = match context.vector as u8 {
         PAGE_FAULT_VECTOR => {
             let pflags = PageFaultFlags::from_bits_truncate(context.rflags as _);
-            // debug!("flags: {:#x?} cx_ref: {:#x?}", pflags, context);
             if pflags.contains(PageFaultFlags::I) {
                 TrapType::InstructionPageFault(unsafe { cr2() })
             } else if pflags.contains(PageFaultFlags::W) {
@@ -74,10 +72,7 @@ fn kernel_callback(context: &mut TrapFrame) {
                 TrapType::LoadPageFault(unsafe { cr2() })
             }
         }
-        BREAKPOINT_VECTOR => {
-            log::debug!("#BP @ {:#x} ", context.rip);
-            TrapType::Breakpoint
-        }
+        BREAKPOINT_VECTOR => TrapType::Breakpoint,
         GENERAL_PROTECTION_FAULT_VECTOR => {
             panic!(
                 "#GP @ {:#x}, fault_vaddr={:#x} error_code={:#x}:\n{:#x?}",
@@ -408,12 +403,5 @@ pub fn run_user_task(context: &mut TrapFrame) -> EscapeReason {
             kernel_callback(context);
             EscapeReason::NoReason
         }
-    }
-}
-
-impl Instruction {
-    #[inline]
-    pub fn ebreak() {
-        unsafe { core::arch::asm!("int 3") }
     }
 }

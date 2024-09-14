@@ -1,9 +1,7 @@
-use crate::components::{arch::psci, instruction::Instruction};
+use crate::components::arch::psci;
 
-impl Instruction {
-    /// Close the computer. Call PSCI.
-    #[inline]
-    pub fn shutdown() -> ! {
-        psci::system_off()
-    }
+/// Close the computer. Call PSCI.
+#[inline]
+pub fn shutdown() -> ! {
+    psci::system_off()
 }

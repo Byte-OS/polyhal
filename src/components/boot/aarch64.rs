@@ -5,16 +5,16 @@ use fdt::Fdt;
 use tock_registers::interfaces::{ReadWriteable, Readable, Writeable};
 
 use crate::{
-    clear_bss,
     components::{
         common::{CPU_NUM, DTB_PTR},
         consts::VIRT_ADDR_START,
         debug_console::{display_info, println},
-        instruction::Instruction,
+        instruction,
         pagetable::{PTEFlags, TLB},
         percpu::percpu_area_init,
         timer,
     },
+    multicore::CpuCore,
     pagetable::PTE,
     PageTable, PhysPage,
 };
@@ -166,9 +166,10 @@ unsafe extern "C" fn _secondary_boot() -> ! {
 }
 
 pub fn rust_tmp_main(hart_id: usize, device_tree: usize) {
-    clear_bss();
+    super::clear_bss();
     percpu_area_init(hart_id);
-    // pl011::init_early();
+    CpuCore::init(hart_id);
+
     // Init DebugConsole early.
     crate::components::debug_console::init_early();
     #[cfg(feature = "logger")]
@@ -215,7 +216,7 @@ pub fn rust_tmp_main(hart_id: usize, device_tree: usize) {
     // Enter to kernel entry point(`main` function).
     unsafe { crate::components::boot::_main_for_arch(hart_id) };
 
-    Instruction::shutdown();
+    instruction::shutdown();
 }
 
 pub fn boot_page_table() -> PageTable {

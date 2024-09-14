@@ -105,8 +105,6 @@
 //!
 //! [Barrier](mem::Barrier): Memory barrier operations.
 //!
-//! [MultiCore](multicore::MultiCore): MultiCore operations. Now only [multicore::MultiCore::boot_all] is available.
-//!
 //! [PageTable]: PageTable and its associated functions.
 //!
 //! [MappingFlags](pagetable::MappingFlags): MappingFlags, This is an abstraction of pagetable flags.
@@ -153,7 +151,6 @@ pub use components::*;
 pub(crate) mod drivers;
 pub mod time;
 pub mod utils;
-use core::mem::size_of;
 
 #[cfg(feature = "boot")]
 pub use polyhal_macro::arch_entry;
@@ -162,23 +159,8 @@ pub use polyhal_macro::arch_interrupt;
 
 // Re export the Module like Structure.
 pub use addr::{PhysAddr, PhysPage, VirtAddr, VirtPage};
-// pub use multicore::MultiCore;
 pub use components::pagetable::{MappingFlags, MappingSize, PageTable, PageTableWrapper};
 pub use time::Time;
-
-pub(crate) fn clear_bss() {
-    extern "C" {
-        fn _sbss();
-        fn _ebss();
-    }
-    unsafe {
-        core::slice::from_raw_parts_mut(
-            _sbss as usize as *mut u128,
-            (_ebss as usize - _sbss as usize) / size_of::<u128>(),
-        )
-        .fill(0);
-    }
-}
 
 #[cfg(test)]
 pub mod tests {

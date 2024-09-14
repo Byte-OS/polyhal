@@ -46,7 +46,7 @@ tock-registers = "0.8"
 arm_gicv2 = "0.1.0"
 
 [target.'cfg(target_arch = "loongarch64")'.dependencies]
-loongArch64 = "0.2.2"
+loongArch64 = "0.2.4"
 
 [dev-dependencies]
 buddy_system_allocator = "0.9.1"

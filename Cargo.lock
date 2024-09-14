@@ -110,9 +110,9 @@ checksum = "90ed8c1e510134f979dbc4f070f87d4313098b704861a105fe34231c70a3901c"
 
 [[package]]
 name = "loongArch64"
-version = "0.2.2"
+version = "0.2.4"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "68608d80585f06cd02ecf725d20d75f450f493422be76bfea3a02063f9732444"
+checksum = "dd48200d465466664e4e899b204b77b5447d60b1ababdad3a2c49ae85417b552"
 dependencies = [
  "bit_field",
  "bitflags 1.3.2",

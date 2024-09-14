@@ -215,7 +215,7 @@ impl PhysPage {
 
     #[inline]
     pub fn copy_value_from_another(&self, ppn: PhysPage) {
-        self.get_buffer().copy_from_slice(&ppn.get_buffer());
+        self.get_buffer().copy_from_slice(ppn.get_buffer());
         #[cfg(c906)]
         unsafe {
             asm!(".long 0x0010000b"); // dcache.all

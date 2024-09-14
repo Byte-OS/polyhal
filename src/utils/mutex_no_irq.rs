@@ -84,13 +84,13 @@ pub struct MutexNoIrqGuard<'a, T: ?Sized + 'a> {
 impl<'a, T: ?Sized> Deref for MutexNoIrqGuard<'a, T> {
     type Target = T;
 
-    fn deref<'b>(&'b self) -> &'b T {
-        &*(self.guard)
+    fn deref(&self) -> &T {
+        &(self.guard)
     }
 }
 
 impl<'a, T: ?Sized> DerefMut for MutexNoIrqGuard<'a, T> {
-    fn deref_mut<'b>(&'b mut self) -> &'b mut T {
-        &mut *(self.guard)
+    fn deref_mut(&mut self) -> &mut T {
+        &mut (self.guard)
     }
 }

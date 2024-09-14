@@ -174,7 +174,7 @@ pub(crate) extern "C" fn rust_secondary_main(hartid: usize) {
     // Initialize CPU Configuration.
     init_cpu();
 
-    info!("secondary hart {} started", hartid);
+    log::info!("secondary hart {} started", hartid);
     unsafe { crate::components::boot::_main_for_arch(hartid) };
     Instruction::shutdown();
 }

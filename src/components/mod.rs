@@ -10,6 +10,7 @@ pub mod debug_console;
 pub mod instruction;
 pub mod irq;
 pub mod kcontext;
+pub mod macros;
 pub mod mem;
 #[cfg(feature = "multicore")]
 pub mod multicore;
@@ -20,4 +21,4 @@ pub mod timer;
 pub mod trap;
 pub mod trapframe;
 
-pub(self) use polyhal_macro::define_arch_mods;
+use polyhal_macro::define_arch_mods;

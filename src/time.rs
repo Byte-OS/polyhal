@@ -49,13 +49,13 @@ impl Time {
 
     #[inline]
     pub fn to_usec(&self) -> usize {
-        self.0 * 1000_000 / Self::get_freq()
+        self.0 * 1_000_000 / Self::get_freq()
     }
 
     /// Converts hardware ticks to nanoseconds.
     #[inline]
     pub fn to_nsec(&self) -> usize {
-        self.0 * 1000_000_000 / Self::get_freq()
+        self.0 * 1_000_000_000 / Self::get_freq()
     }
 
     #[inline]

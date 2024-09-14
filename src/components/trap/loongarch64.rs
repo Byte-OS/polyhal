@@ -305,7 +305,7 @@ fn loongarch64_trap_handler(tf: &mut TrapFrame) -> TrapType {
     let estat = estat::read();
     let trap_type = match estat.cause() {
         Trap::Exception(Exception::Breakpoint) => {
-            debug!("Exception(Breakpoint) @ {:#x} ", tf.era);
+            log::debug!("Exception(Breakpoint) @ {:#x} ", tf.era);
             tf.era += 4;
             TrapType::Breakpoint
         }

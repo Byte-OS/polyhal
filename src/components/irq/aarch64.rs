@@ -28,7 +28,7 @@ static GICC: GicCpuInterface = GicCpuInterface::new(GICC_BASE.get_mut_ptr());
 
 /// Initializes GICD, GICC on the primary CPU.
 pub(crate) fn init() {
-    info!("Initialize GICv2...");
+    log::info!("Initialize GICv2...");
     GICD.lock().init();
     GICC.init();
 }

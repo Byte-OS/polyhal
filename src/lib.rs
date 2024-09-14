@@ -145,7 +145,6 @@
 
 extern crate alloc;
 
-#[macro_use]
 extern crate log;
 
 pub mod addr;

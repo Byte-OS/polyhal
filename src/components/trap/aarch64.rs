@@ -57,7 +57,7 @@ fn handle_exception(tf: &mut TrapFrame, kind: TrapKind, source: TrapSource) -> T
     let trap_type = match esr.read_as_enum(ESR_EL1::EC) {
         Some(ESR_EL1::EC::Value::Brk64) => {
             let iss = esr.read(ESR_EL1::ISS);
-            debug!("BRK #{:#x} @ {:#x} ", iss, tf.elr);
+            log::debug!("BRK #{:#x} @ {:#x} ", iss, tf.elr);
             tf.elr += 4;
             TrapType::Breakpoint
         }
@@ -65,7 +65,7 @@ fn handle_exception(tf: &mut TrapFrame, kind: TrapKind, source: TrapSource) -> T
         Some(ESR_EL1::EC::Value::DataAbortLowerEL)
         | Some(ESR_EL1::EC::Value::InstrAbortLowerEL) => {
             let iss = esr.read(ESR_EL1::ISS);
-            warn!(
+            log::warn!(
                 "EL0 Page Fault @ {:#x}, FAR={:#x}, ISS={:#x}",
                 tf.elr,
                 FAR_EL1.get(),
@@ -76,7 +76,7 @@ fn handle_exception(tf: &mut TrapFrame, kind: TrapKind, source: TrapSource) -> T
         Some(ESR_EL1::EC::Value::DataAbortCurrentEL)
         | Some(ESR_EL1::EC::Value::InstrAbortCurrentEL) => {
             let iss = esr.read(ESR_EL1::ISS);
-            warn!(
+            log::warn!(
                 "EL1 Page Fault @ {:#x}, FAR={:#x}, ISS={:#x}:\n{:#x?}",
                 tf.elr,
                 FAR_EL1.get(),

@@ -95,13 +95,6 @@ pub(crate) fn init() {
 fn kernel_callback(context: &mut TrapFrame) -> TrapType {
     let scause = scause::read();
     let stval = stval::read();
-    // debug!(
-    //     "int occurs: {:#x} {:?}  stval {:#x}  sepc: {:#x}",
-    //     scause.bits(),
-    //     scause.cause(),
-    //     stval,
-    //     context.sepc
-    // );
     let trap_type = match scause.cause() {
         // 中断异常
         Trap::Exception(Exception::Breakpoint) => {
@@ -127,7 +120,7 @@ fn kernel_callback(context: &mut TrapFrame) -> TrapType {
         Trap::Exception(Exception::LoadPageFault) => TrapType::LoadPageFault(stval),
         Trap::Interrupt(Interrupt::SupervisorExternal) => TrapType::SupervisorExternal,
         _ => {
-            error!(
+            log::error!(
                 "内核态中断发生: {:#x} {:?}  stval {:#x}  sepc: {:#x}",
                 scause.bits(),
                 scause.cause(),

@@ -29,5 +29,5 @@ pub fn init() {
         sie::set_stimer();
     }
     set_next_timeout();
-    info!("initialize timer interrupt");
+    log::info!("initialize timer interrupt");
 }

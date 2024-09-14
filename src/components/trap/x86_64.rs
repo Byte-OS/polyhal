@@ -75,7 +75,7 @@ fn kernel_callback(context: &mut TrapFrame) {
             }
         }
         BREAKPOINT_VECTOR => {
-            debug!("#BP @ {:#x} ", context.rip);
+            log::debug!("#BP @ {:#x} ", context.rip);
             TrapType::Breakpoint
         }
         GENERAL_PROTECTION_FAULT_VECTOR => {

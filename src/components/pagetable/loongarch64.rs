@@ -33,7 +33,7 @@ impl PTE {
 
     #[inline]
     pub(crate) fn new_page(ppn: PhysPage, flags: PTEFlags) -> Self {
-        Self(ppn.to_addr() | flags.bits() as usize)
+        Self(ppn.to_addr() | flags.bits())
     }
 }
 
@@ -55,14 +55,14 @@ impl From<MappingFlags> for PTEFlags {
     }
 }
 
-impl Into<MappingFlags> for PTEFlags {
-    fn into(self) -> MappingFlags {
+impl From<PTEFlags> for MappingFlags {
+    fn from(val: PTEFlags) -> Self {
         let mut flags = MappingFlags::empty();
-        if self.contains(PTEFlags::W) {
+        if val.contains(PTEFlags::W) {
             flags |= MappingFlags::W;
         }
 
-        if self.contains(PTEFlags::D) {
+        if val.contains(PTEFlags::D) {
             flags |= MappingFlags::D;
         }
 
@@ -70,7 +70,7 @@ impl Into<MappingFlags> for PTEFlags {
         //     flags |= MappingFlags::X;
         // }
 
-        if self.contains(PTEFlags::PLV_USER) {
+        if val.contains(PTEFlags::PLV_USER) {
             flags |= MappingFlags::U;
         }
         flags
@@ -175,7 +175,7 @@ impl VirtPage {
     /// Get n level page table index of the given virtual address
     #[inline]
     pub fn pn_index(&self, n: usize) -> usize {
-        (self.0 >> 9 * n) & 0x1ff
+        (self.0 >> (9 * n)) & 0x1ff
     }
 }
 

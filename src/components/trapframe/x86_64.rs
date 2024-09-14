@@ -146,7 +146,7 @@ impl IndexMut<TrapFrameArgs> for TrapFrame {
             TrapFrameArgs::SEPC => &mut self.rip,
             TrapFrameArgs::RA => {
                 // set return address, at x86_64 is push return address to rsp, shoule be execute at end.
-                warn!("set_ra in x86_64 is push return address to rsp, shoule be execute at end");
+                log::warn!("set_ra in x86_64 is push return address to rsp, shoule be execute at end");
                 self.rsp -= 8;
                 unsafe { (self.rsp as *mut usize).as_mut().unwrap() }
             }

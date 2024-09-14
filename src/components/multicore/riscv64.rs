@@ -1,11 +1,28 @@
 use crate::{
-    components::{
-        common::{frame_alloc, CPU_ID, CPU_NUM},
-        consts::{MULTI_CORE_AREA, MULTI_CORE_AREA_SIZE, VIRT_ADDR_START},
-        multicore::MultiCore,
-    },
+    boot::secondary_start,
+    common::{frame_alloc, CPU_ID, CPU_NUM},
+    consts::{MULTI_CORE_AREA, MULTI_CORE_AREA_SIZE, VIRT_ADDR_START},
+    multicore::MultiCore,
     MappingFlags, MappingSize, PageTable,
 };
+
+// TODO: Boot a core with top pointer of the stack
+pub fn boot_core(cpu: usize, sp_top: usize) {
+    if cpu == CPU_ID.read_current() {
+        return;
+    };
+
+    // PERCPU DATA ADDRESS RANGE END
+    let aux_core_func = (secondary_start as usize) & (!VIRT_ADDR_START);
+
+    log::info!("secondary addr: {:#x}", secondary_start as usize);
+    let ret = sbi_rt::hart_start(cpu, aux_core_func, sp_top);
+    if ret.is_ok() {
+        log::info!("hart {} Startting successfully", cpu);
+    } else {
+        log::warn!("hart {} Startting failed", cpu)
+    }
+}
 
 /// Implement the function for multicore
 impl MultiCore {
@@ -36,12 +53,12 @@ impl MultiCore {
                 )
             }
 
-            info!("secondary addr: {:#x}", secondary_start as usize);
+            log::info!("secondary addr: {:#x}", secondary_start as usize);
             let ret = sbi_rt::hart_start(cpu, aux_core_func, cpu_addr_end);
             if ret.is_ok() {
-                info!("hart {} Startting successfully", cpu);
+                log::info!("hart {} Startting successfully", cpu);
             } else {
-                warn!("hart {} Startting failed", cpu)
+                log::warn!("hart {} Startting failed", cpu)
             }
         });
     }

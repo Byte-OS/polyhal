@@ -50,7 +50,7 @@ pub struct DebugConsole;
 // Write string through DebugConsole
 impl Write for DebugConsole {
     fn write_str(&mut self, s: &str) -> core::fmt::Result {
-        s.as_bytes().into_iter().for_each(|x| Self::putchar(*x));
+        s.as_bytes().iter().for_each(|x| Self::putchar(*x));
         Ok(())
     }
 }

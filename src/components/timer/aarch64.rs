@@ -24,7 +24,7 @@ pub fn set_next_timer() {
 
 pub fn init() {
     let freq = CNTFRQ_EL0.get();
-    debug!("freq: {}", freq);
+    log::debug!("freq: {}", freq);
     CNTP_CTL_EL0.write(CNTP_CTL_EL0::ENABLE::SET);
     CNTP_TVAL_EL0.set(0);
     // Enable the timer irq.

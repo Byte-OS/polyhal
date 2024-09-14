@@ -23,7 +23,7 @@ pub(crate) fn init_early() {
         .map(|info| info.processor_base_frequency())
     {
         if freq > 0 {
-            info!("Got TSC frequency by CPUID: {} MHz", freq);
+            log::info!("Got TSC frequency by CPUID: {} MHz", freq);
             unsafe { CPU_FREQ_MHZ = freq as _ }
         }
     }

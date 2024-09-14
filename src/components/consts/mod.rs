@@ -11,6 +11,6 @@ pub const VIRT_ADDR_START: usize = GenericConfig::VIRT_ADDR;
 struct GenericConfig;
 
 /// Configuration Trait, Bound for configs
-pub(self) trait ConfigTrait {
+trait ConfigTrait {
     const VIRT_ADDR: usize;
 }

@@ -32,9 +32,9 @@ pub fn arch_init() {
     DTB_BIN.init_by(buffer);
     let mut mem_area = Vec::new();
     if let Ok(fdt) = Fdt::new(&DTB_BIN) {
-        info!("There has {} CPU(s)", fdt.cpus().count());
+        log::info!("There has {} CPU(s)", fdt.cpus().count());
         fdt.memory().regions().for_each(|x| {
-            info!(
+            log::info!(
                 "memory region {:#X} - {:#X}",
                 x.starting_address as usize,
                 x.starting_address as usize + x.size.unwrap()

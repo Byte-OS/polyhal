@@ -7,15 +7,14 @@ mod frame;
 mod logging;
 mod pci;
 use core::panic::PanicInfo;
+use core::sync::atomic::{AtomicU32, Ordering};
 
 use frame::frame_alloc;
 use polyhal::addr::PhysPage;
-use polyhal::common::{get_mem_areas, PageAlloc};
-use polyhal::consts::VIRT_ADDR_START;
+use polyhal::common::{get_fdt, get_mem_areas, PageAlloc};
 use polyhal::debug_console::DebugConsole;
+use polyhal::define_entry;
 use polyhal::instruction::{ebreak, shutdown};
-use polyhal::multicore::boot_core;
-use polyhal::pagetable::PAGE_SIZE;
 use polyhal::trap::TrapType::{self, *};
 use polyhal::trapframe::{TrapFrame, TrapFrameArgs};
 
@@ -37,7 +36,7 @@ fn kernel_interrupt(ctx: &mut TrapFrame, trap_type: TrapType) {
     // println!("trap_type @ {:x?} {:#x?}", trap_type, ctx);
     match trap_type {
         Breakpoint => {
-            log::info!("@BP @ {:#x}", ctx[TrapFrameArgs::SEPC]);
+            log::info!("BreakPoint @ {:#x}", ctx[TrapFrameArgs::SEPC]);
         }
         SysCall => {
             // jump to next instruction anyway
@@ -59,15 +58,16 @@ fn kernel_interrupt(ctx: &mut TrapFrame, trap_type: TrapType) {
     }
 }
 
-#[polyhal::arch_entry]
+static CORE_SET: AtomicU32 = AtomicU32::new(0);
+
 /// kernel main function, entry point.
 fn main(hartid: usize) {
     if hartid != 0 {
         log::info!("Hello Other Hart: {}", hartid);
+        let _ = CORE_SET.fetch_update(Ordering::SeqCst, Ordering::SeqCst, |x| {
+            Some(x | (1 << hartid))
+        });
         loop {}
-    }
-    if hartid != 0 {
-        return;
     }
 
     println!("[kernel] Hello, world!");
@@ -85,11 +85,31 @@ fn main(hartid: usize) {
         frame::add_frame_range(start, start + size);
     });
 
-    // Boot another core that id is 1.
-    let sp = frame_alloc(16);
-    boot_core(1, (sp.to_addr() | VIRT_ADDR_START) + 16 * PAGE_SIZE);
+    if let Some(fdt) = get_fdt() {
+        fdt.all_nodes().for_each(|x| {
+            if let Some(compatibles) = x.compatible() {
+                log::debug!("Node Compatiable: {:?}", compatibles.first());
+            }
+        });
 
-    // Test BreakPoint
+        log::debug!("boot args: {}", fdt.chosen().bootargs().unwrap_or(""));
+    }
+
+    // Boot another core that id is 1.
+    #[cfg(not(target_arch = "x86_64"))]
+    {
+        use polyhal::consts::VIRT_ADDR_START;
+
+        use polyhal::multicore::boot_core;
+        use polyhal::pagetable::PAGE_SIZE;
+        let sp = frame_alloc(16);
+        boot_core(1, (sp.to_addr() | VIRT_ADDR_START) + 16 * PAGE_SIZE);
+        // Waiting for Core Booting
+        while CORE_SET.fetch_and(1 << 1, Ordering::SeqCst) == 0 {}
+        log::info!("Core 1 Has Booted successfully!");
+    }
+
+    // Test BreakPoint Interrupt
     ebreak();
 
     crate::pci::init();
@@ -103,6 +123,8 @@ fn main(hartid: usize) {
     log::info!("Run END. Shutdown successfully.");
     shutdown();
 }
+
+define_entry!(main);
 
 #[panic_handler]
 fn panic(info: &PanicInfo) -> ! {

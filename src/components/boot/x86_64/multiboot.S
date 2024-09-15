@@ -27,22 +27,22 @@ multiboot_header:
     .int    -({mb_hdr_magic} + {mb_hdr_flags})  # checksum
     .int    multiboot_header - {offset}         # header_addr
     .int    _skernel - {offset}                 # load_addr
-    .int    _load_end - {offset}                   # load_end
-    .int    end - {offset}                    # bss_end_addr
+    .int    _load_end - {offset}                # load_end
+    .int    end - {offset}                      # bss_end_addr
     .int    _start - {offset}                   # entry_addr
-    .int    {graphic_mode}
-    .int    0
-    .int    0
-    .int    32
+    .int    {graphic_mode}                      # graphic mode
+    .int    0                                   # graphic pixel width
+    .int    0                                   # graphic pixel height
+    .int    32                                  # graphic pixel color bits
 
 # Common code in 32-bit, prepare states to enter 64-bit.
 .code32
 .global _start
 _start:
-    mov     edi, eax        # arg1: magic: 0x2BADB002
-    mov     esi, ebx        # arg2: multiboot info
+    mov     edi, eax                            # arg1: magic: 0x2BADB002
+    mov     esi, ebx                            # arg2: multiboot info
 
-    lgdt    [.Ltmp_gdt_desc - {offset}]             # load the temporary GDT
+    lgdt    [.Ltmp_gdt_desc - {offset}]         # load the temporary GDT
     # set data segment selectors
     mov     ax, 0x18
     mov     ss, ax

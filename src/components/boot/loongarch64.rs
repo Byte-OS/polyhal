@@ -1,17 +1,12 @@
 use loongArch64::register::euen;
 
 use crate::{
-    arch::hart_id,
-    components::{
-        common::CPU_NUM,
+    arch::hart_id, common::{parse_dtb_info, DTB_PTR}, components::{
         consts::VIRT_ADDR_START,
         debug_console::{display_info, println, DebugConsole},
         percpu::percpu_area_init,
         timer,
-    },
-    instruction,
-    multicore::CpuCore,
-    PageTable, PhysAddr,
+    }, consts::QEMU_DTB_ADDR, instruction, multicore::CpuCore, PageTable, PhysAddr
 };
 
 #[cfg(feature = "trap")]
@@ -71,7 +66,6 @@ unsafe extern "C" fn _start() -> ! {
 /// The earliest entry point for the primary CPU.
 ///
 /// We can't use bl to jump to higher address, so we use jirl to jump to higher address.
-/// TODO: Dynamic Stack Pointer.
 #[naked]
 #[no_mangle]
 #[link_section = ".text.entry"]
@@ -112,17 +106,21 @@ pub fn rust_tmp_main(hart_id: usize) {
     #[cfg(feature = "logger")]
     DebugConsole::log_init();
 
+    unsafe {
+        if fdt::Fdt::from_ptr((QEMU_DTB_ADDR | VIRT_ADDR_START) as *const u8).is_ok() {
+            DTB_PTR.init_by(QEMU_DTB_ADDR | VIRT_ADDR_START);
+        }
+    }
+
     // Display Information.
     display_info!();
     println!(include_str!("../../banner.txt"));
     display_info!("Platform Name", "loongarch64");
     display_info!("Platform Virt Mem Offset", "{:#x}", VIRT_ADDR_START);
+    parse_dtb_info();
     display_info!();
     display_info!("Boot HART ID", "{}", hart_id);
     display_info!();
-
-    // TODO: Detect CPU Num dynamically.
-    CPU_NUM.init_by(2);
 
     unsafe { super::_main_for_arch(hart_id) };
 

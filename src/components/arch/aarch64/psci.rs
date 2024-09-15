@@ -94,9 +94,7 @@ fn psci_call(func: u32, arg0: usize, arg1: usize, arg2: usize) -> Result<(), Psc
 
 /// Shutdown the whole system, including all CPUs.
 pub fn system_off() -> ! {
-    log::info!("Shutting down...");
     psci_call(PSCI_0_2_FN_SYSTEM_OFF, 0, 0, 0).ok();
-    log::warn!("It should shutdown!");
     loop {
         // crate::arch::halt();
     }
@@ -111,7 +109,6 @@ pub fn system_off() -> ! {
 /// `entry_point` is the physical address of the secondary CPU's entry point.
 /// `arg` will be passed to the `X0` register of the secondary CPU.
 pub fn cpu_on(target_cpu: usize, entry_point: usize, arg: usize) {
-    log::info!("Starting CPU {:x} ON ...", target_cpu);
     let res = psci_call(PSCI_0_2_FN64_CPU_ON, target_cpu, entry_point, arg);
     if let Err(e) = res {
         log::error!("failed to boot CPU {:x} ({:?})", target_cpu, e);

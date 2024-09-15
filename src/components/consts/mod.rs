@@ -2,15 +2,8 @@
 //!
 //!
 
+use crate::pub_use_arch;
+
 super::define_arch_mods!();
 
-/// Virtual Address Offset.
-pub const VIRT_ADDR_START: usize = GenericConfig::VIRT_ADDR;
-
-/// Generic Configuration Implementation.
-struct GenericConfig;
-
-/// Configuration Trait, Bound for configs
-trait ConfigTrait {
-    const VIRT_ADDR: usize;
-}
+pub_use_arch!(VIRT_ADDR_START);

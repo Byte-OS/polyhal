@@ -1,5 +1,4 @@
 // TODO: Get CLOCK_FREQUENCY CLOCK_FREQ
-// use crate::currrent_arch::boards::CLOCK_FREQ;
 use crate::time::Time;
 use riscv::register::{sie, time};
 
@@ -17,13 +16,14 @@ impl Time {
     }
 }
 
-// 设置下一次时钟中断触发时间
+// Setting the time interval for then next time
 #[inline]
 pub fn set_next_timeout() {
-    // 调用sbi设置定时器
+    // Setting the timer through calling SBI.
     sbi_rt::set_timer((time::read() + CLOCK_FREQ / 100) as _);
 }
 
+// Initialize the Timer 
 pub fn init() {
     unsafe {
         sie::set_stimer();

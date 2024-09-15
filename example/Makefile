@@ -47,6 +47,17 @@ endif
 OBJDUMP := rust-objdump --arch-name=riscv64
 OBJCOPY := rust-objcopy --binary-architecture=riscv64
 
+ifneq ($(GUI), true)
+QEMU_EXEC += -nographic
+else
+QEMU_EXEC += -serial stdio -vga std
+endif 
+QEMU_EXEC += -smp $(SMP)
+QEMU_EXEC += -D qemu.log -d in_asm,int,pcall,cpu_reset,guest_errors
+ifeq ($(TEST), true)
+QEMU_EXEC += >output.log 2>&1 || echo "QEMU exited"
+endif
+
 build: env $(KERNEL_BIN) 
 
 env:
@@ -62,19 +73,13 @@ kernel:
 	@echo Platform: $(BOARD)
 	@cargo build $(BUILD_ARGS) --release --target $(TARGET)
 
+clean-log:
+	@rm qemu*.log
+
 clean:
 	@cargo clean
 
 run: run-inner
-
-ifneq ($(GUI), true)
-QEMU_EXEC += -nographic
-endif 
-QEMU_EXEC += -smp $(SMP)
-QEMU_EXEC += -D qemu-%d.log -d in_asm,int,pcall,cpu_reset,guest_errors,tid
-ifeq ($(TEST), true)
-QEMU_EXEC += >output.log 2>&1 || echo "QEMU exited"
-endif
 
 run-inner: build
 	$(QEMU_EXEC)
@@ -104,4 +109,4 @@ gdb:
 	-ex 'set arch x86_64' \
 	-ex 'target remote localhost:1234'
 
-.PHONY: build env kernel clean run-inner
+.PHONY: build env kernel clean clean-log run-inner

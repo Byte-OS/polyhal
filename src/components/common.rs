@@ -4,6 +4,8 @@ use fdt::Fdt;
 use crate::components::arch::arch_init;
 use crate::{utils::LazyInit, PhysPage};
 
+use super::debug_console::display_info;
+
 #[polyhal_macro::def_percpu]
 pub(crate) static CPU_ID: usize = 0;
 
@@ -46,7 +48,8 @@ pub fn get_mem_areas() -> Vec<(usize, usize)> {
 
 /// Get the fdt
 pub fn get_fdt() -> Option<Fdt<'static>> {
-    Fdt::new(&DTB_BIN).ok()
+    // Fdt::new(&DTB_BIN).ok()
+    unsafe { Fdt::from_ptr(*DTB_PTR.get_unchecked() as *const u8).ok() }
 }
 
 /// Get the number of cpus
@@ -64,4 +67,32 @@ pub(crate) fn frame_alloc() -> PhysPage {
 #[inline]
 pub(crate) fn frame_dealloc(ppn: PhysPage) {
     PAGE_ALLOC.dealloc(ppn)
+}
+
+/// Parse Information from the device tree binary
+/// 
+/// Display information when booting 
+/// Initialize the variables and memory from device tree
+#[inline]
+pub(crate) fn parse_dtb_info() {
+    let fdt = unsafe { Fdt::from_ptr(*DTB_PTR.get_unchecked() as *mut u8) };
+
+    if let Ok(fdt) = fdt {
+        display_info!("Platform Hart Count", "{}", fdt.cpus().count());
+
+        fdt.memory().regions().for_each(|mm| {
+            display_info!(
+                "Platform Memory Region",
+                "{:#p} - {:#018x}",
+                mm.starting_address,
+                mm.starting_address as usize + mm.size.unwrap_or(0)
+            )
+        });
+
+        display_info!("Boot Args", "{}", fdt.chosen().bootargs().unwrap_or(""));
+
+        CPU_NUM.init_by(fdt.cpus().count());
+    } else {
+        CPU_NUM.init_by(1);
+    }
 }

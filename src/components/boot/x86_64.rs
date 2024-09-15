@@ -24,9 +24,6 @@ use crate::utils::bit;
 /// bits 2 graphic information
 const MULTIBOOT_HEADER_FLAGS: usize = bit!(1) | bit!(16) | bit!(2);
 
-/// The magic field should contain this.
-const MULTIBOOT_HEADER_MAGIC: usize = 0x1BADB002;
-
 /// CR0 Registers introduction: https://wiki.osdev.org/CPU_Registers_x86-64#CR0
 const CR0: u64 = Cr0Flags::PROTECTED_MODE_ENABLE.bits()
     | Cr0Flags::MONITOR_COPROCESSOR.bits()
@@ -89,7 +86,7 @@ pub fn use_multiboot(mboot_ptr: PAddr) -> Option<Multiboot<'static, 'static>> {
 
 global_asm!(
     include_str!("x86_64/multiboot.S"),
-    mb_hdr_magic = const MULTIBOOT_HEADER_MAGIC,
+    mb_hdr_magic = const multiboot::header::MULTIBOOT_HEADER_MAGIC,
     mb_hdr_flags = const MULTIBOOT_HEADER_FLAGS,
     entry = sym rust_tmp_main,
 
@@ -117,10 +114,11 @@ fn rust_tmp_main(magic: usize, mboot_ptr: usize) {
     super::clear_bss();
     #[cfg(feature = "graphic")]
     if let Some(mboot) = use_multiboot(mboot_ptr as _) {
-        if let Some(ft) = mboot.framebuffer_table() {
-            debug_console::init_fb(ft.addr as _, ft.width as _, ft.height as _, ft.pitch as _);
-        } else {
-            debug_console::init_vga();
+        match mboot.framebuffer_table() {
+            Some(ft) => {
+                debug_console::init_fb(ft.addr as _, ft.width as _, ft.height as _, ft.pitch as _)
+            }
+            None => debug_console::init_vga(),
         }
     }
 
@@ -162,7 +160,7 @@ fn rust_tmp_main(magic: usize, mboot_ptr: usize) {
     CPU_NUM.init_by(1);
 
     // Check Multiboot Magic Number.
-    assert_eq!(magic, 0x2BADB002);
+    assert_eq!(magic, multiboot::information::SIGNATURE_EAX as usize);
     // Set the multiboot pointer.
     MBOOT_PTR.store(mboot_ptr, Ordering::SeqCst);
 

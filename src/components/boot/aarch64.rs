@@ -1,22 +1,18 @@
 use aarch64_cpu::{asm, asm::barrier, registers::*};
 
-use fdt::Fdt;
 // use page_table_entry::aarch64::{MemAttr, A64PTE};
 use tock_registers::interfaces::{ReadWriteable, Readable, Writeable};
 
 use crate::{
-    components::{
-        common::{CPU_NUM, DTB_PTR},
+    common::parse_dtb_info, components::{
+        common::DTB_PTR,
         consts::VIRT_ADDR_START,
         debug_console::{display_info, println},
         instruction,
         pagetable::{PTEFlags, TLB},
         percpu::percpu_area_init,
         timer,
-    },
-    multicore::CpuCore,
-    pagetable::PTE,
-    PageTable, PhysPage,
+    }, multicore::CpuCore, pagetable::PTE, PageTable, PhysPage
 };
 
 use super::PageAlignment;
@@ -154,13 +150,26 @@ unsafe extern "C" fn _start() -> ! {
 /// The secondary core boot entry point.
 #[naked]
 #[no_mangle]
-unsafe extern "C" fn _secondary_boot() -> ! {
-    // PC = 0x8_0000
-    // X0 = dtb
-    core::arch::asm!(
-        "
-        wfi
-        b      _secondary_boot",
+pub(crate) unsafe extern "C" fn _secondary_boot() -> ! {
+    core::arch::asm!("
+        mrs     x19, mpidr_el1
+        and     x19, x19, #0xffffff     // get current CPU id
+
+        mov     sp, x0
+        bl      {switch_to_el1}
+        bl      {init_mmu}
+
+        mov     x8, {phys_virt_offset}  // set SP to the high address
+        add     sp, sp, x8
+
+        mov     x0, x19                 // call rust_entry_secondary(cpu_id)
+        ldr     x8, ={entry}
+        blr     x8
+        b      .",
+        switch_to_el1 = sym switch_to_el1,
+        init_mmu = sym init_mmu,
+        phys_virt_offset = const crate::components::consts::VIRT_ADDR_START,
+        entry = sym rust_secondary_main,
         options(noreturn),
     )
 }
@@ -179,36 +188,16 @@ pub fn rust_tmp_main(hart_id: usize, device_tree: usize) {
     // Init GIC interrupt controller.
     crate::components::irq::init();
 
-    timer::init();
+    init_cpu();
 
     DTB_PTR.init_by(device_tree | VIRT_ADDR_START);
-
-    if let Ok(fdt) = unsafe { Fdt::from_ptr(*DTB_PTR as *const u8) } {
-        CPU_NUM.init_by(fdt.cpus().count());
-    } else {
-        CPU_NUM.init_by(1);
-    }
-
-    // Enable Floating Point Feature.
-    CPACR_EL1.write(CPACR_EL1::FPEN::TrapNothing);
-    aarch64_cpu::asm::barrier::isb(aarch64_cpu::asm::barrier::SY);
 
     // Display Polyhal and Platform Information
     display_info!();
     println!(include_str!("../../banner.txt"));
     display_info!("Platform Name", "aarch64");
-    if let Ok(fdt) = unsafe { Fdt::from_ptr(device_tree as *const u8) } {
-        display_info!("Platform HART Count", "{}", fdt.cpus().count());
-        fdt.memory().regions().for_each(|x| {
-            display_info!(
-                "Platform Memory Region",
-                "{:#p} - {:#018x}",
-                x.starting_address,
-                x.starting_address as usize + x.size.unwrap()
-            );
-        });
-    }
     display_info!("Platform Virt Mem Offset", "{:#x}", VIRT_ADDR_START);
+    parse_dtb_info();
     display_info!();
     display_info!("Boot HART ID", "{}", hart_id);
     display_info!();
@@ -217,6 +206,24 @@ pub fn rust_tmp_main(hart_id: usize, device_tree: usize) {
     unsafe { crate::components::boot::_main_for_arch(hart_id) };
 
     instruction::shutdown();
+}
+
+/// Rust secondary entry for core except Boot Core.
+fn rust_secondary_main(hart_id: usize) {
+    // Initialize the cpu configuration.
+    init_cpu();
+
+    unsafe { crate::components::boot::_main_for_arch(hart_id) }
+}
+
+/// Initialize the CPU configuration.
+fn init_cpu() {
+    // Initialize the Timer
+    timer::init();
+
+    // Enable Floating Point Feature.
+    CPACR_EL1.write(CPACR_EL1::FPEN::TrapNothing);
+    aarch64_cpu::asm::barrier::isb(aarch64_cpu::asm::barrier::SY);
 }
 
 pub fn boot_page_table() -> PageTable {

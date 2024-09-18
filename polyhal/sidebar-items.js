@@ -1,0 +1,1 @@
+window.SIDEBAR_ITEMS = {"attr":["arch_entry","arch_interrupt"],"enum":["MappingSize"],"macro":["define_entry","pub_use_arch"],"mod":["addr","boot","common","consts","debug_console","instruction","irq","kcontext","macros","mem","multicore","pagetable","percpu","time","timer","trap","trapframe","utils"],"struct":["MappingFlags","PageTable","PageTableWrapper"]};

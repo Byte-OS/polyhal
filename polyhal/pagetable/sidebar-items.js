@@ -1,0 +1,1 @@
+window.SIDEBAR_ITEMS = {"constant":["PAGE_SIZE","USER_VADDR_END"],"enum":["MappingSize"],"struct":["MappingFlags","PTEFlags","PageTable","PageTableWrapper","TLB"]};

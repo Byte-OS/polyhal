@@ -130,7 +130,7 @@ define_entry!(main);
 fn panic(info: &PanicInfo) -> ! {
     if let Some(location) = info.location() {
         log::error!(
-            "[kernel] Panicked at {}:{} {}",
+            "[kernel] Panicked at {}:{} \n\t{}",
             location.file(),
             location.line(),
             info.message().unwrap()

@@ -4,6 +4,42 @@ use crate::PageTable;
 
 use crate::components::kcontext::KContextArgs;
 
+/// Save the task context registers.
+macro_rules! save_callee_regs {
+    () => {
+        "
+            mrs     x3,  tpidr_el1
+            mov     x4,  sp
+            stp     x4,  x3,  [x0]
+            stp     x19, x20, [x0,  2 * 8]
+            stp     x21, x22, [x0,  4 * 8]
+            stp     x23, x24, [x0,  6 * 8]
+            stp     x25, x26, [x0,  8 * 8]
+            stp     x27, x28, [x0, 10 * 8]
+            stp     x27, x28, [x0, 10 * 8]
+            stp     x29, x30, [x0, 12 * 8]
+        "
+    };
+}
+
+/// Restore the task context registers.
+macro_rules! restore_callee_regs {
+    () => {
+        "
+            ldp     x4,  x3,  [x1]
+            ldp     x19, x20, [x1,  2 * 8]
+            ldp     x21, x22, [x1,  4 * 8]
+            ldp     x23, x24, [x1,  6 * 8]
+            ldp     x25, x26, [x1,  8 * 8]
+            ldp     x27, x28, [x1, 10 * 8]
+            ldp     x27, x28, [x1, 10 * 8]
+            ldp     x29, x30, [x1, 12 * 8]
+            msr     tpidr_el1, x3
+            mov     sp, x4
+        "
+    };
+}
+
 /// Kernel Context
 ///
 /// Kernel Context is used to switch context between kernel task.
@@ -91,32 +127,11 @@ impl IndexMut<KContextArgs> for KContext {
 pub unsafe extern "C" fn context_switch(from: *mut KContext, to: *const KContext) {
     core::arch::asm!(
         // Save Kernel Context.
-        "
-            mrs     x3,  tpidr_el1
-            mov     x4,  sp
-            stp     x4,  x3,  [x0]
-            stp     x19, x20, [x0,  2 * 8]
-            stp     x21, x22, [x0,  4 * 8]
-            stp     x23, x24, [x0,  6 * 8]
-            stp     x25, x26, [x0,  8 * 8]
-            stp     x27, x28, [x0, 10 * 8]
-            stp     x27, x28, [x0, 10 * 8]
-            stp     x29, x30, [x0, 12 * 8]
-        ",
+        save_callee_regs!(),
         // Restore Kernel Context.
-        "
-            ldp     x4,  x3,  [x1]
-            ldp     x19, x20, [x1,  2 * 8]
-            ldp     x21, x22, [x1,  4 * 8]
-            ldp     x23, x24, [x1,  6 * 8]
-            ldp     x25, x26, [x1,  8 * 8]
-            ldp     x27, x28, [x1, 10 * 8]
-            ldp     x27, x28, [x1, 10 * 8]
-            ldp     x29, x30, [x1, 12 * 8]
-            msr     tpidr_el1, x3
-            mov     sp, x4
-            ret
-        ",
+        restore_callee_regs!(),
+        // Return to the caller.
+        "ret",
         options(noreturn)
     )
 }
@@ -124,26 +139,27 @@ pub unsafe extern "C" fn context_switch(from: *mut KContext, to: *const KContext
 /// Context Switch With Page Table
 ///
 /// Save the context of current task and switch to new task.
-#[naked]
+#[inline]
 pub unsafe extern "C" fn context_switch_pt(
     from: *mut KContext,
     to: *const KContext,
     pt_token: PageTable,
 ) {
+    context_switch_pt_impl(from, to, pt_token.0.0);
+}
+
+/// Context Switch With Page Table Implement
+/// 
+/// The detail implementation of [context_switch_pt].
+#[naked]
+unsafe extern "C" fn context_switch_pt_impl(
+    from: *mut KContext,
+    to: *const KContext,
+    pt_token: usize,
+) {
     core::arch::asm!(
         // Save Kernel Context.
-        "
-            mrs     x3, tpidr_el1
-            mov     x4, sp
-            stp     x4,  x3,  [x0]
-            stp     x19, x20, [x0,  2 * 8]
-            stp     x21, x22, [x0,  4 * 8]
-            stp     x23, x24, [x0,  6 * 8]
-            stp     x25, x26, [x0,  8 * 8]
-            stp     x27, x28, [x0, 10 * 8]
-            stp     x27, x28, [x0, 10 * 8]
-            stp     x29, x30, [x0, 12 * 8]
-        ",
+        save_callee_regs!(),
         // Switch to new page table.
         "
             msr     ttbr0_el1, x2
@@ -152,19 +168,9 @@ pub unsafe extern "C" fn context_switch_pt(
             isb
         ",
         // Restore Kernel Context.
-        "
-            ldp     x4,  x3,  [x1]
-            ldp     x19, x20, [x1,  2 * 8]
-            ldp     x21, x22, [x1,  4 * 8]
-            ldp     x23, x24, [x1,  6 * 8]
-            ldp     x25, x26, [x1,  8 * 8]
-            ldp     x27, x28, [x1, 10 * 8]
-            ldp     x27, x28, [x1, 10 * 8]
-            ldp     x29, x30, [x1, 12 * 8]
-            msr     tpidr_el1, x3
-            mov     sp, x4
-            ret
-        ",
+        restore_callee_regs!(),
+        // Return to the caller.
+        "ret",
         options(noreturn)
     )
 }

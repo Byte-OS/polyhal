@@ -3,10 +3,10 @@
 all:
 
 test-build:
-	cargo build --release --all-features --target riscv64gc-unknown-none-elf
-	cargo build --release --all-features --target aarch64-unknown-none-softfloat
-	cargo build --release --all-features --target x86_64-unknown-none
-	cargo build --release --all-features --target loongarch64-unknown-none
+	cargo build --all-features --target riscv64gc-unknown-none-elf
+	cargo build --all-features --target aarch64-unknown-none-softfloat
+	cargo build --all-features --target x86_64-unknown-none
+	cargo build --all-features --target loongarch64-unknown-none
 
 test-clippy:
 	cargo clippy --all-features --target riscv64gc-unknown-none-elf

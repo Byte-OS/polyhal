@@ -8,7 +8,7 @@ use crate::PageTable;
 use crate::components::kcontext::KContextArgs;
 
 /// Save the task context registers.
-macro_rules! save_kcontext_regs {
+macro_rules! save_callee_regs {
     () => {
         "
         sd      sp, 0*8(a0)
@@ -31,7 +31,7 @@ macro_rules! save_kcontext_regs {
 }
 
 /// Restore the task context registers.
-macro_rules! restore_kcontext_regs {
+macro_rules! restore_callee_regs {
     () => {
         "
         ld      sp, 0*8(a1)
@@ -150,9 +150,9 @@ impl IndexMut<KContextArgs> for KContext {
 pub unsafe extern "C" fn context_switch(from: *mut KContext, to: *const KContext) {
     core::arch::asm!(
         // Save Kernel Context.
-        save_kcontext_regs!(),
+        save_callee_regs!(),
         // Restore Kernel Context.
-        restore_kcontext_regs!(),
+        restore_callee_regs!(),
         // Return to the caller.
         ret!(),
         options(noreturn)
@@ -162,15 +162,27 @@ pub unsafe extern "C" fn context_switch(from: *mut KContext, to: *const KContext
 /// Context Switch With Page Table
 ///
 /// Save the context of current task and switch to new task.
-#[naked]
+#[inline]
 pub unsafe extern "C" fn context_switch_pt(
     from: *mut KContext,
     to: *const KContext,
     pt_token: PageTable,
 ) {
+    context_switch_pt_impl(from, to, pt_token.0.0);
+}
+
+/// Context Switch With Page Table Implement
+/// 
+/// The detail implementation of [context_switch_pt].
+#[naked]
+unsafe extern "C" fn context_switch_pt_impl(
+    from: *mut KContext,
+    to: *const KContext,
+    pt_token: usize,
+) {
     core::arch::asm!(
         // Save Kernel Context.
-        save_kcontext_regs!(),
+        save_callee_regs!(),
         // Switch to new page table.
         "
             srli    a2,   a2, 12
@@ -180,7 +192,7 @@ pub unsafe extern "C" fn context_switch_pt(
             sfence.vma
         ",
         // Restore Kernel Context.
-        restore_kcontext_regs!(),
+        restore_callee_regs!(),
         // Return to the caller.
         ret!(),
         options(noreturn)

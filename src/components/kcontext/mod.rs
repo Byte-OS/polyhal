@@ -2,6 +2,8 @@
 //!
 //!
 
+use crate::pub_use_arch;
+
 super::define_arch_mods!();
 
 /// Kernel Context Arg Type.
@@ -16,3 +18,5 @@ pub enum KContextArgs {
     /// Kernel Program Counter
     KPC,
 }
+
+pub_use_arch!(context_switch, context_switch_pt);

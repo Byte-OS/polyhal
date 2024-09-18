@@ -6,6 +6,47 @@ use crate::PageTable;
 
 use crate::components::kcontext::KContextArgs;
 
+/// Save the task context registers.
+macro_rules! save_callee_regs {
+    () => {
+        "
+            mov     [rdi + 0 * 8], rsp
+            mov     [rdi + 2 * 8], rbx
+            mov     [rdi + 3 * 8], rbp
+            mov     [rdi + 4 * 8], r12
+            mov     [rdi + 5 * 8], r13
+            mov     [rdi + 6 * 8], r14
+            mov     [rdi + 7 * 8], r15
+            mov     [rdi + 8 * 8], r8     # save old rip to stack    
+            
+            mov     ecx, 0xC0000100
+            rdmsr
+            mov     [rdi + 1*8],    eax   # push fabase
+            mov     [rdi + 1*8+4],  edx  
+        "
+    };
+}
+
+/// Restore the task context registers.
+macro_rules! restore_callee_regs {
+    () => {
+        "
+            mov     ecx, 0xC0000100
+            mov     eax, [rsi + 1*8]
+            mov     edx, [rsi + 1*8+4]
+            wrmsr                         # pop fsbase
+            mov     rsp, [rsi + 0 * 8]
+            mov     rbx, [rsi + 2 * 8]
+            mov     rbp, [rsi + 3 * 8]
+            mov     r12, [rsi + 4 * 8]
+            mov     r13, [rsi + 5 * 8]
+            mov     r14, [rsi + 6 * 8]
+            mov     r15, [rsi + 7 * 8]
+            mov     r8,  [rsi + 8 * 8]
+        "
+    };
+}
+
 /// Kernel Context
 ///
 /// Kernel Context is used to switch context between kernel task.
@@ -110,36 +151,11 @@ pub unsafe extern "C" fn context_switch(from: *mut KContext, to: *const KContext
         // Save Kernel Context.
         "
         pop     r8 
-
-        mov     [rdi + 0 * 8], rsp
-        mov     [rdi + 2 * 8], rbx
-        mov     [rdi + 3 * 8], rbp
-        mov     [rdi + 4 * 8], r12
-        mov     [rdi + 5 * 8], r13
-        mov     [rdi + 6 * 8], r14
-        mov     [rdi + 7 * 8], r15
-        mov     [rdi + 8 * 8], r8     # save old rip to stack    
-         
-        mov     ecx, 0xC0000100
-        rdmsr
-        mov     [rdi + 1*8],    eax   # push fabase
-        mov     [rdi + 1*8+4],  edx  
         ",
+        save_callee_regs!(),
         // Restore Kernel Context.
-        "      
-        mov     ecx, 0xC0000100
-        mov     eax, [rsi + 1*8]
-        mov     edx, [rsi + 1*8+4]
-        wrmsr                         # pop fsbase
-        mov     rsp, [rsi + 0 * 8]
-        mov     rbx, [rsi + 2 * 8]
-        mov     rbp, [rsi + 3 * 8]
-        mov     r12, [rsi + 4 * 8]
-        mov     r13, [rsi + 5 * 8]
-        mov     r14, [rsi + 6 * 8]
-        mov     r15, [rsi + 7 * 8]
-        mov     r8,  [rsi + 8 * 8]
-        
+        restore_callee_regs!(),
+        "
         push    r8
         ret
         ",
@@ -150,11 +166,23 @@ pub unsafe extern "C" fn context_switch(from: *mut KContext, to: *const KContext
 /// Context Switch With Page Table
 ///
 /// Save the context of current task and switch to new task.
-#[naked]
+#[inline]
 pub unsafe extern "C" fn context_switch_pt(
     from: *mut KContext,
     to: *const KContext,
     pt_token: PageTable,
+) {
+    context_switch_pt_impl(from, to, pt_token.0.0);
+}
+
+/// Context Switch With Page Table Implement
+/// 
+/// The detail implementation of [context_switch_pt].
+#[naked]
+unsafe extern "C" fn context_switch_pt_impl(
+    from: *mut KContext,
+    to: *const KContext,
+    pt_token: usize,
 ) {
     core::arch::asm!(
         // consume the return address(rip) in the stack
@@ -165,40 +193,14 @@ pub unsafe extern "C" fn context_switch_pt(
             mov     r9, rdx
         ",
         // Save Kernel Context.
-        "
-            mov     [rdi + 0 * 8], rsp
-            mov     [rdi + 2 * 8], rbx
-            mov     [rdi + 3 * 8], rbp
-            mov     [rdi + 4 * 8], r12
-            mov     [rdi + 5 * 8], r13
-            mov     [rdi + 6 * 8], r14
-            mov     [rdi + 7 * 8], r15
-            mov     [rdi + 8 * 8], r8     # save old rip to stack
-
-            mov     ecx, 0xC0000100
-            rdmsr
-            mov     [rdi + 1*8],    eax   # push fabase
-            mov     [rdi + 1*8+4],  edx
-        ",
+        save_callee_regs!(),
         // Switch to new page table.
         "
             mov     cr3,   r9
         ",
         // Restore Kernel Context.
+        restore_callee_regs!(),
         "
-            mov     ecx, 0xC0000100
-            mov     eax, [rsi + 1*8]
-            mov     edx, [rsi + 1*8+4]
-            wrmsr                         # pop fsbase
-            mov     rsp, [rsi + 0 * 8]
-            mov     rbx, [rsi + 2 * 8]
-            mov     rbp, [rsi + 3 * 8]
-            mov     r12, [rsi + 4 * 8]
-            mov     r13, [rsi + 5 * 8]
-            mov     r14, [rsi + 6 * 8]
-            mov     r15, [rsi + 7 * 8]
-            mov     r8,  [rsi + 8 * 8]
-            
             push    r8
             ret
         ",

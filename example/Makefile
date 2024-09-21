@@ -50,6 +50,7 @@ OBJCOPY := rust-objcopy --binary-architecture=riscv64
 ifneq ($(GUI), true)
 QEMU_EXEC += -nographic
 else
+BUILD_ARGS += --features "polyhal/graphic"
 QEMU_EXEC += -serial stdio -vga std
 endif 
 QEMU_EXEC += -smp $(SMP)

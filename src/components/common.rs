@@ -2,6 +2,7 @@ use alloc::vec::Vec;
 use fdt::Fdt;
 
 use crate::components::arch::arch_init;
+use crate::utils::InitNum;
 use crate::{utils::LazyInit, PhysPage};
 
 use super::debug_console::display_info;
@@ -12,6 +13,8 @@ pub(crate) static CPU_ID: usize = 0;
 // TODO: Hide DTB_PTR For arch not yet supported.
 #[allow(dead_code)]
 pub(crate) static DTB_PTR: LazyInit<usize> = LazyInit::new();
+
+pub(crate) static PCI_ADDR: InitNum = InitNum::new(0);
 
 /// Page Allocation trait for privoids that page allocation
 pub trait PageAlloc: Sync {
@@ -33,7 +36,7 @@ pub fn init(page_alloc: &'static dyn PageAlloc) {
 }
 
 /// Store the number of cpu, this will fill up by startup function.
-pub(crate) static CPU_NUM: LazyInit<usize> = LazyInit::new();
+pub(crate) static CPU_NUM: InitNum = InitNum::new(0);
 
 /// Store the memory area, this will fill up by the arch_init() function in each architecture.
 pub(crate) static MEM_AREA: LazyInit<Vec<(usize, usize)>> = LazyInit::new();
@@ -52,9 +55,14 @@ pub fn get_fdt() -> Option<Fdt<'static>> {
     unsafe { Fdt::from_ptr(*DTB_PTR.get_unchecked() as *const u8).ok() }
 }
 
+/// Get the pci area address
+pub fn get_pci_addr() -> Option<usize> {
+    PCI_ADDR.get_option()
+}
+
 /// Get the number of cpus
 pub fn get_cpu_num() -> usize {
-    *CPU_NUM
+    CPU_NUM.get()
 }
 
 /// alloc a persistent memory page
@@ -70,8 +78,8 @@ pub(crate) fn frame_dealloc(ppn: PhysPage) {
 }
 
 /// Parse Information from the device tree binary
-/// 
-/// Display information when booting 
+///
+/// Display information when booting
 /// Initialize the variables and memory from device tree
 #[inline]
 pub(crate) fn parse_dtb_info() {
@@ -91,8 +99,20 @@ pub(crate) fn parse_dtb_info() {
 
         display_info!("Boot Args", "{}", fdt.chosen().bootargs().unwrap_or(""));
 
-        CPU_NUM.init_by(fdt.cpus().count());
+        CPU_NUM.init(fdt.cpus().count());
+
+        fdt.all_nodes()
+            .find(|x| x.name.starts_with("pci"))
+            .inspect(|pci_node| {
+                PCI_ADDR.init(
+                    pci_node
+                        .reg()
+                        .map(|mut x| x.next().unwrap())
+                        .unwrap()
+                        .starting_address as _,
+                )
+            });
     } else {
-        CPU_NUM.init_by(1);
+        CPU_NUM.init(1);
     }
 }

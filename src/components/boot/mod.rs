@@ -40,7 +40,7 @@ extern "Rust" {
 }
 
 /// Define the entry point.
-/// 
+///
 /// TODO: Support secondary Entry Point for the application core.
 ///     - Implement MultiCore
 ///     - Jump to _secondary_for_arch function in application core.

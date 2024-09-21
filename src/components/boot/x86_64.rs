@@ -7,6 +7,8 @@ use x86_64::registers::control::{Cr0Flags, Cr4, Cr4Flags};
 use x86_64::registers::model_specific::EferFlags;
 use x86_64::registers::xcontrol::{XCr0, XCr0Flags};
 
+use crate::arch::acpi::detect_acpi;
+use crate::common::get_cpu_num;
 use crate::components::arch::{self, get_com_port, hart_id, MBOOT_PTR};
 use crate::components::common::{CPU_ID, CPU_NUM};
 use crate::components::consts::VIRT_ADDR_START;
@@ -156,8 +158,7 @@ fn rust_tmp_main(magic: usize, mboot_ptr: usize) {
         }
     });
 
-    // TODO: This is will be fixed with ACPI support
-    CPU_NUM.init_by(1);
+    let _ = detect_acpi();
 
     // Check Multiboot Magic Number.
     assert_eq!(magic, multiboot::information::SIGNATURE_EAX as usize);
@@ -169,11 +170,8 @@ fn rust_tmp_main(magic: usize, mboot_ptr: usize) {
     println!(include_str!("../../banner.txt"));
     display_info!("Platform Arch", "x86_64");
     if let Some(features) = CpuId::new().get_feature_info() {
-        display_info!(
-            "Platform Hart Count",
-            "{}",
-            core::cmp::max(1, features.max_logical_processor_ids())
-        );
+        CPU_NUM.init(core::cmp::max(1, features.max_logical_processor_ids() as _));
+        display_info!("Platform Hart Count", "{}", get_cpu_num());
         display_info!("Platform FPU Support", "{}", features.has_fpu());
     }
     display_info!("Platform Boot Header", "{mboot_ptr:#018x}");

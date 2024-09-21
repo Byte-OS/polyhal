@@ -1,9 +1,11 @@
 pub(crate) mod apic;
 pub(crate) mod gdt;
 pub(crate) mod idt;
+pub(crate) mod acpi;
 
 use core::sync::atomic::AtomicUsize;
 
+use acpi::parse_acpi_info;
 use alloc::vec::Vec;
 use multiboot::information::MemoryType;
 
@@ -18,6 +20,7 @@ use crate::components::{
 pub(crate) static MBOOT_PTR: AtomicUsize = AtomicUsize::new(0);
 
 pub(crate) fn arch_init() {
+    let _ = parse_acpi_info();
     DTB_BIN.init_by(Vec::new());
     if let Some(mboot) = use_multiboot(MBOOT_PTR.load(core::sync::atomic::Ordering::SeqCst) as _) {
         let mut mem_area = Vec::new();
@@ -29,7 +32,6 @@ pub(crate) fn arch_init() {
                 .for_each(|x| {
                     let start = x.base_address() as usize | VIRT_ADDR_START;
                     let size = x.length() as usize;
-                    // ArchInterface::add_memory_region(start, end);
                     mem_area.push((start, size));
                 });
         }

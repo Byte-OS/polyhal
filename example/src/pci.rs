@@ -1,5 +1,5 @@
 use log::{info, trace};
-use polyhal::{common::get_fdt, consts::VIRT_ADDR_START};
+use polyhal::{common::get_pci_addr, consts::VIRT_ADDR_START};
 use virtio_drivers::transport::pci::{
     bus::{Cam, Command, DeviceFunction, HeaderType, PciRoot},
     virtio_device_type,
@@ -7,16 +7,20 @@ use virtio_drivers::transport::pci::{
 
 /// Initialize PCI Configuration.
 pub fn init() {
-    if let Some(fdt) = get_fdt() {
-        if let Some(pci_node) = fdt.all_nodes().find(|x| x.name.starts_with("pci")) {
-            let pci_addr = pci_node.reg().map(|mut x| x.next().unwrap()).unwrap();
-            log::info!("PCI Address: {:#p}", pci_addr.starting_address);
-            enumerate_pci((pci_addr.starting_address as usize | VIRT_ADDR_START) as *mut u8);
-            return;
-        }
+    // if let Some(fdt) = get_fdt() {
+    //     if let Some(pci_node) = fdt.all_nodes().find(|x| x.name.starts_with("pci")) {
+    //         let pci_addr = pci_node.reg().map(|mut x| x.next().unwrap()).unwrap();
+    //         log::info!("PCI Address: {:#p}", pci_addr.starting_address);
+    //         enumerate_pci((pci_addr.starting_address as usize | VIRT_ADDR_START) as *mut u8);
+    //         return;
+    //     }
+    // }
+    // #[cfg(target_arch = "x86_64")]
+    // enumerate_pci((0xb000_0000 | VIRT_ADDR_START) as *mut u8);
+    if let Some(pci_addr) = get_pci_addr() {
+        log::info!("PCI Address: {:#x}", pci_addr);
+        enumerate_pci((pci_addr | VIRT_ADDR_START) as *mut u8);
     }
-    #[cfg(target_arch = "x86_64")]
-    enumerate_pci((0xb000_0000 | VIRT_ADDR_START) as *mut u8);
 }
 
 /// Enumerate the PCI devices

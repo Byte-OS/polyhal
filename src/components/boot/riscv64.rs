@@ -132,7 +132,7 @@ pub(crate) fn rust_main(hartid: usize, device_tree: usize) {
     init_cpu();
 
     let fdt = unsafe { Fdt::from_ptr(device_tree as *const u8) };
-    CPU_NUM.init_by(fdt.map(|fdt| fdt.cpus().count()).unwrap_or(1));
+    CPU_NUM.init(fdt.map(|fdt| fdt.cpus().count()).unwrap_or(1));
 
     DTB_PTR.init_by(device_tree);
 

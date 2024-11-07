@@ -1,0 +1,22 @@
+[package]
+name = "example"
+version = "0.1.0"
+edition = "2021"
+
+# See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
+
+[dependencies]
+virtio-drivers = "0.7.5"
+polyhal = { version = "0.1.2", features = [
+  "logger",
+  "boot",
+  "trap",
+  # "graphic"
+] }
+log = "0.4"
+fdt = "0.1.5"
+buddy_system_allocator = "0.9.1"
+spin = { version = "0.9.8", features = ["mutex"] }
+
+[patch.crates-io.polyhal]
+path = ".."

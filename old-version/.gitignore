@@ -1,0 +1,9 @@
+target
+output.log
+qemu.log
+*.iso
+!example/iso/grub/*
+example/iso/*
+example/qemu-*.log
+mount.img
+example/virt.out

@@ -3,8 +3,10 @@ use core::slice;
 use alloc::vec::Vec;
 use fdt::Fdt;
 
-use crate::components::{common::{CPU_ID, DTB_BIN, DTB_PTR, MEM_AREA}, consts::VIRT_ADDR_START};
-
+use crate::components::{
+    common::{CPU_ID, DTB_BIN, DTB_PTR, MEM_AREA},
+    consts::VIRT_ADDR_START,
+};
 
 #[inline]
 pub fn wfi() {

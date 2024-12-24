@@ -19,7 +19,7 @@ impl Time {
 }
 
 pub fn set_next_timer() {
-    CNTP_TVAL_EL0.set(CNTFRQ_EL0.get() / 1000);
+    CNTP_TVAL_EL0.set(CNTFRQ_EL0.get() / 100);
 }
 
 pub fn init() {

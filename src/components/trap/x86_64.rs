@@ -61,7 +61,7 @@ bitflags! {
 
 // 内核中断回调
 #[no_mangle]
-fn kernel_callback(context: &mut TrapFrame) {
+fn kernel_callback(context: &mut TrapFrame) -> TrapType {
     let trap_type = match context.vector as u8 {
         PAGE_FAULT_VECTOR => {
             let pflags = PageFaultFlags::from_bits_truncate(context.rflags as _);
@@ -103,6 +103,7 @@ fn kernel_callback(context: &mut TrapFrame) {
         }
     };
     unsafe { crate::components::trap::_interrupt_for_arch(context, trap_type, 0) };
+    trap_type
 }
 
 #[naked]
@@ -347,7 +348,7 @@ unsafe extern "C" fn syscall_entry() {
             mov ecx, 0xC0000100
             rdmsr
             mov [rsp + 15*8+4], edx
-            mov [rsp + 15*8], eax   # push fabase
+            mov [rsp + 15*8], eax   # push fsbase
 
             mov ecx, 0xC0000102
             rdmsr
@@ -404,10 +405,7 @@ pub fn run_user_task(context: &mut TrapFrame) -> EscapeReason {
             unsafe { crate::components::trap::_interrupt_for_arch(context, TrapType::SysCall, 0) };
             EscapeReason::SysCall
         }
-        _ => {
-            kernel_callback(context);
-            EscapeReason::NoReason
-        }
+        _ => kernel_callback(context).into()
     }
 }
 

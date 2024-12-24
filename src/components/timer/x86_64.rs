@@ -104,7 +104,7 @@ pub(crate) fn init_early() {
         log::info!("ticks 50us: {}", ticks10ms / 10 / 20);
         // lapic.set_timer_initial(ticks10ms * 0x100);
         // Set 500us ticks
-        lapic.set_timer_initial(ticks10ms / 20);
+        lapic.set_timer_initial(ticks10ms * 100);
         debug!("count: {}", lapic.timer_current());
         // set_oneshot_timer(2000);
     }

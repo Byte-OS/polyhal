@@ -1,5 +1,5 @@
 use buddy_system_allocator::LockedFrameAllocator;
-use polyhal::{addr::PhysPage, pagetable::PAGE_SIZE};
+use polyhal::{pagetable::PAGE_SIZE, PhysAddr};
 use spin::Lazy;
 
 static LOCK_FRAME_ALLOCATOR: Lazy<LockedFrameAllocator<32>> =
@@ -18,14 +18,14 @@ pub fn add_frame_range(mm_start: usize, mm_end: usize) {
     LOCK_FRAME_ALLOCATOR.lock().add_frame(mm_start, mm_end);
 }
 
-pub fn frame_alloc(count: usize) -> PhysPage {
+pub fn frame_alloc(count: usize) -> PhysAddr {
     let ppn = LOCK_FRAME_ALLOCATOR
         .lock()
         .alloc(count)
         .expect("can't find memory page");
-    PhysPage::new(ppn)
+    PhysAddr::new(ppn << 12)
 }
 
-pub fn frame_dealloc(ppn: PhysPage) {
-    LOCK_FRAME_ALLOCATOR.lock().dealloc(ppn.as_num(), 1);
+pub fn frame_dealloc(paddr: PhysAddr) {
+    LOCK_FRAME_ALLOCATOR.lock().dealloc(paddr.raw() >> 12, 1);
 }

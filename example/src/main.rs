@@ -1,6 +1,5 @@
 #![no_std]
 #![no_main]
-#![feature(panic_info_message)]
 
 mod allocator;
 mod frame;
@@ -10,23 +9,21 @@ use core::panic::PanicInfo;
 use core::sync::atomic::{AtomicU32, Ordering};
 
 use frame::frame_alloc;
-use polyhal::addr::PhysPage;
 use polyhal::common::{get_fdt, get_mem_areas, PageAlloc};
-use polyhal::debug_console::DebugConsole;
-use polyhal::define_entry;
 use polyhal::instruction::{ebreak, shutdown};
 use polyhal::trap::TrapType::{self, *};
 use polyhal::trapframe::{TrapFrame, TrapFrameArgs};
+use polyhal::{define_entry, PhysAddr};
 
 pub struct PageAllocImpl;
 
 impl PageAlloc for PageAllocImpl {
-    fn alloc(&self) -> PhysPage {
+    fn alloc(&self) -> PhysAddr {
         frame_alloc(1)
     }
 
-    fn dealloc(&self, ppn: PhysPage) {
-        frame::frame_dealloc(ppn)
+    fn dealloc(&self, paddr: PhysAddr) {
+        frame::frame_dealloc(paddr)
     }
 }
 
@@ -103,7 +100,7 @@ fn main(hartid: usize) {
         use polyhal::multicore::boot_core;
         use polyhal::pagetable::PAGE_SIZE;
         let sp = frame_alloc(16);
-        boot_core(1, (sp.to_addr() | VIRT_ADDR_START) + 16 * PAGE_SIZE);
+        boot_core(1, (sp.raw() | VIRT_ADDR_START) + 16 * PAGE_SIZE);
         // Waiting for Core Booting
         while CORE_SET.fetch_and(1 << 1, Ordering::SeqCst) == 0 {}
         log::info!("Core 1 Has Booted successfully!");
@@ -113,12 +110,6 @@ fn main(hartid: usize) {
     ebreak();
 
     crate::pci::init();
-
-    loop {
-        if let Some(c) = DebugConsole::getchar() {
-            DebugConsole::putchar(c);
-        }
-    }
 
     log::info!("Run END. Shutdown successfully.");
     shutdown();
@@ -133,10 +124,10 @@ fn panic(info: &PanicInfo) -> ! {
             "[kernel] Panicked at {}:{} \n\t{}",
             location.file(),
             location.line(),
-            info.message().unwrap()
+            info.message()
         );
     } else {
-        log::error!("[kernel] Panicked: {}", info.message().unwrap());
+        log::error!("[kernel] Panicked: {}", info.message());
     }
     shutdown()
 }

@@ -2,6 +2,10 @@
 
 all:
 
+.PHONY: example
+example:
+	make -C example run
+
 test-build:
 	cargo build --all-features --target riscv64gc-unknown-none-elf
 	cargo build --all-features --target aarch64-unknown-none-softfloat
@@ -13,6 +17,3 @@ test-clippy:
 	cargo clippy --all-features --target aarch64-unknown-none-softfloat
 	cargo clippy --all-features --target x86_64-unknown-none
 	cargo clippy --all-features --target loongarch64-unknown-none
-
-
-.PHONY: test

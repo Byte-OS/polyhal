@@ -5,5 +5,7 @@ qemu.log
 !example/iso/grub/*
 example/iso/*
 example/qemu-*.log
+example/*.lds
+!example/linker.lds
 mount.img
 example/virt.out

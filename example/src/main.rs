@@ -9,11 +9,14 @@ use core::panic::PanicInfo;
 use core::sync::atomic::{AtomicU32, Ordering};
 
 use frame::frame_alloc;
-use polyhal::common::{get_fdt, get_mem_areas, PageAlloc};
-use polyhal::instruction::{ebreak, shutdown};
-use polyhal::trap::TrapType::{self, *};
-use polyhal::trapframe::{TrapFrame, TrapFrameArgs};
-use polyhal::{define_entry, PhysAddr};
+use polyhal::{
+    common::{get_fdt, get_mem_areas, PageAlloc},
+    instruction::{ebreak, shutdown},
+    trap::TrapType::{self, *},
+    trapframe::{TrapFrame, TrapFrameArgs},
+    PhysAddr,
+};
+use polyhal_boot::define_entry;
 
 pub struct PageAllocImpl;
 
@@ -90,20 +93,6 @@ fn main(hartid: usize) {
         });
 
         log::debug!("boot args: {}", fdt.chosen().bootargs().unwrap_or(""));
-    }
-
-    // Boot another core that id is 1.
-    #[cfg(not(target_arch = "x86_64"))]
-    {
-        use polyhal::consts::VIRT_ADDR_START;
-
-        use polyhal::multicore::boot_core;
-        use polyhal::pagetable::PAGE_SIZE;
-        let sp = frame_alloc(16);
-        boot_core(1, (sp.raw() | VIRT_ADDR_START) + 16 * PAGE_SIZE);
-        // Waiting for Core Booting
-        while CORE_SET.fetch_and(1 << 1, Ordering::SeqCst) == 0 {}
-        log::info!("Core 1 Has Booted successfully!");
     }
 
     // Test BreakPoint Interrupt

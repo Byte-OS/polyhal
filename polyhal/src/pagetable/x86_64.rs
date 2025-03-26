@@ -6,7 +6,7 @@ use x86_64::registers::control::Cr3;
 use crate::{components::consts::VIRT_ADDR_START, utils::bit};
 use crate::{PhysAddr, VirtAddr};
 
-use crate::components::pagetable::{MappingFlags, PageTable, PTE, TLB};
+use super::{MappingFlags, PageTable, PTE, TLB};
 
 bitflags! {
     pub struct PTEFlags: u64 {

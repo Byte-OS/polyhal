@@ -4,7 +4,7 @@ TEST := false
 GUI  := false
 SMP  := 1
 
-export RUSTFLAGS := --cfg=board="qemu" -Clink-arg=-Texample/linker/linker-$(ARCH).ld
+export RUSTFLAGS := --cfg=board="qemu"
 
 ifeq ($(TEST), true)
 QEMU_EXEC := timeout 40
@@ -45,7 +45,7 @@ else
 QEMU_EXEC += -serial stdio -vga std
 endif 
 QEMU_EXEC += -smp $(SMP)
-QEMU_EXEC += -D qemu.log -d in_asm,int,pcall,cpu_reset,guest_errors
+QEMU_EXEC += -D ../qemu.log -d in_asm,int,pcall,cpu_reset,guest_errors
 ifeq ($(TEST), true)
 QEMU_EXEC += >output.log 2>&1 || echo "QEMU exited"
 endif

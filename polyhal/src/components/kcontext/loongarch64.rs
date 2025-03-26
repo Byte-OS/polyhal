@@ -3,7 +3,7 @@ use core::{
     ops::{Index, IndexMut},
 };
 
-use crate::{components::kcontext::KContextArgs, components::pagetable::PageTable};
+use crate::{components::kcontext::KContextArgs, pagetable::PageTable};
 
 /// Save the task context registers.
 macro_rules! save_callee_regs {

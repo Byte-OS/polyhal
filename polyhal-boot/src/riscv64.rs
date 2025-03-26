@@ -1,29 +1,30 @@
+use core::ptr::addr_of_mut;
 use polyhal::{
     consts::VIRT_ADDR_START,
-    pagetable::{PTEFlags, PTE},
-    PageTable,
+    pagetable::{PTEFlags, PTE, TLB},
 };
-use riscv::register::{sie, sstatus};
+use riscv::register::{satp, sie, sstatus};
 
-use super::PageAlignment;
+use crate::BOOT_PT;
 
-/// TODO: Map the whole memory in the available memory region.
-pub(crate) static mut PAGE_TABLE: PageAlignment = {
-    let mut arr: [PTE; PageTable::PTE_NUM_IN_PAGE] = [PTE(0); PageTable::PTE_NUM_IN_PAGE];
-    // Init Page Table
-    // 0x00000000_00000000 -> 0x00000000_00000000 (256G)
-    // 0xffffffc0_00000000 -> 0x00000000_00000000 (256G)
-    // Const Loop, Can't use for i in 0..
-    let mut i = 0;
-    while i < 0x100 {
-        // Base Address
-        arr[i] = PTE::from_addr(i * 0x4000_0000, PTEFlags::ADVRWX);
-        // Higher Half Kernel
-        arr[i + 0x100] = PTE::from_addr(i * 0x4000_0000, PTEFlags::ADGVRWX);
-        i += 1;
+unsafe extern "C" fn init_boot_page_table() {
+    let boot_pt = addr_of_mut!(BOOT_PT).as_mut().unwrap();
+    let flags = PTEFlags::A | PTEFlags::D | PTEFlags::R | PTEFlags::V | PTEFlags::W | PTEFlags::X;
+
+    for i in 0..0x100 {
+        let target_addr = i * 0x4000_0000;
+        // 0x00000000_00000000 -> 0x00000000_00000000 (256G, 1G PerPage)
+        boot_pt[i] = PTE::from_addr(target_addr, flags);
+        // 0xffffffc0_00000000 -> 0x00000000_00000000 (256G, 1G PerPage)
+        boot_pt[i + 0x100] = PTE::from_addr(target_addr, flags | PTEFlags::G);
     }
-    PageAlignment(arr)
-};
+}
+
+unsafe extern "C" fn init_mmu() {
+    let ptr = BOOT_PT.as_ptr() as usize;
+    satp::set(satp::Mode::Sv39, 0, ptr >> 12);
+    TLB::flush_all();
+}
 
 /// Assembly Entry Function
 ///
@@ -33,39 +34,24 @@ pub(crate) static mut PAGE_TABLE: PageAlignment = {
 #[link_section = ".text.entry"]
 unsafe extern "C" fn _start() -> ! {
     core::arch::asm!(
-        // Chcek boot core
-        "
-            beqz    a0, 2f
-        ",
         // 1. Set Stack Pointer.
         // sp = bootstack + (hartid + 1) * 0x10000
-        "2:
-            la      sp, {boot_stack}
-            li      t0, {stack_size}
-            add     sp, sp, t0              // set boot stack
+        "   mv      s0, a0
+            la      sp, bstack_top
 
-            li      s0, {virt_addr_start}   // add virtual address
-            or      sp, sp, s0
-        ",
-        // 2. Open Paging Mode
-        // satp = (8 << 60) | PPN(page_table)
-        "
-            la      t0, {page_table}
-            srli    t0, t0, 12
-            li      t1, 8 << 60
-            or      t0, t0, t1
-            csrw    satp, t0
-            sfence.vma
-        ",
-        // 3. Call rust_main function.
-        "
+            call    {init_boot_page_table}
+            call    {init_mmu}
+
+            li      t0, {virt_addr_start}   // add virtual address
+            or      sp, sp, t0
+
             la      a2, {entry}
-            or      a2, a2, s0
+            or      a2, a2, t0
+            mv      a0, s0
             jalr    a2                      // call rust_main
         ",
-        stack_size = const crate::STACK_SIZE,
-        boot_stack = sym crate::BOOT_STACK,
-        page_table = sym PAGE_TABLE,
+        init_boot_page_table = sym init_boot_page_table,
+        init_mmu = sym init_mmu,
         entry = sym rust_main,
         virt_addr_start = const VIRT_ADDR_START,
         options(noreturn),
@@ -77,65 +63,57 @@ unsafe extern "C" fn _start() -> ! {
 /// Initialize Page Information. Call rust_secondary_main entry function.
 #[naked]
 #[no_mangle]
-pub(crate) unsafe extern "C" fn secondary_start() -> ! {
+unsafe extern "C" fn secondary_start() -> ! {
     core::arch::asm!(
         // 1. Set Stack Pointer.
         // sp = a1(given Stack Pointer.)
         "
-            mv      s6, a0
+            mv      s0, a0
             mv      sp, a1
 
-            li      s0, {virt_addr_start}   // add virtual address
-            or      sp, sp, s0
-        ",
-        // 2. Call Paging Mode
-        // satp = (8 << 60) | PPN(page_table)
-        "
-            la      t0, {page_table}
-            srli    t0, t0, 12
-            li      t1, 8 << 60
-            or      t0, t0, t1
-            csrw    satp, t0
-            sfence.vma
-        ", 
-        // 3. Call secondary_entry
-        "
+            call    {init_mmu}
+
+            li      t0, {virt_addr_start}   // add virtual address
+            or      sp, sp, t0
+
             la      a2, {entry}
-            or      a2, a2, s0
-            mv      a0, s6
+            or      a2, a2, t0
+            mv      a0, s0
             jalr    a2                      // call rust_main
         ",
-        page_table = sym PAGE_TABLE,
+        init_mmu = sym init_mmu,
         entry = sym rust_secondary_main,
         virt_addr_start = const VIRT_ADDR_START,
         options(noreturn)
     );
 }
 
-pub(crate) fn rust_main(hartid: usize, device_tree: usize) {
+unsafe extern "C" fn rust_main(hartid: usize, dt: usize) {
     super::clear_bss();
 
     // Initialize CPU Configuration.
     init_cpu();
+    // Init contructor functions
+    polyhal::ctor::ph_init_iter(0).for_each(|x| (x.func)());
 
-    unsafe {
-        super::_main_for_arch(hartid);
-    }
+    super::call_real_main(hartid);
 }
 
 /// Secondary Main function Entry.
 ///
 /// Supports MultiCore, Boot in this function.
 pub(crate) extern "C" fn rust_secondary_main(hartid: usize) {
-    // TODO: Get the hart_id and device_tree for the specified device.
-    // let (hartid, _device_tree) = boards::init_device(hartid, 0);
-
     // Initialize CPU Configuration.
     init_cpu();
 
-    unsafe { super::_main_for_arch(hartid) };
+    super::call_real_main(hartid);
 }
 
+/// Init CPU Configuration
+///
+/// - `status` <https://riscv.github.io/riscv-isa-manual/snapshot/privileged/#sstatus>
+/// - `sum`    <https://riscv.github.io/riscv-isa-manual/snapshot/privileged/#sum>
+/// - `sie`    <https://riscv.github.io/riscv-isa-manual/snapshot/privileged/#_supervisor_interrupt_sip_and_sie_registers>
 #[inline]
 fn init_cpu() {
     unsafe {

@@ -1,4 +1,21 @@
-super::define_arch_mods!();
+cfg_if::cfg_if! {
+    if #[cfg(target_arch = "loongarch64")] {
+        mod loongarch64;
+        pub use loongarch64::*;
+    } else if #[cfg(target_arch = "aarch64")] {
+        mod aarch64;
+        pub use aarch64::*;
+    } else if #[cfg(target_arch = "riscv64")] {
+        mod riscv64;
+        pub use riscv64::*;
+
+    } else if #[cfg(target_arch = "x86_64")] {
+        mod x86_64;
+        pub use x86_64::*;
+    } else {
+        compile_error!("unsupported architecture!");
+    }
+}
 
 use core::ops::Deref;
 
@@ -16,6 +33,12 @@ pub const USER_VADDR_END: usize = PageTable::USER_VADDR_END;
 /// Just define here. Should implement functions in specific architectures.
 #[derive(Copy, Clone, Debug)]
 pub struct PTE(pub usize);
+
+impl PTE {
+    pub const fn empty() -> Self {
+        Self(0)
+    }
+}
 
 /// Page Table
 ///

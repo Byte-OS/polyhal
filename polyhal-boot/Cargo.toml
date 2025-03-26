@@ -11,8 +11,7 @@ polyhal = { workspace = true }
 cfg-if = { workspace = true }
 
 [target.'cfg(target_arch = "riscv64")'.dependencies]
-riscv = "0.11.0"
-sbi-rt = { version = "0.0.2", features = ["legacy"] }
+riscv = "0.13.0"
 
 [target.'cfg(target_arch = "x86_64")'.dependencies]
 x86 = "0.52"

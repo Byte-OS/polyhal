@@ -1,12 +1,16 @@
 use crate::components::{consts::VIRT_ADDR_START, timer, trapframe::TrapFrame};
 use core::arch::{asm, global_asm};
-use riscv::register::{
-    scause::{self, Exception, Interrupt, Trap},
-    stval, stvec,
+use riscv::{
+    interrupt::{Exception, Interrupt},
+    register::{
+        scause::{self, Trap},
+        stval,
+        stvec::{self, Stvec},
+    },
 };
 
-use crate::components::trap::TrapType;
 use crate::components::trap::EscapeReason;
+use crate::components::trap::TrapType;
 
 global_asm!(
     r"
@@ -83,7 +87,10 @@ static USER_RSP: usize = 0;
 // Initialize the trap handler.
 pub(crate) fn init() {
     unsafe {
-        stvec::write(kernelvec as usize, stvec::TrapMode::Direct);
+        let mut stvec = Stvec::from_bits(0);
+        stvec.set_address(kernelvec as usize);
+        stvec.set_trap_mode(stvec::TrapMode::Direct);
+        stvec::write(stvec);
     }
 
     // Initialize the timer component
@@ -95,7 +102,8 @@ pub(crate) fn init() {
 fn kernel_callback(context: &mut TrapFrame) -> TrapType {
     let scause = scause::read();
     let stval = stval::read();
-    let trap_type = match scause.cause() {
+
+    let trap_type = match scause.cause().try_into().unwrap() {
         // 中断异常
         Trap::Exception(Exception::Breakpoint) => {
             context.sepc += 2;

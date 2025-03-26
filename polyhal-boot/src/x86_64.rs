@@ -1,16 +1,15 @@
-use core::arch::global_asm;
-use core::{mem, slice};
+use core::{arch::global_asm, mem, slice};
 use multiboot::{
     header::MULTIBOOT_HEADER_MAGIC,
     information::{MemoryManagement, Multiboot, PAddr},
 };
-use polyhal::arch::hart_id;
-use polyhal::consts::VIRT_ADDR_START;
-use polyhal::utils::bit;
+use polyhal::{arch::hart_id, consts::VIRT_ADDR_START, utils::bit};
 use raw_cpuid::CpuId;
-use x86_64::registers::control::{Cr0Flags, Cr4, Cr4Flags};
-use x86_64::registers::model_specific::EferFlags;
-use x86_64::registers::xcontrol::{XCr0, XCr0Flags};
+use x86_64::registers::{
+    control::{Cr0Flags, Cr4, Cr4Flags},
+    model_specific::EferFlags,
+    xcontrol::{XCr0, XCr0Flags},
+};
 
 /// Flags set in the 'flags' member of the multiboot header.
 ///
@@ -85,8 +84,6 @@ global_asm!(
     entry = sym rust_tmp_main,
 
     offset = const VIRT_ADDR_START,
-    boot_stack_size = const super::STACK_SIZE,
-    boot_stack = sym super::BOOT_STACK,
 
     cr0 = const CR0,
     cr4 = const CR4,
@@ -123,5 +120,5 @@ fn rust_tmp_main(magic: usize, mboot_ptr: usize) {
     // Check Multiboot Magic Number.
     assert_eq!(magic, multiboot::information::SIGNATURE_EAX as usize);
 
-    unsafe { crate::_main_for_arch(hart_id()) };
+    super::call_real_main(hart_id());
 }

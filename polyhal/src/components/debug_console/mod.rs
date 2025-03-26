@@ -125,3 +125,5 @@ impl DebugConsole {
         });
     }
 }
+
+ph_ctor!(CONSOLE_INIT, DebugConsole::log_init);

@@ -84,8 +84,7 @@ bsp_entry64:
     mov     gs, ax
 
     # set RSP to boot stack
-    movabs  rsp, offset {boot_stack}
-    add     rsp, {boot_stack_size}
+    movabs  rsp, bstack_top
 
     # call rust_entry(magic, mbi)
     movabs  rax, offset {entry}

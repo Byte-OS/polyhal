@@ -24,15 +24,11 @@ unsafe extern "C" fn _start() -> ! {
         li.w        $t0, 0x00       # FPE=0, SXE=0, ASXE=0, BTE=0
         csrwr       $t0, 0x2        # LOONGARCH_CSR_EUEN
 
-        la.global   $sp, {boot_stack}
-        li.d        $t0, {boot_stack_size}
-        add.d       $sp, $sp, $t0       # setup boot stack
+        la.global   $sp, bstack_top
         csrrd       $a0, 0x20           # cpuid
         la.global   $t0, {entry}
         jirl        $zero,$t0,0
         ",
-        boot_stack_size = const super::STACK_SIZE,
-        boot_stack = sym super::BOOT_STACK,
         entry = sym rust_tmp_main,
         options(noreturn),
     )
@@ -76,7 +72,7 @@ pub fn rust_tmp_main(hart_id: usize) {
     // Initialize CPU Configuration.
     init_cpu();
 
-    unsafe { super::_main_for_arch(hart_id) };
+    super::call_real_main(hart_id);
 }
 
 /// Initialize CPU Configuration.
@@ -93,5 +89,5 @@ pub(crate) extern "C" fn _rust_secondary_main() {
     // Initialize CPU Configuration.
     init_cpu();
 
-    unsafe { super::_main_for_arch(hart_id()) };
+    super::call_real_main(hart_id());
 }

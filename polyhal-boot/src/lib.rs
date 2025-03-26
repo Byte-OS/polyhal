@@ -6,7 +6,9 @@
 //!
 //!
 
-use core::mem::size_of;
+use core::{hint::spin_loop, mem::size_of};
+
+use polyhal::{pagetable::PTE, PageTable};
 
 // Define multi-architecture modules and pub use them.
 cfg_if::cfg_if! {
@@ -22,18 +24,8 @@ cfg_if::cfg_if! {
         compile_error!("unsupported architecture!");
     }
 }
-
-/// Boot Stack Size.
-/// TODO: reduce the boot stack size. Map stack in boot step.
-pub const STACK_SIZE: usize = 0x8_0000;
-
-/// Boot Stack. Boot Stack Size is [STACK_SIZE]
-#[link_section = ".bss.stack"]
-pub(crate) static mut BOOT_STACK: [u8; STACK_SIZE] = [0; STACK_SIZE];
-
-#[cfg(any(target_arch = "riscv64", target_arch = "aarch64"))]
-#[repr(align(4096))]
-pub(crate) struct PageAlignment([polyhal::pagetable::PTE; polyhal::PageTable::PTE_NUM_IN_PAGE]);
+#[link_section = ".data.boot_page_table"]
+static mut BOOT_PT: [PTE; PageTable::PTE_NUM_IN_PAGE] = [PTE::empty(); PageTable::PTE_NUM_IN_PAGE];
 
 /// Clear the bss section
 pub(crate) fn clear_bss() {
@@ -50,9 +42,17 @@ pub(crate) fn clear_bss() {
     }
 }
 
-// Declare the _main_for_arch exists.
-extern "Rust" {
-    pub(crate) fn _main_for_arch(hartid: usize);
+fn call_real_main(hartid: usize) {
+    // Declare the _main_for_arch exists.
+    extern "Rust" {
+        pub(crate) fn _main_for_arch(hartid: usize);
+    }
+    unsafe {
+        _main_for_arch(hartid);
+    }
+    loop {
+        spin_loop();
+    }
 }
 
 /// Define the entry point.
@@ -64,6 +64,15 @@ extern "Rust" {
 #[macro_export]
 macro_rules! define_entry {
     ($main_fn:ident, $sec_entry:ident) => {
+        core::arch::global_asm!(concat!(
+            "
+            .section .bss
+            .global bstack_top
+            bstack:
+            .fill 0x80000
+            bstack_top:
+        "
+        ));
         #[export_name = "_main_for_arch"]
         fn _polyhal_defined_main(hart_id: usize) {
             $main_fn(hart_id);

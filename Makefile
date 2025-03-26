@@ -6,6 +6,9 @@ all:
 example:
 	make -C example run
 
+clean:
+	rm -rf target/
+
 test-build:
 	cargo build --all-features --target riscv64gc-unknown-none-elf
 	cargo build --all-features --target aarch64-unknown-none-softfloat

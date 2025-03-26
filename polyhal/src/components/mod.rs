@@ -3,7 +3,7 @@
 //!
 
 pub(crate) mod arch;
-pub mod boot;
+// pub mod boot;
 pub mod common;
 pub mod consts;
 pub mod debug_console;
@@ -12,8 +12,7 @@ pub mod irq;
 pub mod kcontext;
 pub mod macros;
 pub mod mem;
-pub mod multicore;
-pub mod pagetable;
+// pub mod multicore;
 pub mod percpu;
 pub mod timer;
 #[cfg(feature = "trap")]

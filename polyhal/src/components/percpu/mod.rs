@@ -7,7 +7,7 @@ super::define_arch_mods!();
 use alloc::alloc::alloc;
 use core::{alloc::Layout, mem::size_of, ptr::copy_nonoverlapping};
 
-use super::pagetable::PAGE_SIZE;
+use crate::pagetable::PAGE_SIZE;
 
 pub use polyhal_macro::def_percpu;
 

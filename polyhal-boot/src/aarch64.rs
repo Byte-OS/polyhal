@@ -3,12 +3,7 @@ use polyhal::{
     pagetable::{PTEFlags, PTE, TLB},
     PageTable, PhysAddr,
 };
-
-use super::PageAlignment;
 use tock_registers::interfaces::{ReadWriteable, Writeable};
-
-#[link_section = ".data"]
-static mut BOOT_PT_L1: PageAlignment = PageAlignment([PTE(0); PageTable::PTE_NUM_IN_PAGE]);
 
 unsafe fn init_mmu() {
     MAIR_EL1.set(0x44_ff_04);
@@ -30,10 +25,9 @@ unsafe fn init_mmu() {
     barrier::isb(barrier::SY);
 
     // Set both TTBR0 and TTBR1
-    // let root_paddr = PhysAddr::from(BOOT_PT_L0.as_ptr() as usize).addr() as _;
-    let root_paddr = (BOOT_PT_L1.0.as_ptr() as usize & 0xFFFF_FFFF_F000) as _;
-    TTBR0_EL1.set(root_paddr);
-    TTBR1_EL1.set(root_paddr);
+    // let root_paddr = (BOOT_PT_L1.0.as_ptr() as usize & 0xFFFF_FFFF_F000) as _;
+    // TTBR0_EL1.set(root_paddr);
+    // TTBR1_EL1.set(root_paddr);
 
     // Flush the entire TLB
     TLB::flush_all();
@@ -46,10 +40,10 @@ unsafe fn init_mmu() {
 unsafe fn init_boot_page_table() {
     // Level 1 Entry for Huge Page
     for i in 0..0x200 {
-        BOOT_PT_L1.0[i] = PTE::new_page(
-            PhysAddr::new(i * 0x4000_0000),
-            PTEFlags::VALID | PTEFlags::AF | PTEFlags::ATTR_INDX | PTEFlags::NG,
-        );
+        // BOOT_PT_L1.0[i] = PTE::new_page(
+        //     PhysAddr::new(i * 0x4000_0000),
+        //     PTEFlags::VALID | PTEFlags::AF | PTEFlags::ATTR_INDX | PTEFlags::NG,
+        // );
     }
 }
 /// The earliest entry point for the primary CPU.
@@ -63,9 +57,7 @@ unsafe extern "C" fn _start() -> ! {
         mrs     x19, mpidr_el1
         and     x19, x19, #0xffffff     // get current CPU id
         mov     x20, x0                 // save DTB pointer
-        adrp    x8, {boot_stack}        // setup boot stack
-        add     x8, x8, {boot_stack_size}
-        mov     sp, x8
+        ldr     sp, =bstack_top
 
         bl      {init_boot_page_table}
         bl      {init_mmu}              // setup MMU
@@ -80,8 +72,6 @@ unsafe extern "C" fn _start() -> ! {
         b      .",
         init_boot_page_table = sym init_boot_page_table,
         init_mmu = sym init_mmu,
-        boot_stack = sym super::BOOT_STACK,
-        boot_stack_size = const super::STACK_SIZE,
         phys_virt_offset = const polyhal::consts::VIRT_ADDR_START,
         entry = sym rust_tmp_main,
         options(noreturn),
@@ -117,7 +107,7 @@ pub fn rust_tmp_main(hart_id: usize, device_tree: usize) {
     super::clear_bss();
 
     init_cpu();
-    unsafe { super::_main_for_arch(hart_id) }
+    super::call_real_main(hart_id);
 }
 
 /// Rust secondary entry for core except Boot Core.
@@ -125,7 +115,7 @@ fn rust_secondary_main(hart_id: usize) {
     // Initialize the cpu configuration.
     init_cpu();
 
-    unsafe { super::_main_for_arch(hart_id) }
+    super::call_real_main(hart_id);
 }
 
 /// Initialize the CPU configuration.

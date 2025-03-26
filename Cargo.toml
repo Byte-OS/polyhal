@@ -4,6 +4,7 @@ members = ["example", "polyhal-macro", "polyhal", "polyhal-boot"]
 
 [workspace.dependencies]
 polyhal = { version = "0.1.2" }
+polyhal-boot = { path = "polyhal-boot" }
 
 cfg-if = "1.0.0"
 

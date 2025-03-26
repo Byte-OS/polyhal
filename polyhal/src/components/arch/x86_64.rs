@@ -8,7 +8,7 @@ use alloc::vec::Vec;
 use multiboot::information::MemoryType;
 
 use crate::components::{
-    boot::use_multiboot,
+    // boot::use_multiboot,
     common::{DTB_BIN, MEM_AREA},
     consts::VIRT_ADDR_START,
 };
@@ -19,22 +19,22 @@ pub(crate) static MBOOT_PTR: AtomicUsize = AtomicUsize::new(0);
 
 pub(crate) fn arch_init() {
     DTB_BIN.init_by(Vec::new());
-    if let Some(mboot) = use_multiboot(MBOOT_PTR.load(core::sync::atomic::Ordering::SeqCst) as _) {
-        let mut mem_area = Vec::new();
-        if mboot.has_memory_map() {
-            mboot
-                .memory_regions()
-                .unwrap()
-                .filter(|x| x.memory_type() == MemoryType::Available)
-                .for_each(|x| {
-                    let start = x.base_address() as usize | VIRT_ADDR_START;
-                    let size = x.length() as usize;
-                    // ArchInterface::add_memory_region(start, end);
-                    mem_area.push((start, size));
-                });
-        }
-        MEM_AREA.init_by(mem_area);
-    }
+    // if let Some(mboot) = use_multiboot(MBOOT_PTR.load(core::sync::atomic::Ordering::SeqCst) as _) {
+    //     let mut mem_area = Vec::new();
+    //     if mboot.has_memory_map() {
+    //         mboot
+    //             .memory_regions()
+    //             .unwrap()
+    //             .filter(|x| x.memory_type() == MemoryType::Available)
+    //             .for_each(|x| {
+    //                 let start = x.base_address() as usize | VIRT_ADDR_START;
+    //                 let size = x.length() as usize;
+    //                 // ArchInterface::add_memory_region(start, end);
+    //                 mem_area.push((start, size));
+    //             });
+    //     }
+    //     MEM_AREA.init_by(mem_area);
+    // }
 }
 
 pub fn hart_id() -> usize {

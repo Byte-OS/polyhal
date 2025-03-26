@@ -1,9 +1,9 @@
 use core::arch::riscv64::sfence_vma;
 
 use bitflags::bitflags;
-use riscv::register::satp;
+use riscv::register::satp::{self, Satp};
 
-use crate::components::pagetable::{MappingFlags, PageTable, PTE, TLB};
+use super::{MappingFlags, PageTable, PTE, TLB};
 use crate::utils::bit;
 use crate::{PhysAddr, VirtAddr};
 
@@ -192,7 +192,7 @@ impl PageTable {
     #[inline]
     pub fn change(&self) {
         // Write page table entry for
-        satp::write((8 << 60) | (self.0.raw() >> 12));
+        unsafe { satp::write(Satp::from_bits((8 << 60) | (self.0.raw() >> 12))) }
         TLB::flush_all();
     }
 }

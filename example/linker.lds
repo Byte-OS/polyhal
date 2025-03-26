@@ -1,13 +1,11 @@
-OUTPUT_ARCH(riscv)
+OUTPUT_ARCH(%ARCH%)
 ENTRY(_start)
 
-BASE_ADDRESS = 0xffffff8040080000;
+BASE_ADDRESS = %KERNEL_BASE%;
 
 SECTIONS
 {
-    /* Load the kernel at this address: "." means the current address */
     . = BASE_ADDRESS;
-    start = .;
     _skernel = .;
 
     .text ALIGN(4K): {
@@ -20,28 +18,25 @@ SECTIONS
     .rodata ALIGN(4K): {
         srodata = .;
         *(.rodata .rodata.*)
-        . = ALIGN(4K);
         erodata = .;
     }
 
     .data ALIGN(4K): {
-        . = ALIGN(4K);
-        *(.data.prepage .data.prepage.*)
-        . = ALIGN(4K);
         _sdata = .;
+        . = ALIGN(4K);
+        *(.data.boot_page_table)
+
         *(.data .data.*)
         *(.sdata .sdata.*)
         _edata = .;
     }
-
-    .sigtrx ALIGN(4K): {
-        *(.sigtrx .sigtrx.*)
-    }
-
     _load_end = .;
 
     .bss ALIGN(4K): {
-        *(.bss.stack)
+        bstack = .;
+        *(.bss.bstack)
+        bstack_top = .;
+
         _sbss = .;
         *(.bss .bss.*)
         *(.sbss .sbss.*)

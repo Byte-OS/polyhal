@@ -8,7 +8,7 @@ fn gen_linker_script() -> Result<()> {
     let arch = env::var("CARGO_CFG_TARGET_ARCH").expect("can't find target");
     let fname = format!("linker_{}.lds", arch);
     let (output_arch, kernel_base) = if arch == "x86_64" {
-        ("i386:x86-64", "0xffffff8000200000")
+        ("i386:x86-64", "0xffff800000200000")
     } else if arch.contains("riscv64") {
         ("riscv", "0xffffffc080200000") // OUTPUT_ARCH of both riscv32/riscv64 is "riscv"
     } else if arch.contains("aarch64") {

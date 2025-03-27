@@ -16,13 +16,12 @@ pub fn init_early() {
 impl DebugConsole {
     /// Writes a byte to the console.
     pub fn putchar(c: u8) {
-        let mut uart = UART.lock();
         match c {
             b'\n' => {
-                uart.putchar(b'\r');
-                uart.putchar(b'\n');
+                UART.lock().putchar(b'\r');
+                UART.lock().putchar(b'\n');
             }
-            c => uart.putchar(c),
+            c => UART.lock().putchar(c),
         }
     }
 
@@ -31,3 +30,5 @@ impl DebugConsole {
         UART.lock().getchar()
     }
 }
+
+ph_ctor!(AARCH64_INIT_CONSOLE, init_early);

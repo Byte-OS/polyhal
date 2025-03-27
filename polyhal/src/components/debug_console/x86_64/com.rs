@@ -111,3 +111,5 @@ pub(super) fn putchar(c: u8) {
 pub(super) fn getchar() -> Option<u8> {
     COM1.lock().getchar()
 }
+
+ph_ctor!(X86_64_INIT_CONSOLE, init);

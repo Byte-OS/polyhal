@@ -10,6 +10,11 @@
     .endr
 .endm
 
+.macro MapAll2MPage name, addr
+\name:
+    Page2MTable  \addr
+.endm
+
 .macro Page1GHugeTable before
     .set    n, \before * 0x40000000
     .rept   512 - \before
@@ -84,7 +89,7 @@ bsp_entry64:
     mov     gs, ax
 
     # set RSP to boot stack
-    movabs  rsp, bstack_top
+    movabs  rsp, offset bstack_top
 
     # call rust_entry(magic, mbi)
     movabs  rax, offset {entry}
@@ -115,28 +120,24 @@ bsp_entry64:
 _boot_page_table:
     # 0x0000_0000 ~ 0xffff_ffff
     .quad _boot_mapping_pdpt - {offset} + 0x3   # PRESENT | WRITABLE | paddr(tmp_pdpt)
-    .zero 8 * 510
-    # 0xffff_ff80_0000_0000 ~ 0xffff_ff80_ffff_ffff
+    .zero 8 * 255
+    # 0xffff_8000_0000_0000 ~ 0xffff_ffff_ffff_ffff
     .quad _boot_mapping_pdpt - {offset} + 0x3  # PRESENT | WRITABLE | paddr(tmp_pdpt)
+    .zero 8 * 255
 
 .balign 4096
 .global _boot_mapping_pdpt
 # FIXME: may not work on macOS using hvf as the CPU does not support 1GB page (pdpe1gb)
 _boot_mapping_pdpt:
-    .quad _boot_mapping_pd  - {offset} + 0x3 # PRESENT | WRITABLE | paddr(0x0)
-    .quad _boot_mapping_pd2 - {offset} + 0x3 # PRESENT | WRITABLE | HUGE_PAGE | paddr(0x4000_0000)
-    .quad _boot_mapping_pd3 - {offset} + 0x3 # PRESENT | WRITABLE | HUGE_PAGE | paddr(0x8000_0000)
-    .quad _boot_mapping_pd4 - {offset} + 0x3 # PRESENT | WRITABLE | HUGE_PAGE | paddr(0xc000_0000)
+    .quad .Lboot_pd1 - {offset} + 0x3 # PRESENT | WRITABLE | paddr(0x0)
+    .quad .Lboot_pd2 - {offset} + 0x3 # PRESENT | WRITABLE | HUGE_PAGE | paddr(0x4000_0000)
+    .quad .Lboot_pd3 - {offset} + 0x3 # PRESENT | WRITABLE | HUGE_PAGE | paddr(0x8000_0000)
+    .quad .Lboot_pd4 - {offset} + 0x3 # PRESENT | WRITABLE | HUGE_PAGE | paddr(0xc000_0000)
     # .zero 8 * 508
     Page1GHugeTable 4
 
 .balign 4096
-_boot_mapping_pd:
-    Page2MTable 0
-_boot_mapping_pd2:
-    Page2MTable 0x40000000
-_boot_mapping_pd3:
-    Page2MTable 0x80000000
-.global _boot_mapping_pd4
-_boot_mapping_pd4:
-    Page2MTable 0xc0000000
+MapAll2MPage  .Lboot_pd1, 0x00000000
+MapAll2MPage  .Lboot_pd2, 0x40000000
+MapAll2MPage  .Lboot_pd3, 0x80000000
+MapAll2MPage  .Lboot_pd4, 0xc0000000

@@ -6,9 +6,9 @@
 //!
 //!
 
-use core::{hint::spin_loop, mem::size_of};
+extern crate polyhal;
 
-use polyhal::{pagetable::PTE, PageTable};
+use core::{hint::spin_loop, mem::size_of};
 
 // Define multi-architecture modules and pub use them.
 cfg_if::cfg_if! {
@@ -24,8 +24,6 @@ cfg_if::cfg_if! {
         compile_error!("unsupported architecture!");
     }
 }
-#[link_section = ".data.boot_page_table"]
-static mut BOOT_PT: [PTE; PageTable::PTE_NUM_IN_PAGE] = [PTE::empty(); PageTable::PTE_NUM_IN_PAGE];
 
 /// Clear the bss section
 pub(crate) fn clear_bss() {

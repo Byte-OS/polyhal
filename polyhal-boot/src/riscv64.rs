@@ -2,10 +2,12 @@ use core::ptr::addr_of_mut;
 use polyhal::{
     consts::VIRT_ADDR_START,
     pagetable::{PTEFlags, PTE, TLB},
+    PageTable,
 };
 use riscv::register::{satp, sie, sstatus};
 
-use crate::BOOT_PT;
+#[link_section = ".data.boot_page_table"]
+static mut BOOT_PT: [PTE; PageTable::PTE_NUM_IN_PAGE] = [PTE::empty(); PageTable::PTE_NUM_IN_PAGE];
 
 unsafe extern "C" fn init_boot_page_table() {
     let boot_pt = addr_of_mut!(BOOT_PT).as_mut().unwrap();

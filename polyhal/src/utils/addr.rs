@@ -5,6 +5,20 @@ use core::{
 
 use crate::{components::consts::VIRT_ADDR_START, PageTable};
 
+#[macro_export]
+macro_rules! pa {
+    ($e:expr) => {
+        $crate::PhysAddr::new(($e) as usize)
+    };
+}
+
+#[macro_export]
+macro_rules! va {
+    ($e:expr) => {
+        $crate::VirtAddr::new(($e) as usize)
+    };
+}
+
 #[repr(C)]
 #[derive(Copy, Clone, Ord, PartialOrd, Eq, PartialEq)]
 pub struct PhysAddr(usize);

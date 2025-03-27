@@ -111,8 +111,8 @@ bitflags::bitflags! {
 
 impl PageTable {
     /// The size of the page for this platform.
-    pub(crate) const PAGE_SIZE: usize = 0x1000;
-    pub(crate) const PAGE_LEVEL: usize = 3;
+    pub const PAGE_SIZE: usize = 0x1000;
+    pub const PAGE_LEVEL: usize = 3;
     pub const PTE_NUM_IN_PAGE: usize = 0x200;
     pub(crate) const GLOBAL_ROOT_PTE_RANGE: usize = 0x100;
     pub(crate) const VADDR_BITS: usize = 39;

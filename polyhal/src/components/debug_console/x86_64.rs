@@ -32,7 +32,7 @@ impl DebugConsole {
         #[cfg(feature = "graphic")]
         match graphic::is_graphic() {
             true => graphic::putchar(c),
-            false => vga_text::putchar(c)
+            false => vga_text::putchar(c),
         }
     }
 

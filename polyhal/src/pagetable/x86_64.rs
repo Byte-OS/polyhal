@@ -118,8 +118,8 @@ impl PTE {
 
 impl PageTable {
     /// The size of the page for this platform.
-    pub(crate) const PAGE_SIZE: usize = 0x1000;
-    pub(crate) const PAGE_LEVEL: usize = 4;
+    pub const PAGE_SIZE: usize = 0x1000;
+    pub const PAGE_LEVEL: usize = 4;
     pub const PTE_NUM_IN_PAGE: usize = 0x200;
     pub(crate) const GLOBAL_ROOT_PTE_RANGE: usize = 0x100;
     pub(crate) const VADDR_BITS: usize = 48;
@@ -134,7 +134,7 @@ impl PageTable {
             fn _boot_mapping_pdpt();
         }
         let pml4 = self.0.slice_mut_with_len::<PTE>(Self::PTE_NUM_IN_PAGE);
-        pml4[0x1ff] = PTE((_boot_mapping_pdpt as usize - VIRT_ADDR_START as usize) | 0x3);
+        pml4[0x100] = PTE((_boot_mapping_pdpt as usize - VIRT_ADDR_START as usize) | 0x3);
         TLB::flush_all();
     }
 

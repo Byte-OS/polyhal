@@ -28,11 +28,13 @@ SECTIONS
 
         *(.data .data.*)
         *(.sdata .sdata.*)
+        *(.got .got.*)
         _edata = .;
     }
-    _load_end = .;
 
     .bss ALIGN(4K): {
+        _load_end = .;
+
         bstack = .;
         *(.bss.bstack)
         bstack_top = .;

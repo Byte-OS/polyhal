@@ -111,6 +111,8 @@ fn rust_tmp_main(magic: usize, mboot_ptr: usize) {
             }
         }
     });
+    // Init contructor functions
+    polyhal::ctor::ph_init_iter(0).for_each(|x| (x.func)());
     if let Some(mboot) = use_multiboot(mboot_ptr as _) {
         if let Some(mr) = mboot.memory_regions() {
             mr.for_each(|mm| {});

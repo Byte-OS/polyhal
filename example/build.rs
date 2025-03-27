@@ -10,7 +10,7 @@ fn gen_linker_script() -> Result<()> {
     let (output_arch, kernel_base) = if arch == "x86_64" {
         ("i386:x86-64", "0xffff800000200000")
     } else if arch.contains("riscv64") {
-        ("riscv", "0xffffffc080200000") // OUTPUT_ARCH of both riscv32/riscv64 is "riscv"
+        ("riscv", "0xffffffc080200000")
     } else if arch.contains("aarch64") {
         ("aarch64", "0xffff000040080000")
     } else if arch.contains("loongarch64") {

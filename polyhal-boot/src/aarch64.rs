@@ -1,5 +1,6 @@
 use aarch64_cpu::{asm::barrier, registers::*};
 use polyhal::{
+    ctor::CtorType,
     pa,
     pagetable::{PTEFlags, PAGE_SIZE, PTE, TLB},
     PageTable,
@@ -7,7 +8,8 @@ use polyhal::{
 use tock_registers::interfaces::{ReadWriteable, Writeable};
 
 #[link_section = ".data.boot_page_table"]
-static mut BOOT_PT: [PTE; PageTable::PTE_NUM_IN_PAGE * 2] = [PTE::empty(); PageTable::PTE_NUM_IN_PAGE * 2];
+static mut BOOT_PT: [PTE; PageTable::PTE_NUM_IN_PAGE * 2] =
+    [PTE::empty(); PageTable::PTE_NUM_IN_PAGE * 2];
 
 /// Init MMU
 ///
@@ -113,7 +115,7 @@ pub fn rust_tmp_main(hart_id: usize, dt: usize) {
 
     init_cpu();
 
-    polyhal::ctor::ph_init_iter(0).for_each(|x| (x.func)());
+    polyhal::ctor::ph_init_iter(CtorType::Platform).for_each(|x| (x.func)());
 
     super::call_real_main(hart_id);
 }

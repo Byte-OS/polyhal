@@ -3,7 +3,12 @@ use multiboot::{
     header::MULTIBOOT_HEADER_MAGIC,
     information::{MemoryManagement, Multiboot, PAddr},
 };
-use polyhal::{arch::hart_id, consts::VIRT_ADDR_START, utils::bit};
+use polyhal::{
+    arch::hart_id,
+    consts::VIRT_ADDR_START,
+    ctor::{ph_init_iter, CtorType},
+    utils::bit,
+};
 use raw_cpuid::CpuId;
 use x86_64::registers::{
     control::{Cr0Flags, Cr4, Cr4Flags},
@@ -33,9 +38,6 @@ const CR4: u64 = Cr4Flags::PHYSICAL_ADDRESS_EXTENSION.bits()
     | Cr4Flags::OSFXSR.bits()
     // Add Support for 2M Huge Page Support.
     | Cr4Flags::PAGE_SIZE_EXTENSION.bits()
-    // XSAVE And Processor Extended States Enable
-    // This bit should open if the processor was supported.
-    // | Cr4Flags::OSXSAVE.bits()
     // OS Support for unmasked simd floating point exceptions
     | Cr4Flags::OSXMMEXCPT_ENABLE.bits();
 
@@ -83,7 +85,7 @@ global_asm!(
     mb_hdr_flags = const MULTIBOOT_HEADER_FLAGS,
     entry = sym rust_tmp_main,
 
-    offset = const VIRT_ADDR_START,
+    kernel_offset = const VIRT_ADDR_START,
 
     cr0 = const CR0,
     cr4 = const CR4,
@@ -98,26 +100,26 @@ fn rust_tmp_main(magic: usize, mboot_ptr: usize) {
     // TIPS: QEMU not support avx, so we can't enable avx here
     // IF you want to use avx in the qemu, you can use -cpu IvyBridge-v2 to
     // select a cpu with avx support
-    CpuId::new().get_feature_info().map(|features| {
+    CpuId::new().get_feature_info().inspect(|features| unsafe {
         // Add OSXSave flag to cr4 register if supported
         if features.has_xsave() {
-            unsafe {
-                Cr4::write(Cr4::read() | Cr4Flags::OSXSAVE);
-            }
+            Cr4::update(|x| x.insert(Cr4Flags::OSXSAVE));
         }
-        if features.has_avx() && features.has_xsave() && Cr4::read().contains(Cr4Flags::OSXSAVE) {
-            unsafe {
-                XCr0::write(XCr0::read() | XCr0Flags::AVX | XCr0Flags::SSE | XCr0Flags::X87);
-            }
+        // XSAVE And Processor Extended States Enable
+        // This bit should open if the processor was supported.
+        if features.has_avx() && features.has_xsave() && features.has_sse() {
+            XCr0::write(XCr0::read() | XCr0Flags::AVX | XCr0Flags::SSE | XCr0Flags::X87);
         }
     });
+    ph_init_iter(CtorType::Cpu).for_each(|x| (x.func)());
     // Init contructor functions
-    polyhal::ctor::ph_init_iter(0).for_each(|x| (x.func)());
+    ph_init_iter(CtorType::Platform).for_each(|x| (x.func)());
     if let Some(mboot) = use_multiboot(mboot_ptr as _) {
         if let Some(mr) = mboot.memory_regions() {
             mr.for_each(|mm| {});
         }
     }
+    ph_init_iter(CtorType::HALDriver).for_each(|x| (x.func)());
 
     // Check Multiboot Magic Number.
     assert_eq!(magic, multiboot::information::SIGNATURE_EAX as usize);

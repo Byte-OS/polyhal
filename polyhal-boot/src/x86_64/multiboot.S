@@ -15,9 +15,9 @@
     Page2MTable  \addr
 .endm
 
-.macro Page1GHugeTable before
+.macro Page1GHugeTable before, until
     .set    n, \before * 0x40000000
-    .rept   512 - \before
+    .rept   \until - \before
         .quad n + 0x83
     .set    n, n + 0x40000000
     .endr
@@ -30,11 +30,11 @@ multiboot_header:
     .int    {mb_hdr_magic}                      # magic: 0x1BADB002
     .int    {mb_hdr_flags}                      # flags
     .int    -({mb_hdr_magic} + {mb_hdr_flags})  # checksum
-    .int    multiboot_header - {offset}         # header_addr
-    .int    _skernel - {offset}                 # load_addr
-    .int    _load_end - {offset}                # load_end
-    .int    end - {offset}                      # bss_end_addr
-    .int    _start - {offset}                   # entry_addr
+    .int    multiboot_header - {kernel_offset}         # header_addr
+    .int    _skernel - {kernel_offset}                 # load_addr
+    .int    _load_end - {kernel_offset}                # load_end
+    .int    end - {kernel_offset}                      # bss_end_addr
+    .int    _start - {kernel_offset}                   # entry_addr
     .int    {graphic_mode}                      # graphic mode
     .int    0                                   # graphic pixel width
     .int    0                                   # graphic pixel height
@@ -47,7 +47,7 @@ _start:
     mov     edi, eax                            # arg1: magic: 0x2BADB002
     mov     esi, ebx                            # arg2: multiboot info
 
-    lgdt    [.Ltmp_gdt_desc - {offset}]         # load the temporary GDT
+    lgdt    [.Ltmp_gdt_desc - {kernel_offset}]         # load the temporary GDT
     # set data segment selectors
     mov     ax, 0x18
     mov     ss, ax
@@ -62,7 +62,7 @@ _start:
     mov     cr4, eax
 
     # load the temporary page table
-    lea     eax, [_boot_page_table - {offset}]
+    lea     eax, [_boot_page_table - {kernel_offset}]
     mov     cr3, eax
 
     # set LME, NXE bit in IA32_EFER
@@ -76,7 +76,7 @@ _start:
     or      eax, {cr0}
     mov     cr0, eax
 
-    ljmp    0x10, offset bsp_entry64 - {offset}    # 0x10 is code64 segment
+    ljmp    0x10, offset bsp_entry64 - {kernel_offset}    # 0x10 is code64 segment
 
 .code64
 bsp_entry64:
@@ -104,7 +104,7 @@ bsp_entry64:
 .balign 8
 .Ltmp_gdt_desc:
     .short  .Ltmp_gdt_end - .Ltmp_gdt - 1   # limit
-    .long   .Ltmp_gdt - {offset}            # base
+    .long   .Ltmp_gdt - {kernel_offset}            # base
 
 .section .data
 .balign 16
@@ -119,22 +119,20 @@ bsp_entry64:
 .global _boot_page_table
 _boot_page_table:
     # 0x0000_0000 ~ 0xffff_ffff
-    .quad _boot_mapping_pdpt - {offset} + 0x3   # PRESENT | WRITABLE | paddr(tmp_pdpt)
+    .quad _boot_mapping_pdpt - {kernel_offset} + 0x3   # PRESENT | WRITABLE | paddr(tmp_pdpt)
     .zero 8 * 255
-    # 0xffff_8000_0000_0000 ~ 0xffff_ffff_ffff_ffff
-    .quad _boot_mapping_pdpt - {offset} + 0x3  # PRESENT | WRITABLE | paddr(tmp_pdpt)
+    .quad _boot_mapping_pdpt - {kernel_offset} + 0x3   # PRESENT | WRITABLE | paddr(tmp_pdpt)
     .zero 8 * 255
 
 .balign 4096
 .global _boot_mapping_pdpt
 # FIXME: may not work on macOS using hvf as the CPU does not support 1GB page (pdpe1gb)
 _boot_mapping_pdpt:
-    .quad .Lboot_pd1 - {offset} + 0x3 # PRESENT | WRITABLE | paddr(0x0)
-    .quad .Lboot_pd2 - {offset} + 0x3 # PRESENT | WRITABLE | HUGE_PAGE | paddr(0x4000_0000)
-    .quad .Lboot_pd3 - {offset} + 0x3 # PRESENT | WRITABLE | HUGE_PAGE | paddr(0x8000_0000)
-    .quad .Lboot_pd4 - {offset} + 0x3 # PRESENT | WRITABLE | HUGE_PAGE | paddr(0xc000_0000)
-    # .zero 8 * 508
-    Page1GHugeTable 4
+    .quad .Lboot_pd1 - {kernel_offset} + 0x3 # PRESENT | WRITABLE | paddr(0x0)
+    .quad .Lboot_pd2 - {kernel_offset} + 0x3 # PRESENT | WRITABLE | HUGE_PAGE | paddr(0x4000_0000)
+    .quad .Lboot_pd3 - {kernel_offset} + 0x3 # PRESENT | WRITABLE | HUGE_PAGE | paddr(0x8000_0000)
+    .quad .Lboot_pd4 - {kernel_offset} + 0x3 # PRESENT | WRITABLE | HUGE_PAGE | paddr(0xc000_0000)
+    Page1GHugeTable 4, 512
 
 .balign 4096
 MapAll2MPage  .Lboot_pd1, 0x00000000

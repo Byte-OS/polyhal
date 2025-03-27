@@ -1,6 +1,7 @@
 use core::ptr::addr_of_mut;
 use polyhal::{
     consts::VIRT_ADDR_START,
+    ctor::CtorType,
     pagetable::{PTEFlags, PTE, TLB},
     PageTable,
 };
@@ -96,7 +97,7 @@ unsafe extern "C" fn rust_main(hartid: usize, dt: usize) {
     // Initialize CPU Configuration.
     init_cpu();
     // Init contructor functions
-    polyhal::ctor::ph_init_iter(0).for_each(|x| (x.func)());
+    polyhal::ctor::ph_init_iter(CtorType::Platform).for_each(|x| (x.func)());
 
     super::call_real_main(hartid);
 }

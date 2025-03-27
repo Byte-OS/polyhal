@@ -126,4 +126,8 @@ impl DebugConsole {
     }
 }
 
-ph_ctor!(CONSOLE_INIT, DebugConsole::log_init);
+ph_ctor!(
+    CONSOLE_INIT,
+    DebugConsole::log_init,
+    crate::ctor::CtorType::HALDriver
+);

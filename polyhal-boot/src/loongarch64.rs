@@ -1,5 +1,5 @@
 use loongArch64::register::euen;
-use polyhal::arch::hart_id;
+use polyhal::{arch::hart_id, ctor::CtorType};
 
 macro_rules! init_dwm {
     () => {
@@ -73,7 +73,7 @@ pub fn rust_tmp_main(hart_id: usize) {
     // Initialize CPU Configuration.
     init_cpu();
 
-    polyhal::ctor::ph_init_iter(0).for_each(|x| (x.func)());
+    polyhal::ctor::ph_init_iter(CtorType::Platform).for_each(|x| (x.func)());
 
     super::call_real_main(hart_id);
 }

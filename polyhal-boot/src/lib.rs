@@ -10,6 +10,8 @@ extern crate polyhal;
 
 use core::{hint::spin_loop, mem::size_of};
 
+use polyhal::ctor::{ph_init_iter, CtorType};
+
 // Define multi-architecture modules and pub use them.
 cfg_if::cfg_if! {
     if #[cfg(target_arch = "loongarch64")] {
@@ -41,6 +43,10 @@ pub(crate) fn clear_bss() {
 }
 
 fn call_real_main(hartid: usize) {
+    // Run Kernel's Contructors Before Droping Into Kernel.
+    ph_init_iter(CtorType::KernelService).for_each(|x| (x.func)());
+    ph_init_iter(CtorType::Normal).for_each(|x| (x.func)());
+
     // Declare the _main_for_arch exists.
     extern "Rust" {
         pub(crate) fn _main_for_arch(hartid: usize);

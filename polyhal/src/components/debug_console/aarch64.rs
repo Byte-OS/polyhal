@@ -31,4 +31,8 @@ impl DebugConsole {
     }
 }
 
-ph_ctor!(AARCH64_INIT_CONSOLE, init_early);
+ph_ctor!(
+    AARCH64_INIT_CONSOLE,
+    init_early,
+    crate::ctor::CtorType::HALDriver
+);

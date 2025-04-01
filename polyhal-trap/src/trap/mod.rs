@@ -3,7 +3,7 @@
 //!
 
 use super::trapframe::TrapFrame;
-use polyhal::irq::IRQVector;
+use polyhal::{ctor::CtorType, irq::IRQVector, ph_ctor};
 
 polyhal_macro::define_arch_mods!();
 
@@ -42,3 +42,5 @@ impl Into<EscapeReason> for TrapType {
 extern "Rust" {
     pub(crate) fn _interrupt_for_arch(ctx: &mut TrapFrame, trap_type: TrapType, token: usize);
 }
+
+ph_ctor!(TRAP_INIT, init, CtorType::Cpu);

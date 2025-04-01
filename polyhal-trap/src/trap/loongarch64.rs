@@ -246,11 +246,6 @@ pub unsafe extern "C" fn tlb_fill() {
     );
 }
 
-#[inline]
-pub fn set_tlb_refill(tlbrentry: usize) {
-    tlbrentry::set_tlbrentry(tlbrentry & 0xFFFF_FFFF_FFFF);
-}
-
 pub const PS_4K: usize = 0x0c;
 pub const _PS_16K: usize = 0x0e;
 pub const _PS_2M: usize = 0x15;
@@ -284,13 +279,14 @@ pub fn tlb_init(tlbrentry: usize) {
     pwch::set_dir3_base(PAGE_SIZE_SHIFT + PAGE_SIZE_SHIFT - 3 + PAGE_SIZE_SHIFT - 3);
     pwch::set_dir3_width(PAGE_SIZE_SHIFT - 3);
 
-    set_tlb_refill(tlbrentry);
+    tlbrentry::set_tlbrentry(tlbrentry & 0xFFFF_FFFF_FFFF);
     // pgdl::set_base(kernel_pgd_base);
     // pgdh::set_base(kernel_pgd_base);
 }
 
 #[inline]
-pub fn set_trap_vector_base() {
+pub fn init() {
+    tlb_init(tlb_fill as usize);
     ecfg::set_vs(0);
     eentry::set_eentry(trap_vector_base as usize);
 }

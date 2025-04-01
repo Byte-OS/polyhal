@@ -14,6 +14,7 @@ polyhal-boot = { path = "polyhal-boot" }
 polyhal-macro = { path = "polyhal-macro" }
 polyhal-trap = { path = "polyhal-trap" }
 
+bitflags = "2.0.2"
 cfg-if = "1.0.0"
 
 [patch.crates-io]

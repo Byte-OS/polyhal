@@ -304,6 +304,16 @@ pub fn init_syscall() {
     KernelGsBase::write(VirtAddr::new(0));
 }
 
+pub fn init() {
+    // Init PerCPU Information.
+    polyhal::arch::idt::init();
+    // println!("Hello");
+    // polyhal::arch::apic::init();
+    // Init allocator
+    // polyhal::arch::gdt::init();
+    // init_syscall();
+}
+
 #[naked]
 unsafe extern "C" fn syscall_entry() {
     asm!(

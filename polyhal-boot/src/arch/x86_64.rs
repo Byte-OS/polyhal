@@ -98,6 +98,7 @@ global_asm!(
 
 fn rust_tmp_main(magic: usize, mboot_ptr: usize) {
     super::clear_bss();
+    ph_init_iter(CtorType::Cpu).for_each(|x| (x.func)());
     // enable avx extend instruction set and sse if support avx
     // TIPS: QEMU not support avx, so we can't enable avx here
     // IF you want to use avx in the qemu, you can use -cpu IvyBridge-v2 to
@@ -113,7 +114,6 @@ fn rust_tmp_main(magic: usize, mboot_ptr: usize) {
             XCr0::write(XCr0::read() | XCr0Flags::AVX | XCr0Flags::SSE | XCr0Flags::X87);
         }
     });
-    ph_init_iter(CtorType::Cpu).for_each(|x| (x.func)());
     // Init contructor functions
     ph_init_iter(CtorType::Platform).for_each(|x| (x.func)());
     ph_init_iter(CtorType::HALDriver).for_each(|x| (x.func)());

@@ -1,6 +1,6 @@
 use core::fmt;
 
-use spin::Once;
+use lazyinit::LazyInit;
 use x86_64::instructions::tables::{lgdt, load_tss};
 use x86_64::registers::segmentation::{Segment, SegmentSelector, CS};
 use x86_64::structures::gdt::{Descriptor, DescriptorFlags};
@@ -8,10 +8,10 @@ use x86_64::structures::{tss::TaskStateSegment, DescriptorTablePointer};
 use x86_64::{addr::VirtAddr, PrivilegeLevel};
 
 #[polyhal_macro::def_percpu]
-pub(super) static GDT: Once<GdtStruct> = Once::new();
+pub(super) static GDT: LazyInit<GdtStruct> = LazyInit::new();
 
 #[polyhal_macro::def_percpu]
-pub(super) static TSS: Once<TaskStateSegment> = Once::new();
+pub(super) static TSS: LazyInit<TaskStateSegment> = LazyInit::new();
 
 /// A wrapper of the Global Descriptor Table (GDT) with maximum 16 entries.
 #[repr(align(16))]
@@ -99,8 +99,8 @@ pub fn init() {
     unsafe {
         let tss = TSS.current_ref_raw();
         let gdt = GDT.current_ref_mut_raw();
-        tss.call_once(|| TaskStateSegment::new());
-        gdt.call_once(|| GdtStruct::new(tss.get_unchecked()));
+        tss.init_once(TaskStateSegment::new());
+        gdt.init_once(GdtStruct::new(tss.get_unchecked()));
         let gdt = gdt.get_unchecked();
         gdt.load();
         gdt.load_tss();

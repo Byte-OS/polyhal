@@ -10,7 +10,11 @@ extern "Rust" {
 /// ## Executeion Flow:
 ///
 /// ```plain
-/// Cpu  ->  Platform -> HALDriver -> KernelService -> Normal -> jump to kernel
+/// Primary Core:
+/// Cpu  ->  Platform -> HALDriver -> KernelService -> Normal -> (optional) Boot Other Core -> jump to kernel
+///
+/// Secondary Core:
+/// Cpu  ->  jump to kernel
 /// ```
 ///
 /// ## Note

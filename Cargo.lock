@@ -67,15 +67,6 @@ checksum = "5c8214115b7bf84099f1309324e63141d4c5d7cc26862f97a0a857dbefe165bd"
 
 [[package]]
 name = "buddy_system_allocator"
-version = "0.9.1"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "d44d578cadd17312c75e7d0ef489361f160ace58f7139aa32001fee1a51b89b5"
-dependencies = [
- "spin 0.9.8",
-]
-
-[[package]]
-name = "buddy_system_allocator"
 version = "0.11.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "a1a0108968a3a2dab95b089c0fc3f1afa7759aa5ebe6f1d86d206d6f7ba726eb"
@@ -122,7 +113,7 @@ dependencies = [
 name = "example"
 version = "0.1.0"
 dependencies = [
- "buddy_system_allocator 0.11.0",
+ "buddy_system_allocator",
  "fdt",
  "log",
  "polyhal",
@@ -200,7 +191,6 @@ dependencies = [
  "arm_pl011",
  "arrayvec",
  "bitflags 2.9.0",
- "buddy_system_allocator 0.9.1",
  "cfg-if",
  "fdt",
  "lazyinit",
@@ -208,7 +198,7 @@ dependencies = [
  "loongArch64",
  "multiboot",
  "ns16550a",
- "polyhal-macro 0.1.3 (registry+https://github.com/rust-lang/crates.io-index)",
+ "polyhal-macro",
  "raw-cpuid 11.5.0",
  "riscv",
  "sbi-rt",
@@ -245,17 +235,6 @@ dependencies = [
 ]
 
 [[package]]
-name = "polyhal-macro"
-version = "0.1.3"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "e8445234620fa3a0886b9cae5d5fa568a6124efb916041628eb9c4011d1a3e8b"
-dependencies = [
- "proc-macro2",
- "quote",
- "syn",
-]
-
-[[package]]
 name = "polyhal-trap"
 version = "0.1.0"
 dependencies = [
@@ -265,7 +244,7 @@ dependencies = [
  "loongArch64",
  "multiboot",
  "polyhal",
- "polyhal-macro 0.1.3",
+ "polyhal-macro",
  "raw-cpuid 11.5.0",
  "riscv",
  "tock-registers",

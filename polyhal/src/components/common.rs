@@ -1,6 +1,5 @@
 use lazyinit::LazyInit;
 
-use crate::components::arch::arch_init;
 use crate::PhysAddr;
 
 #[polyhal_macro::def_percpu]
@@ -20,9 +19,6 @@ static PAGE_ALLOC: LazyInit<&dyn PageAlloc> = LazyInit::new();
 /// Please initialize the allocator before calling this function.
 pub fn init(page_alloc: &'static dyn PageAlloc) {
     PAGE_ALLOC.init_once(page_alloc);
-
-    // Init current architecture
-    arch_init();
 }
 
 /// Store the number of cpu, this will fill up by startup function.

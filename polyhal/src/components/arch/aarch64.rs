@@ -6,5 +6,3 @@ pub(crate) mod psci;
 pub fn hart_id() -> usize {
     MPIDR_EL1.read(MPIDR_EL1::Aff0) as _
 }
-
-pub(crate) fn arch_init() {}

@@ -9,7 +9,7 @@ use crate::utils::MutexNoIrq;
 const UART_CLOCK_FACTOR: usize = 16;
 const OSC_FREQ: usize = 1_843_200;
 
-static COM1: MutexNoIrq<Uart16550> = MutexNoIrq::new(Uart16550::new(0x2f9));
+static COM1: MutexNoIrq<Uart16550> = MutexNoIrq::new(Uart16550::new(0x3f8));
 
 bitflags::bitflags! {
     /// Line status flags

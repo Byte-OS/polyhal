@@ -12,5 +12,3 @@ pub fn wfi() {
 pub fn hart_id() -> usize {
     CPU_ID.read_current()
 }
-
-pub fn arch_init() {}

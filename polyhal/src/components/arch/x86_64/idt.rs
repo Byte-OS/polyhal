@@ -1,9 +1,9 @@
-use spin::Once;
+use lazyinit::LazyInit;
 use x86_64::structures::idt::{Entry, HandlerFunc, InterruptDescriptorTable};
 
 const NUM_INT: usize = 256;
 
-pub(super) static IDT: Once<IdtStruct> = Once::new();
+pub(super) static IDT: LazyInit<IdtStruct> = LazyInit::new();
 
 /// A wrapper of the Interrupt Descriptor Table (IDT).
 #[repr(transparent)]
@@ -47,9 +47,6 @@ impl IdtStruct {
 }
 
 pub fn init() {
-    let idt = IdtStruct::new();
-    IDT.call_once(|| idt);
-    unsafe {
-        IDT.get().unwrap().load();
-    }
+    IDT.init_once(IdtStruct::new());
+    unsafe { IDT.get().unwrap().load() }
 }

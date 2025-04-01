@@ -114,7 +114,6 @@ name = "example"
 version = "0.1.0"
 dependencies = [
  "buddy_system_allocator",
- "fdt",
  "log",
  "polyhal",
  "polyhal-boot",
@@ -124,10 +123,10 @@ dependencies = [
 ]
 
 [[package]]
-name = "fdt"
-version = "0.1.5"
+name = "fdt-parser"
+version = "0.4.10"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "784a4df722dc6267a04af36895398f59d21d07dce47232adf31ec0ff2fa45e67"
+checksum = "f6ce5f2349481622d853a132241a102974317337ec643670a830e4194cb71181"
 
 [[package]]
 name = "lazyinit"
@@ -192,7 +191,7 @@ dependencies = [
  "arrayvec",
  "bitflags 2.9.0",
  "cfg-if",
- "fdt",
+ "fdt-parser",
  "lazyinit",
  "log",
  "loongArch64",

@@ -88,8 +88,8 @@ fn main(hartid: usize) {
 
     if let Ok(fdt) = get_fdt() {
         fdt.all_nodes().for_each(|x| {
-            if let Some(compatibles) = x.compatible() {
-                log::debug!("Node Compatiable: {:?}", compatibles.first());
+            if let Some(mut compatibles) = x.compatible() {
+                log::debug!("Node Compatiable: {:?}", compatibles.next());
             }
         });
     }
@@ -97,8 +97,7 @@ fn main(hartid: usize) {
     // Test BreakPoint Interrupt
     ebreak();
 
-    // crate::pci::init();
-
+    crate::pci::init();
     log::info!("Run END. Shutdown successfully.");
     shutdown();
 }

@@ -1,5 +1,8 @@
+use core::ptr::NonNull;
+
 use arrayvec::ArrayVec;
-use fdt::{Fdt, FdtError};
+use fdt_parser::{Fdt, FdtError};
+// use fdt::{Fdt, FdtError};
 use lazyinit::LazyInit;
 
 use crate::{
@@ -23,20 +26,21 @@ static DTB_INFO: LazyInit<(PhysAddr, usize)> = LazyInit::new();
 ///
 /// - `dtb_ptr` is the pointer to the device tree binary.
 ///
-pub fn init_dtb_once(dtb_ptr: *const u8) -> Result<(), FdtError> {
+pub fn init_dtb_once(dtb_ptr: *mut u8) -> Result<(), FdtError<'static>> {
     // Validate Device Tree
-    let dtb = unsafe { Fdt::from_ptr(dtb_ptr.add(VIRT_ADDR_START))? };
+    let ptr = unsafe { NonNull::new(dtb_ptr.add(VIRT_ADDR_START)) };
+    let dtb = unsafe { Fdt::from_ptr(ptr.unwrap())? };
     DTB_INFO.init_once((pa!(dtb_ptr), dtb.total_size()));
     parse_dtb_info();
     Ok(())
 }
 
 /// Get Flattened Device Tree
-pub fn get_fdt() -> Result<Fdt<'static>, FdtError> {
+pub fn get_fdt() -> Result<Fdt<'static>, FdtError<'static>> {
     if !DTB_INFO.is_inited() {
         return Err(FdtError::BadPtr);
     }
-    unsafe { Fdt::from_ptr(DTB_INFO.0.get_mut_ptr()) }
+    unsafe { Fdt::from_ptr(NonNull::new_unchecked(DTB_INFO.0.get_mut_ptr())) }
 }
 
 /// Parse Information from the device tree binary
@@ -49,34 +53,34 @@ pub fn parse_dtb_info() {
     println!(include_str!("./banner.txt"));
 
     if let Ok(fdt) = get_fdt() {
-        // fdt.memory().flat_map(|x| x.regions()).for_each(|mm| {
-        //     display_info!(
-        //         "Platform Memory Region",
-        //         "{:#p} - {:#018x}",
-        //         mm.address,
-        //         mm.address as usize + mm.size
-        //     );
-        //     unsafe { add_memory_region(mm.address as _, mm.address as usize + mm.size) }
-        // });
-        fdt.memory().regions().for_each(|mm| {
+        fdt.memory().flat_map(|x| x.regions()).for_each(|mm| {
             display_info!(
                 "Platform Memory Region",
                 "{:#p} - {:#018x}",
-                mm.starting_address,
-                mm.starting_address as usize + mm.size.unwrap_or(0)
+                mm.address,
+                mm.address as usize + mm.size
             );
-            unsafe {
-                add_memory_region(
-                    mm.starting_address as _,
-                    mm.starting_address as usize + mm.size.unwrap_or(0),
-                )
-            }
+            unsafe { add_memory_region(mm.address as _, mm.address as usize + mm.size) }
         });
-
-        // fdt.chosen().inspect(|chosen| {
-        //     display_info!("Boot Args", "{:?}", chosen.bootargs());
+        // fdt.memory().regions().for_each(|mm| {
+        //     display_info!(
+        //         "Platform Memory Region",
+        //         "{:#p} - {:#018x}",
+        //         mm.starting_address,
+        //         mm.starting_address as usize + mm.size.unwrap_or(0)
+        //     );
+        //     unsafe {
+        //         add_memory_region(
+        //             mm.starting_address as _,
+        //             mm.starting_address as usize + mm.size.unwrap_or(0),
+        //         )
+        //     }
         // });
-        display_info!("Boot Args", "{}", fdt.chosen().bootargs().unwrap_or(""));
+
+        fdt.chosen().inspect(|chosen| {
+            display_info!("Boot Args", "{}", chosen.bootargs().unwrap_or(""));
+        });
+        // display_info!("Boot Args", "{}", fdt.chosen().bootargs().unwrap_or(""));
 
         display_info!()
     }

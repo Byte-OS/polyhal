@@ -10,8 +10,8 @@ pub fn init() {
     if let Ok(fdt) = get_fdt() {
         if let Some(pci_node) = fdt.all_nodes().find(|x| x.name.starts_with("pci")) {
             let pci_addr = pci_node.reg().map(|mut x| x.next().unwrap()).unwrap();
-            log::info!("PCI Address: {:#p}", pci_addr.starting_address);
-            enumerate_pci((pci_addr.starting_address as usize | VIRT_ADDR_START) as *mut u8);
+            log::info!("PCI Address: {:#x}", pci_addr.address);
+            enumerate_pci((pci_addr.address as usize | VIRT_ADDR_START) as *mut u8);
             return;
         }
     }

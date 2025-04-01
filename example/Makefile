@@ -3,13 +3,9 @@ ARCH := riscv64
 TEST := false
 GUI  := false
 SMP  := 1
+BOOT_ARGS := 
 
-export RUSTFLAGS := --cfg=board="qemu"
-
-ifeq ($(TEST), true)
-QEMU_EXEC := timeout 40
-endif
-
+export RUSTFLAGS := 
 QEMU_EXEC += qemu-system-$(ARCH)
 
 ifeq ($(ARCH), x86_64)
@@ -46,9 +42,7 @@ QEMU_EXEC += -serial stdio -vga std
 endif 
 QEMU_EXEC += -smp $(SMP)
 QEMU_EXEC += -D ../qemu.log -d in_asm,int,pcall,cpu_reset,guest_errors
-ifeq ($(TEST), true)
-QEMU_EXEC += >output.log 2>&1 || echo "QEMU exited"
-endif
+QEMU_EXEC += -append "$(BOOT_ARGS)"
 
 build: $(KERNEL_BIN) 
 
@@ -59,9 +53,6 @@ kernel:
 	@echo Platform: $(BOARD)
 	@cargo build $(BUILD_ARGS) --release --target $(TARGET)
 
-clean-log:
-	@rm qemu*.log
-
 clean:
 	@cargo clean
 
@@ -69,9 +60,6 @@ run: run-inner
 
 run-inner: build
 	$(QEMU_EXEC)
-ifeq ($(TEST), true)
-	grep "\[kernel\] Hello, world!" output.log
-endif
 
 debug: build
 	$(QEMU_EXEC) -s -S

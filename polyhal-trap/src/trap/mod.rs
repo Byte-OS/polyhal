@@ -2,10 +2,10 @@
 //!
 //!
 
-use super::irq::IRQVector;
 use super::trapframe::TrapFrame;
+use polyhal::irq::IRQVector;
 
-super::define_arch_mods!();
+polyhal_macro::define_arch_mods!();
 
 #[derive(Debug, Clone, Copy)]
 pub enum TrapType {

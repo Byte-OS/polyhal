@@ -4,7 +4,7 @@
 
 use core::mem::size_of;
 
-super::define_arch_mods!();
+polyhal_macro::define_arch_mods!();
 
 /// Trap Frame Arg Type
 ///

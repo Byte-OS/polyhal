@@ -11,7 +11,7 @@ use self::vectors::*;
 use crate::components::consts::{PIC_VECTOR_OFFSET, VIRT_ADDR_START};
 use crate::utils::MutexNoIrq;
 
-pub(crate) mod vectors {
+pub mod vectors {
     pub const APIC_TIMER_VECTOR: u8 = 0xf0;
     pub const APIC_SPURIOUS_VECTOR: u8 = 0xf1;
     pub const APIC_ERROR_VECTOR: u8 = 0xf2;
@@ -47,17 +47,17 @@ static IO_APIC: Once<MutexNoIrq<IoApic>> = Once::new();
 //     unsafe { local_apic().end_of_interrupt() };
 // }
 
-pub(crate) fn local_apic<'a>() -> &'a mut LocalApic {
+pub fn local_apic<'a>() -> &'a mut LocalApic {
     // It's safe as LAPIC is per-cpu.
     unsafe { LOCAL_APIC.as_mut().unwrap() }
 }
 
 /// Get the interrupt controller
-pub(crate) fn io_apic<'a>() -> &'a MutexNoIrq<IoApic> {
+pub fn io_apic<'a>() -> &'a MutexNoIrq<IoApic> {
     IO_APIC.get().expect("Can't get io_apic")
 }
 
-pub(crate) fn raw_apic_id(id_u8: u8) -> u32 {
+pub fn raw_apic_id(id_u8: u8) -> u32 {
     if unsafe { IS_X2APIC } {
         id_u8 as u32
     } else {
@@ -76,7 +76,7 @@ fn cpu_has_x2apic() -> bool {
 /// PIC End of interrupt
 /// 8259 Programmable Interrupt Controller
 #[allow(dead_code)]
-pub(crate) fn pic_eoi() {
+pub fn pic_eoi() {
     unsafe {
         Port::<u8>::new(0x20).write(0x20);
         Port::<u8>::new(0xa0).write(0x20);
@@ -84,7 +84,7 @@ pub(crate) fn pic_eoi() {
 }
 
 /// Init APIC
-pub(crate) fn init() {
+pub fn init() {
     // Remap and init pic controller.
     unsafe {
         let mut pic1_command = Port::<u8>::new(0x20);

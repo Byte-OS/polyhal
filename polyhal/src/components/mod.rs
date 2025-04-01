@@ -14,8 +14,5 @@ pub mod mem;
 // pub mod multicore;
 pub mod percpu;
 pub mod timer;
-#[cfg(feature = "trap")]
-pub mod trap;
-pub mod trapframe;
 
 use polyhal_macro::define_arch_mods;

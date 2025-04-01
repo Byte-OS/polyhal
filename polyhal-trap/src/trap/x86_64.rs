@@ -1,20 +1,17 @@
+use super::{EscapeReason, TrapType};
+use crate::trapframe::{FxsaveArea, TrapFrame, TRAPFRAME_SIZE};
+use bitflags::bitflags;
 use core::arch::{asm, global_asm};
 use core::mem::{offset_of, size_of};
-
-use bitflags::bitflags;
+use polyhal::arch::apic::{local_apic, vectors::*};
+use polyhal::arch::gdt::{set_tss_kernel_sp, GdtStruct};
+use polyhal::consts::{PIC_VECTOR_OFFSET, SYSCALL_VECTOR};
+use polyhal::irq;
+use polyhal::percpu::PerCPUReserved;
+use x86::{controlregs::cr2, irq::*};
 use x86_64::registers::model_specific::{Efer, EferFlags, KernelGsBase, LStar, SFMask, Star};
 use x86_64::registers::rflags::RFlags;
 use x86_64::VirtAddr;
-
-use x86::{controlregs::cr2, irq::*};
-
-use crate::components::arch::apic::{local_apic, vectors::*};
-use crate::components::arch::gdt::{set_tss_kernel_sp, GdtStruct};
-use crate::components::consts::{PIC_VECTOR_OFFSET, SYSCALL_VECTOR};
-use crate::components::irq;
-use crate::components::trapframe::{FxsaveArea, TrapFrame, TRAPFRAME_SIZE};
-use crate::components::percpu::PerCPUReserved;
-use crate::components::trap::{EscapeReason, TrapType};
 
 global_asm!(
     r"
@@ -87,7 +84,7 @@ fn kernel_callback(context: &mut TrapFrame) {
             TrapType::Timer
         }
         // PIC IRQS
-        0x20..=0x2f => TrapType::Irq(irq::IRQVector(
+        0x20..=0x2f => TrapType::Irq(irq::IRQVector::new(
             context.vector as usize - PIC_VECTOR_OFFSET as usize,
         )),
         _ => {
@@ -97,7 +94,7 @@ fn kernel_callback(context: &mut TrapFrame) {
             );
         }
     };
-    unsafe { crate::components::trap::_interrupt_for_arch(context, trap_type, 0) };
+    unsafe { super::_interrupt_for_arch(context, trap_type, 0) };
 }
 
 #[naked]
@@ -396,7 +393,7 @@ pub fn run_user_task(context: &mut TrapFrame) -> EscapeReason {
 
     match context.vector {
         SYSCALL_VECTOR => {
-            unsafe { crate::components::trap::_interrupt_for_arch(context, TrapType::SysCall, 0) };
+            unsafe { super::_interrupt_for_arch(context, TrapType::SysCall, 0) };
             EscapeReason::SysCall
         }
         _ => {

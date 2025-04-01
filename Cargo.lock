@@ -127,6 +127,7 @@ dependencies = [
  "log",
  "polyhal",
  "polyhal-boot",
+ "polyhal-trap",
  "spin 0.10.0",
  "virtio-drivers",
 ]
@@ -252,6 +253,24 @@ dependencies = [
  "proc-macro2",
  "quote",
  "syn",
+]
+
+[[package]]
+name = "polyhal-trap"
+version = "0.1.0"
+dependencies = [
+ "aarch64-cpu",
+ "bitflags 2.9.0",
+ "log",
+ "loongArch64",
+ "multiboot",
+ "polyhal",
+ "polyhal-macro 0.1.3",
+ "raw-cpuid 11.5.0",
+ "riscv",
+ "tock-registers",
+ "x86",
+ "x86_64",
 ]
 
 [[package]]

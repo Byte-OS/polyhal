@@ -1,5 +1,7 @@
-use crate::components::{consts::VIRT_ADDR_START, timer, trapframe::TrapFrame};
+use super::{EscapeReason, TrapType};
+use crate::trapframe::TrapFrame;
 use core::arch::{asm, global_asm};
+use polyhal::{consts::VIRT_ADDR_START, timer};
 use riscv::{
     interrupt::{Exception, Interrupt},
     register::{
@@ -8,9 +10,6 @@ use riscv::{
         stvec::{self, Stvec},
     },
 };
-
-use crate::components::trap::EscapeReason;
-use crate::components::trap::TrapType;
 
 global_asm!(
     r"
@@ -94,7 +93,7 @@ pub(crate) fn init() {
     }
 
     // Initialize the timer component
-    crate::components::timer::init();
+    polyhal::timer::init();
 }
 
 // 内核中断回调
@@ -138,7 +137,7 @@ fn kernel_callback(context: &mut TrapFrame) -> TrapType {
             panic!("未知中断: {:#x?}", context);
         }
     };
-    unsafe { crate::components::trap::_interrupt_for_arch(context, trap_type, 0) };
+    unsafe { super::_interrupt_for_arch(context, trap_type, 0) };
     trap_type
 }
 
@@ -166,7 +165,7 @@ pub unsafe extern "C" fn kernelvec() {
             LOAD_GENERAL_REGS
             sret
         ",
-        cx_size = const crate::components::trapframe::TRAPFRAME_SIZE,
+        cx_size = const crate::trapframe::TRAPFRAME_SIZE,
         options(noreturn)
     )
 }

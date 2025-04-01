@@ -33,3 +33,9 @@ impl IRQ {}
 
 #[derive(Debug, Clone, Copy)]
 pub struct IRQVector(pub(crate) usize);
+
+impl IRQVector {
+    pub const fn new(value: usize) -> Self {
+        Self(value)
+    }
+}

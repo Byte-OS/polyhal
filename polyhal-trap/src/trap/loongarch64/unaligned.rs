@@ -3,7 +3,7 @@ use core::arch::global_asm;
 
 use loongArch64::register::badv;
 
-use crate::components::trapframe::TrapFrame;
+use crate::trapframe::TrapFrame;
 
 pub const LDH_OP: u32 = 0xa1;
 pub const LDHU_OP: u32 = 0xa9;

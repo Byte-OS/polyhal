@@ -5,7 +5,7 @@ use core::{
 
 use riscv::register::sstatus::{self, Sstatus, SPP};
 
-use crate::components::trapframe::TrapFrameArgs;
+use super::TrapFrameArgs;
 
 #[repr(C)]
 #[derive(Clone)]

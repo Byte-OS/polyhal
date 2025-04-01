@@ -1,6 +1,6 @@
-pub(crate) mod apic;
-pub(crate) mod gdt;
-pub(crate) mod idt;
+pub mod apic;
+pub mod gdt;
+pub mod idt;
 
 use core::sync::atomic::AtomicUsize;
 

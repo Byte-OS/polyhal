@@ -1,10 +1,18 @@
 [workspace]
 resolver = "2"
-members = ["example", "polyhal-macro", "polyhal", "polyhal-boot"]
+members = [
+    "example",
+    "polyhal-macro",
+    "polyhal",
+    "polyhal-boot",
+    "polyhal-trap",
+]
 
 [workspace.dependencies]
 polyhal = { version = "0.1.2" }
 polyhal-boot = { path = "polyhal-boot" }
+polyhal-macro = { path = "polyhal-macro" }
+polyhal-trap = { path = "polyhal-trap" }
 
 cfg-if = "1.0.0"
 

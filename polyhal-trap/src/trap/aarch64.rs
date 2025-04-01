@@ -3,11 +3,11 @@ use core::arch::{asm, global_asm};
 use aarch64_cpu::registers::{Writeable, ESR_EL1, FAR_EL1, VBAR_EL1};
 use tock_registers::interfaces::Readable;
 
-use crate::components::irq::{get_irq, TIMER_IRQ_NUM};
-use crate::components::timer::set_next_timer;
-use crate::components::trapframe::TrapFrame;
+use crate::trapframe::TrapFrame;
+use polyhal::irq::{get_irq, TIMER_IRQ_NUM};
+use polyhal::timer::set_next_timer;
 
-use crate::components::trap::{EscapeReason, TrapType};
+use super::{EscapeReason, TrapType};
 
 global_asm!(include_str!("aarch64/trap.S"));
 
@@ -43,7 +43,7 @@ fn handle_exception(tf: &mut TrapFrame, kind: TrapKind, source: TrapSource) -> T
             }
             _ => TrapType::Irq(irq),
         };
-        unsafe { crate::components::trap::_interrupt_for_arch(tf, trap_type, 0) };
+        unsafe { super::_interrupt_for_arch(tf, trap_type, 0) };
         return trap_type;
     }
     if kind != TrapKind::Synchronous {
@@ -92,7 +92,7 @@ fn handle_exception(tf: &mut TrapFrame, kind: TrapKind, source: TrapSource) -> T
             );
         }
     };
-    unsafe { crate::components::trap::_interrupt_for_arch(tf, trap_type, 0) };
+    unsafe { super::_interrupt_for_arch(tf, trap_type, 0) };
     trap_type
 }
 

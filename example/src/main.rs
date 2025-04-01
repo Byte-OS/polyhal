@@ -13,11 +13,11 @@ use polyhal::mem::{get_fdt, get_mem_areas};
 use polyhal::{
     common::PageAlloc,
     instruction::{ebreak, shutdown},
-    trap::TrapType::{self, *},
-    trapframe::{TrapFrame, TrapFrameArgs},
     PhysAddr,
 };
 use polyhal_boot::define_entry;
+use polyhal_trap::trap::TrapType::{self, *};
+use polyhal_trap::trapframe::{TrapFrame, TrapFrameArgs};
 
 pub struct PageAllocImpl;
 
@@ -94,8 +94,8 @@ fn main(hartid: usize) {
         });
     }
 
-    // // Test BreakPoint Interrupt
-    // // ebreak();
+    // Test BreakPoint Interrupt
+    ebreak();
 
     // crate::pci::init();
 

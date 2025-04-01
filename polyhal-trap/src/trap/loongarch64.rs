@@ -8,10 +8,10 @@ use loongArch64::register::{
 };
 use unaligned::emulate_load_store_insn;
 
-use crate::components::trapframe::TrapFrame;
+use crate::trapframe::TrapFrame;
 
-use crate::components::trap::{EscapeReason, TrapType};
-use crate::irq::TIMER_IRQ;
+use super::{EscapeReason, TrapType};
+use polyhal::irq::TIMER_IRQ;
 
 global_asm!(
     r"
@@ -210,7 +210,7 @@ pub unsafe extern "C" fn trap_vector_base() {
                 LOAD_REGS
                 ertn
         ",
-        trapframe_size = const crate::components::trapframe::TRAPFRAME_SIZE,
+        trapframe_size = const crate::trapframe::TRAPFRAME_SIZE,
         user_vec = sym user_vec,
         trap_handler = sym loongarch64_trap_handler,
         options(noreturn)
@@ -345,6 +345,6 @@ fn loongarch64_trap_handler(tf: &mut TrapFrame) -> TrapType {
         }
     };
     // info!("return to addr: {:#x}", tf.era);
-    unsafe { crate::components::trap::_interrupt_for_arch(tf, trap_type, 0) };
+    unsafe { super::_interrupt_for_arch(tf, trap_type, 0) };
     trap_type
 }

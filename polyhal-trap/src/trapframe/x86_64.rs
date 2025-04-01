@@ -1,11 +1,10 @@
+use super::TrapFrameArgs;
 use core::{
     fmt::Debug,
     ops::{Index, IndexMut},
 };
-
+use polyhal::arch::gdt::GdtStruct;
 use x86_64::registers::rflags::RFlags;
-
-use crate::components::{arch::gdt::GdtStruct, trapframe::TrapFrameArgs};
 
 #[repr(C, align(16))]
 #[derive(Clone)]
@@ -146,7 +145,9 @@ impl IndexMut<TrapFrameArgs> for TrapFrame {
             TrapFrameArgs::SEPC => &mut self.rip,
             TrapFrameArgs::RA => {
                 // set return address, at x86_64 is push return address to rsp, shoule be execute at end.
-                log::warn!("set_ra in x86_64 is push return address to rsp, shoule be execute at end");
+                log::warn!(
+                    "set_ra in x86_64 is push return address to rsp, shoule be execute at end"
+                );
                 self.rsp -= 8;
                 unsafe { (self.rsp as *mut usize).as_mut().unwrap() }
             }

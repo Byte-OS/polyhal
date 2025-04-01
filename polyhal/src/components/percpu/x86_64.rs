@@ -1,4 +1,3 @@
-
 /// Reserved for default usage.
 /// This is related to the [polyhal_macro::percpu::PERCPU_RESERVED]
 /// Just for x86_64 now.
@@ -8,7 +7,7 @@
 /// 3: KERNEL_RSP
 /// 4: USER_CONTEXT
 #[repr(C)]
-pub(crate) struct PerCPUReserved {
+pub struct PerCPUReserved {
     pub self_ptr: usize,
     pub valid_ptr: usize,
     pub user_rsp: usize,

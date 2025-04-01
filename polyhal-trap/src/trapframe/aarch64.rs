@@ -1,6 +1,6 @@
 use core::ops::{Index, IndexMut};
 
-use crate::components::trapframe::TrapFrameArgs;
+use super::TrapFrameArgs;
 
 /// Saved registers when a trap (interrupt or exception) occurs.#[allow(missing_docs)]
 #[repr(C)]

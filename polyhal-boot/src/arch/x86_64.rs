@@ -7,7 +7,8 @@ use polyhal::{
     arch::hart_id,
     consts::VIRT_ADDR_START,
     ctor::{ph_init_iter, CtorType},
-    mem::add_memory_region,
+    display_info,
+    mem::{add_memory_region, parse_system_info},
     percpu::set_local_thread_pointer,
     utils::bit,
 };
@@ -100,6 +101,25 @@ global_asm!(
 fn rust_tmp_main(magic: usize, mboot_ptr: usize) {
     super::clear_bss();
     set_local_thread_pointer(hart_id());
+
+    parse_system_info();
+    if let Some(mboot) = use_multiboot(mboot_ptr as _) {
+        if let Some(mr) = mboot.memory_regions() {
+            mr.for_each(|mm| unsafe {
+                let mm_end = mm.base_address() + mm.length();
+                if mm.memory_type() != MemoryType::Available || mm_end < 0x100000 {
+                    return;
+                }
+                add_memory_region(mm.base_address() as _, mm_end as _);
+            });
+        }
+        display_info!(
+            "Platform Boot Args",
+            "{}",
+            mboot.command_line().unwrap_or("")
+        );
+    }
+
     ph_init_iter(CtorType::Cpu).for_each(|x| (x.func)());
     // enable avx extend instruction set and sse if support avx
     // TIPS: QEMU not support avx, so we can't enable avx here
@@ -119,17 +139,6 @@ fn rust_tmp_main(magic: usize, mboot_ptr: usize) {
     // Init contructor functions
     ph_init_iter(CtorType::Platform).for_each(|x| (x.func)());
     ph_init_iter(CtorType::HALDriver).for_each(|x| (x.func)());
-    if let Some(mboot) = use_multiboot(mboot_ptr as _) {
-        if let Some(mr) = mboot.memory_regions() {
-            mr.for_each(|mm| unsafe {
-                let mm_end = mm.base_address() + mm.length();
-                if mm.memory_type() != MemoryType::Available || mm_end < 0x100000 {
-                    return;
-                }
-                add_memory_region(mm.base_address() as _, mm_end as _);
-            });
-        }
-    }
 
     // Check Multiboot Magic Number.
     assert_eq!(magic, multiboot::information::SIGNATURE_EAX as usize);

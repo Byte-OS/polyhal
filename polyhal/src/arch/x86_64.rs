@@ -2,10 +2,6 @@ pub mod apic;
 pub mod gdt;
 pub mod idt;
 
-use core::sync::atomic::AtomicUsize;
-
-pub(crate) static MBOOT_PTR: AtomicUsize = AtomicUsize::new(0);
-
 pub fn hart_id() -> usize {
     match raw_cpuid::CpuId::new().get_feature_info() {
         Some(finfo) => finfo.initial_local_apic_id() as usize,

@@ -29,9 +29,9 @@ static DTB_INFO: LazyInit<(PhysAddr, usize)> = LazyInit::new();
 pub fn init_dtb_once(dtb_ptr: *mut u8) -> Result<(), FdtError<'static>> {
     // Validate Device Tree
     let ptr = unsafe { NonNull::new(dtb_ptr.add(VIRT_ADDR_START)) };
-    let dtb = unsafe { Fdt::from_ptr(ptr.unwrap())? };
+    let dtb = Fdt::from_ptr(ptr.unwrap())?;
     DTB_INFO.init_once((pa!(dtb_ptr), dtb.total_size()));
-    parse_dtb_info();
+    parse_system_info();
     Ok(())
 }
 
@@ -43,16 +43,18 @@ pub fn get_fdt() -> Result<Fdt<'static>, FdtError<'static>> {
     unsafe { Fdt::from_ptr(NonNull::new_unchecked(DTB_INFO.0.get_mut_ptr())) }
 }
 
-/// Parse Information from the device tree binary
+/// Parse Information from the device tree binary or Multiboot
 ///
 /// Display information when booting
 /// Initialize the variables and memory from device tree
 #[inline]
-pub fn parse_dtb_info() {
+pub fn parse_system_info() {
     display_info!();
     println!(include_str!("./banner.txt"));
 
     if let Ok(fdt) = get_fdt() {
+        display_info!("Boot HART ID", "{}", fdt.boot_cpuid_phys());
+        display_info!("Boot HART Count", "{}", fdt.find_nodes("/cpus/cpu").count());
         fdt.memory().flat_map(|x| x.regions()).for_each(|mm| {
             display_info!(
                 "Platform Memory Region",
@@ -62,26 +64,9 @@ pub fn parse_dtb_info() {
             );
             unsafe { add_memory_region(mm.address as _, mm.address as usize + mm.size) }
         });
-        // fdt.memory().regions().for_each(|mm| {
-        //     display_info!(
-        //         "Platform Memory Region",
-        //         "{:#p} - {:#018x}",
-        //         mm.starting_address,
-        //         mm.starting_address as usize + mm.size.unwrap_or(0)
-        //     );
-        //     unsafe {
-        //         add_memory_region(
-        //             mm.starting_address as _,
-        //             mm.starting_address as usize + mm.size.unwrap_or(0),
-        //         )
-        //     }
-        // });
-
         fdt.chosen().inspect(|chosen| {
             display_info!("Boot Args", "{}", chosen.bootargs().unwrap_or(""));
         });
-        // display_info!("Boot Args", "{}", fdt.chosen().bootargs().unwrap_or(""));
-
         display_info!()
     }
 }

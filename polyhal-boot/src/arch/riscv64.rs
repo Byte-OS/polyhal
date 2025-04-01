@@ -1,7 +1,8 @@
 use core::ptr::addr_of_mut;
 use polyhal::{
     consts::VIRT_ADDR_START,
-    ctor::CtorType,
+    ctor::{ph_init_iter, CtorType},
+    mem::init_dtb_once,
     pagetable::{PTEFlags, PTE, TLB},
     PageTable,
 };
@@ -40,6 +41,7 @@ unsafe extern "C" fn _start() -> ! {
         // 1. Set Stack Pointer.
         // sp = bootstack + (hartid + 1) * 0x10000
         "   mv      s0, a0
+            mv      s1, a1
             la      sp, bstack_top
 
             call    {init_boot_page_table}
@@ -51,6 +53,7 @@ unsafe extern "C" fn _start() -> ! {
             la      a2, {entry}
             or      a2, a2, t0
             mv      a0, s0
+            mv      a1, s1
             jalr    a2                      // call rust_main
         ",
         init_boot_page_table = sym init_boot_page_table,
@@ -96,8 +99,13 @@ unsafe extern "C" fn rust_main(hartid: usize, dt: usize) {
 
     // Initialize CPU Configuration.
     init_cpu();
+    ph_init_iter(CtorType::Cpu).for_each(|x| (x.func)());
+
+    let _ = init_dtb_once(dt as _);
+
     // Init contructor functions
-    polyhal::ctor::ph_init_iter(CtorType::Platform).for_each(|x| (x.func)());
+    ph_init_iter(CtorType::Platform).for_each(|x| (x.func)());
+    ph_init_iter(CtorType::HALDriver).for_each(|x| (x.func)());
 
     super::call_real_main(hartid);
 }

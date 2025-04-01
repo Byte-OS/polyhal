@@ -1,6 +1,7 @@
 use aarch64_cpu::{asm::barrier, registers::*};
 use polyhal::{
-    ctor::CtorType,
+    ctor::{ph_init_iter, CtorType},
+    mem::init_dtb_once,
     pa,
     pagetable::{PTEFlags, PAGE_SIZE, PTE, TLB},
     PageTable,
@@ -19,7 +20,14 @@ static mut BOOT_PT: [PTE; PageTable::PTE_NUM_IN_PAGE * 2] =
 unsafe extern "C" fn init_mmu() {
     SPSel.write(SPSel::SP::ELx);
     SP_EL0.set(0);
-    MAIR_EL1.set(0x44_ff_04);
+    // MAIR_EL1.set(0x44_ff_04);
+    MAIR_EL1.write(
+        MAIR_EL1::Attr0_Device::nonGathering_nonReordering_EarlyWriteAck
+            + MAIR_EL1::Attr1_Normal_Inner::WriteBack_NonTransient_ReadWriteAlloc
+            + MAIR_EL1::Attr1_Normal_Outer::WriteBack_NonTransient_ReadWriteAlloc
+            + MAIR_EL1::Attr2_Normal_Inner::NonCacheable
+            + MAIR_EL1::Attr2_Normal_Outer::NonCacheable,
+    );
 
     // Enable TTBR0 and TTBR1 walks, page size = 4K, vaddr size = 39 bits, paddr size = 40 bits.
     let tcr_flags0 = TCR_EL1::EPD0::EnableTTBR0Walks
@@ -114,8 +122,10 @@ pub fn rust_tmp_main(hart_id: usize, dt: usize) {
     super::clear_bss();
 
     init_cpu();
-
-    polyhal::ctor::ph_init_iter(CtorType::Platform).for_each(|x| (x.func)());
+    ph_init_iter(CtorType::Cpu).for_each(|x| (x.func)());
+    let _ = init_dtb_once(dt as _);
+    ph_init_iter(CtorType::Platform).for_each(|x| (x.func)());
+    ph_init_iter(CtorType::HALDriver).for_each(|x| (x.func)());
 
     super::call_real_main(hart_id);
 }

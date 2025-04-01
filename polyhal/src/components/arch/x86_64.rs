@@ -4,21 +4,9 @@ pub(crate) mod idt;
 
 use core::sync::atomic::AtomicUsize;
 
-use alloc::vec::Vec;
-use multiboot::information::MemoryType;
-
-use crate::components::{
-    // boot::use_multiboot,
-    common::{DTB_BIN, MEM_AREA},
-    consts::VIRT_ADDR_START,
-};
-
-// pub(crate) static MBOOT_PTR: LazyInit<usize> = LazyInit::new();
-
 pub(crate) static MBOOT_PTR: AtomicUsize = AtomicUsize::new(0);
 
 pub(crate) fn arch_init() {
-    DTB_BIN.init_by(Vec::new());
     // if let Some(mboot) = use_multiboot(MBOOT_PTR.load(core::sync::atomic::Ordering::SeqCst) as _) {
     //     let mut mem_area = Vec::new();
     //     if mboot.has_memory_map() {

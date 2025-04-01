@@ -18,9 +18,12 @@ extern crate log;
 
 #[macro_use]
 pub mod ctor;
+#[macro_use]
+pub mod debug_console;
 
 pub mod arch;
 mod components;
+pub mod mem;
 pub use components::*;
 pub mod pagetable;
 pub mod time;

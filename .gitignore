@@ -9,3 +9,4 @@ example/*.lds
 !example/linker.lds
 mount.img
 example/virt.out
+qemu.dtb

@@ -21,6 +21,10 @@ SECTIONS
         erodata = .;
     }
 
+    .got : {
+        *(.got .got.*)
+    }
+
     .data ALIGN(4K): {
         _sdata = .;
         . = ALIGN(4K);
@@ -28,7 +32,6 @@ SECTIONS
 
         *(.data .data.*)
         *(.sdata .sdata.*)
-        *(.got .got.*)
         _edata = .;
     }
 
@@ -45,7 +48,7 @@ SECTIONS
         _ebss = .;
     }
 
-    PROVIDE(end = .);
+    PROVIDE(_end = .);
     /DISCARD/ : {
         *(.comment) *(.gnu*) *(.note*) *(.eh_frame*)
     }

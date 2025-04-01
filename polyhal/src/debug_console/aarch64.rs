@@ -2,9 +2,9 @@
 
 use arm_pl011::Pl011Uart;
 
-use crate::{components::debug_console::DebugConsole, utils::MutexNoIrq, PhysAddr};
+use crate::{debug_console::DebugConsole, pa, utils::MutexNoIrq, PhysAddr};
 
-const UART_BASE: PhysAddr = PhysAddr::new(0x0900_0000);
+const UART_BASE: PhysAddr = pa!(0x0900_0000);
 
 static UART: MutexNoIrq<Pl011Uart> = MutexNoIrq::new(Pl011Uart::new(UART_BASE.get_mut_ptr()));
 

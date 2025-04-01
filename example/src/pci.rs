@@ -1,5 +1,5 @@
 use log::{info, trace};
-use polyhal::{common::get_fdt, consts::VIRT_ADDR_START};
+use polyhal::{consts::VIRT_ADDR_START, mem::get_fdt};
 use virtio_drivers::transport::pci::{
     bus::{Cam, Command, DeviceFunction, HeaderType, PciRoot},
     virtio_device_type,
@@ -7,7 +7,7 @@ use virtio_drivers::transport::pci::{
 
 /// Initialize PCI Configuration.
 pub fn init() {
-    if let Some(fdt) = get_fdt() {
+    if let Ok(fdt) = get_fdt() {
         if let Some(pci_node) = fdt.all_nodes().find(|x| x.name.starts_with("pci")) {
             let pci_addr = pci_node.reg().map(|mut x| x.next().unwrap()).unwrap();
             log::info!("PCI Address: {:#p}", pci_addr.starting_address);

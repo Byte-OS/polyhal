@@ -1,5 +1,10 @@
 use loongArch64::register::euen;
-use polyhal::{arch::hart_id, ctor::CtorType};
+use polyhal::{
+    arch::hart_id,
+    consts::QEMU_DTB_ADDR,
+    ctor::{ph_init_iter, CtorType},
+    mem::init_dtb_once,
+};
 
 macro_rules! init_dwm {
     () => {
@@ -72,8 +77,11 @@ pub fn rust_tmp_main(hart_id: usize) {
     super::clear_bss();
     // Initialize CPU Configuration.
     init_cpu();
+    ph_init_iter(CtorType::Cpu).for_each(|x| (x.func)());
+    let _ = init_dtb_once(QEMU_DTB_ADDR as _);
 
-    polyhal::ctor::ph_init_iter(CtorType::Platform).for_each(|x| (x.func)());
+    ph_init_iter(CtorType::Platform).for_each(|x| (x.func)());
+    ph_init_iter(CtorType::HALDriver).for_each(|x| (x.func)());
 
     super::call_real_main(hart_id);
 }

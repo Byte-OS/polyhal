@@ -6,7 +6,6 @@ pub(crate) mod arch;
 // pub mod boot;
 pub mod common;
 pub mod consts;
-pub mod debug_console;
 pub mod instruction;
 pub mod irq;
 pub mod kcontext;

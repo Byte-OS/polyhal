@@ -11,37 +11,39 @@
 //! ```rust
 //! DebugConsole::getchar();
 //! ```
-
-super::define_arch_mods!();
+polyhal_macro::define_arch_mods!();
 
 use core::fmt::Write;
 
 /// Print macro to print polyhal information with newline
-pub(crate) macro println {
+#[macro_export]
+macro_rules! println {
     () => {
-        $crate::components::debug_console::_print(format_args!("\n"))
-    },
+        $crate::debug_console::_print(format_args!("\n"))
+    };
     ($fmt: expr $(, $($arg: tt)+)?) => {
-        $crate::components::debug_console::_print(format_args!("{}\n", format_args!($fmt $(, $($arg)+)?)))
-    },
+        $crate::debug_console::_print(format_args!("{}\n", format_args!($fmt $(, $($arg)+)?)))
+    };
 }
 
 /// Display Platform Information with specified format
 /// display_info!("item name", "{}", "format");
 /// The output format like below:
 /// item name             : format
-pub(crate) macro display_info{
+#[macro_export]
+macro_rules! display_info{
     () => {
-        $crate::components::debug_console::_print(format_args!("\n"))
-    },
+        $crate::debug_console::_print(format_args!("\n"))
+    };
     ($item:expr,$fmt: expr $(, $($arg: tt)+)?) => {
-        $crate::components::debug_console::_print(format_args!("{:<26}: {}\n", $item, format_args!($fmt $(, $($arg)+)?)))
-    }
+        $crate::debug_console::_print(format_args!("{:<26}: {}\n", $item, format_args!($fmt $(, $($arg)+)?)))
+    };
 }
 
 /// Print the given arguments
 #[inline]
-pub(crate) fn _print(args: core::fmt::Arguments) {
+#[doc(hidden)]
+pub fn _print(args: core::fmt::Arguments) {
     DebugConsole.write_fmt(args).expect("can't print arguments");
 }
 

@@ -1,6 +1,6 @@
 use x86::io::{inb, outb};
 
-use crate::{debug_console::println, utils::MutexNoIrq};
+use crate::utils::MutexNoIrq;
 
 static VGA_BUFFER: MutexNoIrq<VGAPos> = MutexNoIrq::new(VGAPos::new());
 
@@ -40,7 +40,7 @@ impl VGAPos {
                 self.y += 1;
             }
             b'\r' => self.x = 0,
-            0x7f => println!("putchar: {:#x}", c),
+            // 0x7f => println!("putchar: {:#x}", c),
             _ => {
                 unsafe {
                     vga_buffer.add(self.offset()).write_volatile(FChar(c, 0x7));

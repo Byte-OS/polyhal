@@ -9,8 +9,9 @@ use core::panic::PanicInfo;
 use core::sync::atomic::{AtomicU32, Ordering};
 
 use frame::frame_alloc;
+use polyhal::mem::{get_fdt, get_mem_areas};
 use polyhal::{
-    common::{get_fdt, get_mem_areas, PageAlloc},
+    common::PageAlloc,
     instruction::{ebreak, shutdown},
     trap::TrapType::{self, *},
     trapframe::{TrapFrame, TrapFrameArgs},
@@ -80,25 +81,23 @@ fn main(hartid: usize) {
     // Init page alloc for polyhal
     polyhal::common::init(&PageAllocImpl);
 
-    get_mem_areas().into_iter().for_each(|(start, size)| {
+    get_mem_areas().for_each(|(start, size)| {
         println!("init memory region {:#x} - {:#x}", start, start + size);
-        frame::add_frame_range(start, start + size);
+        frame::add_frame_range(*start, start + size);
     });
 
-    if let Some(fdt) = get_fdt() {
+    if let Ok(fdt) = get_fdt() {
         fdt.all_nodes().for_each(|x| {
             if let Some(compatibles) = x.compatible() {
                 log::debug!("Node Compatiable: {:?}", compatibles.first());
             }
         });
-
-        log::debug!("boot args: {}", fdt.chosen().bootargs().unwrap_or(""));
     }
 
-    // Test BreakPoint Interrupt
-    ebreak();
+    // // Test BreakPoint Interrupt
+    // // ebreak();
 
-    crate::pci::init();
+    // crate::pci::init();
 
     log::info!("Run END. Shutdown successfully.");
     shutdown();

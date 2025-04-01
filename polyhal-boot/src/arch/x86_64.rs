@@ -1,12 +1,13 @@
-use core::{arch::global_asm, mem, slice};
+use core::{arch::global_asm, mem, ptr::addr_of_mut, slice};
 use multiboot::{
     header::MULTIBOOT_HEADER_MAGIC,
-    information::{MemoryManagement, Multiboot, PAddr},
+    information::{MemoryManagement, MemoryType, Multiboot, PAddr},
 };
 use polyhal::{
     arch::hart_id,
     consts::VIRT_ADDR_START,
     ctor::{ph_init_iter, CtorType},
+    mem::add_memory_region,
     utils::bit,
 };
 use raw_cpuid::CpuId;
@@ -76,7 +77,8 @@ impl MemoryManagement for Mem {
 /// mboot_ptr is the initial pointer to the multiboot structure
 /// provided in %ebx on start-up.
 pub fn use_multiboot(mboot_ptr: PAddr) -> Option<Multiboot<'static, 'static>> {
-    unsafe { Multiboot::from_ptr(mboot_ptr, &mut MEM) }
+    // unsafe { Multiboot::from_ptr(mboot_ptr, &mut MEM) }
+    unsafe { Multiboot::from_ptr(mboot_ptr, addr_of_mut!(MEM).as_mut().unwrap()) }
 }
 
 global_asm!(
@@ -114,12 +116,18 @@ fn rust_tmp_main(magic: usize, mboot_ptr: usize) {
     ph_init_iter(CtorType::Cpu).for_each(|x| (x.func)());
     // Init contructor functions
     ph_init_iter(CtorType::Platform).for_each(|x| (x.func)());
+    ph_init_iter(CtorType::HALDriver).for_each(|x| (x.func)());
     if let Some(mboot) = use_multiboot(mboot_ptr as _) {
         if let Some(mr) = mboot.memory_regions() {
-            mr.for_each(|mm| {});
+            mr.for_each(|mm| unsafe {
+                let mm_end = mm.base_address() + mm.length();
+                if mm.memory_type() != MemoryType::Available || mm_end < 0x100000 {
+                    return;
+                }
+                add_memory_region(mm.base_address() as _, mm_end as _);
+            });
         }
     }
-    ph_init_iter(CtorType::HALDriver).for_each(|x| (x.func)());
 
     // Check Multiboot Magic Number.
     assert_eq!(magic, multiboot::information::SIGNATURE_EAX as usize);

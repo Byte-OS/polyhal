@@ -30,11 +30,11 @@ multiboot_header:
     .int    {mb_hdr_magic}                      # magic: 0x1BADB002
     .int    {mb_hdr_flags}                      # flags
     .int    -({mb_hdr_magic} + {mb_hdr_flags})  # checksum
-    .int    multiboot_header - {kernel_offset}         # header_addr
-    .int    _skernel - {kernel_offset}                 # load_addr
-    .int    _load_end - {kernel_offset}                # load_end
-    .int    end - {kernel_offset}                      # bss_end_addr
-    .int    _start - {kernel_offset}                   # entry_addr
+    .int    multiboot_header - {kernel_offset}  # header_addr
+    .int    _skernel - {kernel_offset}          # load_addr
+    .int    _load_end - {kernel_offset}         # load_end
+    .int    _end - {kernel_offset}              # bss_end_addr
+    .int    _start - {kernel_offset}            # entry_addr
     .int    {graphic_mode}                      # graphic mode
     .int    0                                   # graphic pixel width
     .int    0                                   # graphic pixel height

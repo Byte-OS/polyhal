@@ -1,5 +1,4 @@
-use crate::components::debug_console::DebugConsole;
-
+use crate::debug_console::DebugConsole;
 
 /// Debug console function.
 impl DebugConsole {

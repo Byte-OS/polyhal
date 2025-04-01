@@ -14,21 +14,17 @@ impl IdtStruct {
     /// `trap_handler_table`.
     #[allow(clippy::new_without_default)]
     pub fn new() -> Self {
-        #[cfg(feature = "trap")]
         extern "C" {
             #[link_name = "trap_handler_table"]
             static ENTRIES: [extern "C" fn(); NUM_INT];
         }
         let mut idt = Self(InterruptDescriptorTable::new());
-
-        #[cfg(feature = "trap")]
         let entries = unsafe {
             core::slice::from_raw_parts_mut(
                 &mut idt.0 as *mut _ as *mut Entry<HandlerFunc>,
                 NUM_INT,
             )
         };
-        #[cfg(feature = "trap")]
         for i in 0..NUM_INT {
             entries[i].set_handler_fn(unsafe { core::mem::transmute(ENTRIES[i]) });
         }

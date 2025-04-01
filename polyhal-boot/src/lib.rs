@@ -19,15 +19,17 @@ extern crate polyhal;
 #[macro_export]
 macro_rules! define_entry {
     ($main_fn:ident, $sec_entry:ident) => {
-        core::arch::global_asm!(concat!(
+        core::arch::global_asm!(
             "
-            .section .bss
-            .global bstack_top
-            bstack:
-            .fill 0x80000
-            bstack_top:
-        "
-        ));
+                .section .bss.bstack
+                .global bstack
+                .global bstack_top
+                bstack:
+                .fill 0x80000
+                .size bstack, . - bstack
+                bstack_top:
+            "
+        );
         #[export_name = "_main_for_arch"]
         fn _polyhal_defined_main(hart_id: usize) {
             $main_fn(hart_id);

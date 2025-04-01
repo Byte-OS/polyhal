@@ -307,11 +307,10 @@ pub fn init_syscall() {
 pub fn init() {
     // Init PerCPU Information.
     polyhal::arch::idt::init();
-    // println!("Hello");
-    // polyhal::arch::apic::init();
+    polyhal::arch::apic::init();
     // Init allocator
-    // polyhal::arch::gdt::init();
-    // init_syscall();
+    polyhal::arch::gdt::init();
+    init_syscall();
 }
 
 #[naked]

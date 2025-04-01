@@ -8,6 +8,7 @@ use polyhal::{
     consts::VIRT_ADDR_START,
     ctor::{ph_init_iter, CtorType},
     mem::add_memory_region,
+    percpu::set_local_thread_pointer,
     utils::bit,
 };
 use raw_cpuid::CpuId;
@@ -98,6 +99,7 @@ global_asm!(
 
 fn rust_tmp_main(magic: usize, mboot_ptr: usize) {
     super::clear_bss();
+    set_local_thread_pointer(hart_id());
     ph_init_iter(CtorType::Cpu).for_each(|x| (x.func)());
     // enable avx extend instruction set and sse if support avx
     // TIPS: QEMU not support avx, so we can't enable avx here

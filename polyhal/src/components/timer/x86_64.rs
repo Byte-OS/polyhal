@@ -1,7 +1,7 @@
 use raw_cpuid::CpuId;
 use x86_64::structures::port::{self, PortRead};
 
-use crate::{components::arch::apic::local_apic, time::Time};
+use crate::{arch::apic::local_apic, time::Time};
 
 static mut CPU_FREQ_MHZ: usize = 4000_000_000;
 

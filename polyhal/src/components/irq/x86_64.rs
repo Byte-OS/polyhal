@@ -1,5 +1,5 @@
-use crate::components::irq::{IRQ, IRQVector};
-use crate::components::arch::apic::{io_apic, local_apic};
+use crate::arch::apic::{io_apic, local_apic};
+use crate::components::irq::{IRQVector, IRQ};
 
 /// Implement IRQ operations for the IRQ interface.
 impl IRQ {

@@ -1,4 +1,4 @@
-use crate::components::arch::psci;
+use crate::arch::psci;
 
 /// Close the computer. Call PSCI.
 #[inline]

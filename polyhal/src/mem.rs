@@ -1,8 +1,7 @@
-use core::ptr::NonNull;
+use core::{alloc::Layout, ptr::NonNull};
 
 use arrayvec::ArrayVec;
 use fdt_parser::{Fdt, FdtError};
-// use fdt::{Fdt, FdtError};
 use lazyinit::LazyInit;
 
 use crate::{
@@ -41,6 +40,15 @@ pub fn get_fdt() -> Result<Fdt<'static>, FdtError<'static>> {
         return Err(FdtError::BadPtr);
     }
     unsafe { Fdt::from_ptr(NonNull::new_unchecked(DTB_INFO.0.get_mut_ptr())) }
+}
+
+/// Allocate Memory From [MEM_AREA]
+///
+/// # Safety
+///
+/// - Ensure call this function in the primary core when booting
+pub unsafe fn alloc(layout: Layout) -> usize {
+    todo!()
 }
 
 /// Parse Information from the device tree binary or Multiboot

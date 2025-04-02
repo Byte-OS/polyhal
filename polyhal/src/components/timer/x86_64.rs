@@ -3,7 +3,7 @@ use x86_64::structures::port::{self, PortRead};
 
 use crate::{arch::apic::local_apic, time::Time};
 
-static mut CPU_FREQ_MHZ: usize = 4000_000_000;
+static mut CPU_FREQ_MHZ: usize = 4_000_000_000;
 
 impl Time {
     #[inline]

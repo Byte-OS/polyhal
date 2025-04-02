@@ -51,9 +51,13 @@ impl PTE {
 /// loongarch64/page_table.rs
 #[repr(C)]
 #[derive(Debug, Clone, Copy)]
-pub struct PageTable(pub(crate) PhysAddr);
+pub struct PageTable(PhysAddr);
 
 impl PageTable {
+    /// Get the root Physical Page
+    pub const fn root(&self) -> PhysAddr {
+        self.0
+    }
     /// Get the page table list through the physical address
     #[inline]
     pub(crate) fn get_pte_list(paddr: PhysAddr) -> &'static mut [PTE] {
@@ -241,7 +245,7 @@ impl PageTable {
         let drop_l2 = |pte_list: &[PTE]| {
             pte_list.iter().for_each(|x| {
                 if x.is_table() {
-                    frame_dealloc(x.address().into());
+                    frame_dealloc(x.address());
                 }
             });
         };
@@ -249,7 +253,7 @@ impl PageTable {
             pte_list.iter().for_each(|x| {
                 if x.is_table() {
                     drop_l2(Self::get_pte_list(x.address()));
-                    frame_dealloc(x.address().into());
+                    frame_dealloc(x.address());
                 }
             });
         };
@@ -257,7 +261,7 @@ impl PageTable {
             pte_list.iter().for_each(|x| {
                 if x.is_table() {
                     drop_l3(Self::get_pte_list(x.address()));
-                    frame_dealloc(x.address().into());
+                    frame_dealloc(x.address());
                 }
             });
         };
@@ -361,7 +365,7 @@ impl PageTableWrapper {
     /// This operation will copy kernel page table space from booting page table.
     #[inline]
     pub fn alloc() -> Self {
-        let pt = PageTable(frame_alloc().into());
+        let pt = PageTable(frame_alloc());
         pt.restore();
         Self(pt)
     }
@@ -374,7 +378,7 @@ impl PageTableWrapper {
 impl Drop for PageTableWrapper {
     fn drop(&mut self) {
         self.0.release();
-        frame_dealloc(self.0 .0.into());
+        frame_dealloc(self.0 .0);
     }
 }
 

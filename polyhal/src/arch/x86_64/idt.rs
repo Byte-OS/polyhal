@@ -1,5 +1,7 @@
+use core::mem::transmute;
+
 use lazyinit::LazyInit;
-use x86_64::structures::idt::{Entry, HandlerFunc, InterruptDescriptorTable};
+use x86_64::structures::idt::{Entry, HandlerFunc, InterruptDescriptorTable, InterruptStackFrame};
 
 const NUM_INT: usize = 256;
 
@@ -26,7 +28,11 @@ impl IdtStruct {
             )
         };
         for i in 0..NUM_INT {
-            entries[i].set_handler_fn(unsafe { core::mem::transmute(ENTRIES[i]) });
+            entries[i].set_handler_fn(unsafe {
+                transmute::<extern "C" fn(), extern "x86-interrupt" fn(InterruptStackFrame)>(
+                    ENTRIES[i],
+                )
+            });
         }
         idt
     }

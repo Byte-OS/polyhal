@@ -100,8 +100,7 @@ pub fn init() {
         let tss = TSS.current_ref_raw();
         let gdt = GDT.current_ref_mut_raw();
         tss.init_once(TaskStateSegment::new());
-        gdt.init_once(GdtStruct::new(tss.get_unchecked()));
-        let gdt = gdt.get_unchecked();
+        gdt.init_once(GdtStruct::new(tss));
         gdt.load();
         gdt.load_tss();
     }

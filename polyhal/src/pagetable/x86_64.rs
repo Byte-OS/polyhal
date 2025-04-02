@@ -25,7 +25,7 @@ bitflags! {
         /// Dirty; indicates whether software has written to the 4-KByte page referenced by this entry.
         const D         = bit!(6);
         /// Page size; if set this entry maps a 2-MByte page; otherwise, this entry references a page directory.
-        const PS      = bit!(7);
+        const PS        = bit!(7);
         /// Global; if CR4.PGE = 1, determines whether the translation is global (see Section 4.10); ignored otherwise
         const G         = bit!(8);
         /// User defined flag -- ignored by hardware (bit 9)
@@ -62,22 +62,22 @@ impl From<MappingFlags> for PTEFlags {
     }
 }
 
-impl Into<MappingFlags> for PTEFlags {
-    fn into(self) -> MappingFlags {
+impl From<PTEFlags> for MappingFlags {
+    fn from(value: PTEFlags) -> Self {
         let mut res = MappingFlags::empty();
-        if self.contains(Self::RW) {
+        if value.contains(PTEFlags::RW) {
             res |= MappingFlags::W
         };
-        if self.contains(Self::US) {
+        if value.contains(PTEFlags::US) {
             res |= MappingFlags::U
         };
-        if self.contains(Self::A) {
+        if value.contains(PTEFlags::A) {
             res |= MappingFlags::A;
         }
-        if self.contains(Self::D) {
+        if value.contains(PTEFlags::D) {
             res |= MappingFlags::D;
         }
-        if !self.contains(Self::XD) {
+        if !value.contains(PTEFlags::XD) {
             res |= MappingFlags::X
         }
         res
@@ -134,7 +134,7 @@ impl PageTable {
             fn _boot_mapping_pdpt();
         }
         let pml4 = self.0.slice_mut_with_len::<PTE>(Self::PTE_NUM_IN_PAGE);
-        pml4[0x100] = PTE((_boot_mapping_pdpt as usize - VIRT_ADDR_START as usize) | 0x3);
+        pml4[0x100] = PTE((_boot_mapping_pdpt as usize - VIRT_ADDR_START) | 0x3);
         TLB::flush_all();
     }
 

@@ -7,11 +7,9 @@
 #![feature(used_with_arg)]
 #![feature(unsafe_attributes)]
 #![cfg_attr(not(version("1.79")), feature(stdsimd))]
-#![feature(const_mut_refs)]
-#![feature(const_slice_from_raw_parts_mut)]
-#![feature(const_trait_impl)]
 #![cfg_attr(target_arch = "riscv64", feature(riscv_ext_intrinsics))]
 #![cfg_attr(target_arch = "aarch64", feature(const_option))]
+#![cfg_attr(target_arch = "x86_64", feature(abi_x86_interrupt))]
 
 extern crate alloc;
 extern crate log;

@@ -5,16 +5,11 @@
 super::define_arch_mods!();
 
 // use alloc::alloc::alloc;
-use core::{alloc::Layout, mem::size_of, ptr::copy_nonoverlapping};
-
-use crate::pagetable::PAGE_SIZE;
+use core::ptr::copy_nonoverlapping;
 
 pub use polyhal_macro::def_percpu;
 
-#[repr(align(8))]
-struct PerCPUDATA([u8; PAGE_SIZE]);
-
-static mut BOOT_PERCPU_DATA_AREA: PerCPUDATA = PerCPUDATA([0; PAGE_SIZE]);
+use crate::consts::VIRT_ADDR_START;
 
 /// This is a empty seat for percpu section.
 /// Force the linker to create the percpu section.
@@ -30,7 +25,7 @@ const PERCPU_RESERVED: usize = 0;
 /// Returns the base address of the per-CPU data area on the given CPU.
 ///
 /// if `cpu_id` is 0, it returns the base address of all per-CPU data areas.
-pub fn percpu_area_init(cpu_id: usize) -> usize {
+pub fn percpu_area_init(_cpu_id: usize) -> usize {
     // Get initial per-CPU data area
     extern "Rust" {
         fn __start_percpu();
@@ -39,16 +34,8 @@ pub fn percpu_area_init(cpu_id: usize) -> usize {
     let start = __start_percpu as usize;
     let size = __stop_percpu as usize - start + PERCPU_RESERVED;
 
-    // Get the base address of the per-CPU data area
-    // If cpu_id is boot,core then use BOOT_PERCPU_DATA_AREA.
-    // else alloc area.
-    let dst = if cpu_id == 0 {
-        unsafe { BOOT_PERCPU_DATA_AREA.0.as_mut_ptr() }
-    } else {
-        let layout =
-            Layout::from_size_align(size, size_of::<usize>()).expect("percpu area align failed");
-        unsafe { crate::mem::alloc(layout) }
-    };
+    // Alloc PerCPU Area
+    let dst = unsafe { crate::mem::alloc(size).add(VIRT_ADDR_START) };
 
     // Init the area with original data.
     unsafe {

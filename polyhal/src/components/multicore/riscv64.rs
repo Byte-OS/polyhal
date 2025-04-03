@@ -1,11 +1,7 @@
-use crate::{consts::VIRT_ADDR_START, hart_id};
+use crate::consts::VIRT_ADDR_START;
 
 // Boot a core with top pointer of the stack
 pub fn boot_core(cpuid: usize, addr: usize, sp_top: usize) {
-    if cpuid == hart_id() {
-        return;
-    };
-
     // PERCPU DATA ADDRESS RANGE END
     let aux_core_func = addr & !VIRT_ADDR_START;
 

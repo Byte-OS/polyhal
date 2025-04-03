@@ -51,8 +51,7 @@ unsafe extern "C" fn _start() -> ! {
 /// We can't use bl to jump to higher address, so we use jirl to jump to higher address.
 #[naked]
 #[no_mangle]
-#[link_section = ".text.entry"]
-pub(crate) unsafe extern "C" fn _start_secondary() -> ! {
+unsafe extern "C" fn _secondary_start() -> ! {
     core::arch::asm!(
         init_dwm!(),
         "# Load Stack Pointer From Message Buffer

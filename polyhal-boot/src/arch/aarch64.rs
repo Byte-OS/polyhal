@@ -100,7 +100,7 @@ unsafe extern "C" fn _start() -> ! {
 /// The secondary core boot entry point.
 #[naked]
 #[no_mangle]
-pub(crate) unsafe extern "C" fn _secondary_boot() -> ! {
+unsafe extern "C" fn _secondary_start() -> ! {
     core::arch::asm!("
         mrs     x19, mpidr_el1
         and     x19, x19, #0xffffff     // get current CPU id

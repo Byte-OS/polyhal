@@ -1,6 +1,13 @@
-use core::hint::spin_loop;
+use core::{
+    hint::spin_loop,
+    sync::atomic::{AtomicBool, Ordering},
+};
 
-use polyhal::ctor::{ph_init_iter, CtorType};
+use polyhal::{
+    common::get_cpu_num,
+    ctor::{ph_init_iter, CtorType},
+    println,
+};
 
 // Define multi-architecture modules and pub use them.
 cfg_if::cfg_if! {
@@ -33,17 +40,42 @@ pub(crate) fn clear_bss() {
 }
 
 fn call_real_main(hartid: usize) {
-    polyhal::println!();
-    // Run Kernel's Contructors Before Droping Into Kernel.
-    ph_init_iter(CtorType::KernelService).for_each(|x| (x.func)());
-    ph_init_iter(CtorType::Normal).for_each(|x| (x.func)());
-
-    // Declare the _main_for_arch exists.
+    // polyhal::multicore::boot_core(cpuid, addr, sp_top);
+    static IS_BOOT: AtomicBool = AtomicBool::new(true);
     extern "Rust" {
+        fn _secondary_start();
         pub(crate) fn _main_for_arch(hartid: usize);
+        pub(crate) fn _secondary_for_arch(hartid: usize);
     }
-    unsafe {
-        _main_for_arch(hartid);
+
+    if IS_BOOT.swap(false, Ordering::SeqCst) {
+        const SP_SIZE: usize = 0x40_0000;
+        println!("Boot Addr: {:#x}", _secondary_start as usize);
+
+        (0..get_cpu_num()).for_each(|x| unsafe {
+            if x == hartid {
+                return;
+            }
+            let stack_top = polyhal::mem::alloc(SP_SIZE).add(SP_SIZE);
+            println!("Boot Core: {}   {:#p}", x, stack_top);
+            polyhal::multicore::boot_core(x, _secondary_start as usize, stack_top as usize);
+        });
+        loop {
+            spin_loop();
+        }
+
+        polyhal::println!();
+        // Run Kernel's Contructors Before Droping Into Kernel.
+        ph_init_iter(CtorType::KernelService).for_each(|x| (x.func)());
+        ph_init_iter(CtorType::Normal).for_each(|x| (x.func)());
+        // Declare the _main_for_arch exists.
+        unsafe {
+            _main_for_arch(hartid);
+        }
+    } else {
+        unsafe {
+            _secondary_for_arch(hartid);
+        }
     }
     loop {
         spin_loop();

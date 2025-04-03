@@ -1,6 +1,7 @@
 target
 output.log
 qemu.log
+qemu-*.log
 *.iso
 !example/iso/grub/*
 example/iso/*

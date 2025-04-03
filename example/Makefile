@@ -41,7 +41,11 @@ else
 QEMU_EXEC += -serial stdio -vga std
 endif 
 QEMU_EXEC += -smp $(SMP)
+ifneq ($(SMP), 1)
+QEMU_EXEC += -D ../qemu-%d.log -d in_asm,int,pcall,cpu_reset,tid,guest_errors
+else
 QEMU_EXEC += -D ../qemu.log -d in_asm,int,pcall,cpu_reset,guest_errors
+endif
 QEMU_EXEC += -append "$(BOOT_ARGS)"
 
 build: $(KERNEL_BIN) 
@@ -59,6 +63,7 @@ clean:
 run: run-inner
 
 run-inner: build
+	rm -f ../qemu-*.log
 	$(QEMU_EXEC)
 
 debug: build

@@ -1,4 +1,4 @@
-use core::{alloc::Layout, ptr::NonNull};
+use core::ptr::NonNull;
 
 use arrayvec::ArrayVec;
 use fdt_parser::{Fdt, FdtError};
@@ -6,6 +6,7 @@ use lazyinit::LazyInit;
 
 use crate::{
     arch::{consts::VIRT_ADDR_START, MEM_VECTOR_CAPACITY},
+    common::CPU_NUM,
     pa, PhysAddr,
 };
 
@@ -33,7 +34,18 @@ pub fn init_dtb_once(dtb_ptr: *mut u8) -> Result<(), FdtError<'static>> {
     fdt.memory()
         .flat_map(|x| x.regions())
         .for_each(|mm| unsafe {
-            add_memory_region(mm.address as _, mm.address as usize + mm.size)
+            #[cfg(not(target_arch = "riscv64"))]
+            add_memory_region(mm.address as _, mm.address as usize + mm.size);
+            #[cfg(target_arch = "riscv64")]
+            {
+                let mut start = mm.address as _;
+                let end = mm.address as usize + mm.size;
+
+                // TODO: using dynamic to skip memory
+                start += 0x200_000;
+
+                add_memory_region(start, end);
+            }
         });
     Ok(())
 }
@@ -51,8 +63,19 @@ pub fn get_fdt() -> Result<Fdt<'static>, FdtError<'static>> {
 /// # Safety
 ///
 /// - Ensure call this function in the primary core when booting
-pub unsafe fn alloc(layout: Layout) -> *mut u8 {
-    todo!()
+/// - Ensure no alignment required
+pub unsafe fn alloc(alloc_size: usize) -> *mut u8 {
+    unsafe {
+        for (start, size) in MEM_AREA.iter_mut() {
+            if *size > alloc_size {
+                let ptr = *start;
+                *start += alloc_size;
+                *size -= alloc_size;
+                return ptr as _;
+            }
+        }
+        unreachable!()
+    }
 }
 
 /// Parse Information from the device tree binary or Multiboot
@@ -67,6 +90,7 @@ pub fn parse_system_info() {
     if let Ok(fdt) = get_fdt() {
         display_info!("Boot HART ID", "{}", fdt.boot_cpuid_phys());
         display_info!("Boot HART Count", "{}", fdt.find_nodes("/cpus/cpu").count());
+        CPU_NUM.init_once(fdt.find_nodes("/cpus/cpu").count());
         fdt.chosen().inspect(|chosen| {
             display_info!("Boot Args", "{}", chosen.bootargs().unwrap_or(""));
         });

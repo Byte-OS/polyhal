@@ -70,7 +70,7 @@ unsafe extern "C" fn _start() -> ! {
 /// Initialize Page Information. Call rust_secondary_main entry function.
 #[naked]
 #[no_mangle]
-unsafe extern "C" fn secondary_start() -> ! {
+unsafe extern "C" fn _secondary_start() -> ! {
     core::arch::asm!(
         // 1. Set Stack Pointer.
         // sp = a1(given Stack Pointer.)
@@ -98,7 +98,6 @@ unsafe extern "C" fn secondary_start() -> ! {
 unsafe extern "C" fn rust_main(hartid: usize, dt: usize) {
     super::clear_bss();
     let _ = init_dtb_once(dt as _);
-
     // Initialize CPU Configuration.
     set_local_thread_pointer(hartid);
     init_cpu();
@@ -118,7 +117,10 @@ unsafe extern "C" fn rust_main(hartid: usize, dt: usize) {
 /// Supports MultiCore, Boot in this function.
 pub(crate) extern "C" fn rust_secondary_main(hartid: usize) {
     // Initialize CPU Configuration.
+    set_local_thread_pointer(hartid);
+
     init_cpu();
+    ph_init_iter(CtorType::Cpu).for_each(|x| (x.func)());
 
     super::call_real_main(hartid);
 }

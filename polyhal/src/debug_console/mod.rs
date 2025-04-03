@@ -15,6 +15,8 @@ polyhal_macro::define_arch_mods!();
 
 use core::fmt::Write;
 
+use crate::utils::MutexNoIrq;
+
 /// Print macro to print polyhal information with newline
 #[macro_export]
 macro_rules! println {
@@ -44,7 +46,10 @@ macro_rules! display_info{
 #[inline]
 #[doc(hidden)]
 pub fn _print(args: core::fmt::Arguments) {
+    static LOCK: MutexNoIrq<()> = MutexNoIrq::new(());
+    let lock = LOCK.lock();
     DebugConsole.write_fmt(args).expect("can't print arguments");
+    drop(lock)
 }
 
 pub struct DebugConsole;
@@ -52,7 +57,7 @@ pub struct DebugConsole;
 // Write string through DebugConsole
 impl Write for DebugConsole {
     fn write_str(&mut self, s: &str) -> core::fmt::Result {
-        s.as_bytes().iter().for_each(|x| Self::putchar(*x));
+        s.as_bytes().iter().for_each(|&x| Self::putchar(x));
         Ok(())
     }
 }

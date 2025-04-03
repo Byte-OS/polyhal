@@ -42,6 +42,7 @@ pub(crate) fn clear_bss() {
 fn call_real_main(hartid: usize) {
     // polyhal::multicore::boot_core(cpuid, addr, sp_top);
     static IS_BOOT: AtomicBool = AtomicBool::new(true);
+    static INIT_DONE: AtomicBool = AtomicBool::new(false);
     extern "Rust" {
         fn _secondary_start();
         pub(crate) fn _main_for_arch(hartid: usize);
@@ -60,19 +61,19 @@ fn call_real_main(hartid: usize) {
             println!("Boot Core: {}   {:#p}", x, stack_top);
             polyhal::multicore::boot_core(x, _secondary_start as usize, stack_top as usize);
         });
-        loop {
-            spin_loop();
-        }
-
         polyhal::println!();
         // Run Kernel's Contructors Before Droping Into Kernel.
         ph_init_iter(CtorType::KernelService).for_each(|x| (x.func)());
         ph_init_iter(CtorType::Normal).for_each(|x| (x.func)());
+        INIT_DONE.store(true, Ordering::SeqCst);
         // Declare the _main_for_arch exists.
         unsafe {
             _main_for_arch(hartid);
         }
     } else {
+        while INIT_DONE.load(Ordering::SeqCst) {
+            spin_loop();
+        }
         unsafe {
             _secondary_for_arch(hartid);
         }

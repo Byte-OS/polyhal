@@ -1,3 +1,5 @@
+use loongArch64::register::crmd;
+
 use crate::components::irq::IRQ;
 
 /// Timer IRQ of loongarch64
@@ -20,19 +22,18 @@ impl IRQ {
     /// Enable interrupt
     #[inline]
     pub fn int_enable() {
-        log::warn!("int_enable not implemented in loongarch64 platform yet");
+        crmd::set_ie(true);
     }
 
     /// Disable interrupt
     #[inline]
     pub fn int_disable() {
-        log::warn!("int_disable not implemented in loongarch64 platform yet");
+        crmd::set_ie(false);
     }
 
     /// Check if the interrupt was enabled.
     #[inline]
     pub fn int_enabled() -> bool {
-        log::warn!("int_enabled not implemented in loongarch64 platform yet");
-        false
+        crmd::read().ie()
     }
 }

@@ -3,13 +3,12 @@
 
 mod allocator;
 mod frame;
-mod logging;
 mod pci;
 use core::panic::PanicInfo;
-use core::sync::atomic::{AtomicU32, Ordering};
 
 use frame::frame_alloc;
 use polyhal::mem::{get_fdt, get_mem_areas};
+use polyhal::println;
 use polyhal::{
     common::PageAlloc,
     instruction::{ebreak, shutdown},
@@ -59,18 +58,8 @@ fn kernel_interrupt(ctx: &mut TrapFrame, trap_type: TrapType) {
     }
 }
 
-static CORE_SET: AtomicU32 = AtomicU32::new(0);
-
 /// kernel main function, entry point.
-fn main(hartid: usize) {
-    if hartid != 0 {
-        log::info!("Hello Other Hart: {}", hartid);
-        let _ = CORE_SET.fetch_update(Ordering::SeqCst, Ordering::SeqCst, |x| {
-            Some(x | (1 << hartid))
-        });
-        loop {}
-    }
-
+fn main(_hartid: usize) {
     println!("[kernel] Hello, world!");
     allocator::init_allocator();
     log::debug!("Test Logger DEBUG!");

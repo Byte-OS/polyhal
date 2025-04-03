@@ -5,6 +5,7 @@ use multiboot::{
 };
 use polyhal::{
     bits,
+    common::get_cpu_num,
     consts::VIRT_ADDR_START,
     ctor::{ph_init_iter, CtorType},
     display_info, hart_id,
@@ -97,9 +98,13 @@ global_asm!(
     efer = const EFER,
 );
 
+core::arch::global_asm!(
+    include_str!("x86_64/ap_start.S"),
+    start_page_paddr = const 0x6000,
+);
+
 fn rust_tmp_main(magic: usize, mboot_ptr: usize) {
     super::clear_bss();
-    set_local_thread_pointer(hart_id());
 
     let mboot = use_multiboot(mboot_ptr as _);
     mboot.as_ref().inspect(|mboot| {
@@ -113,6 +118,10 @@ fn rust_tmp_main(magic: usize, mboot_ptr: usize) {
             });
         }
     });
+
+    set_local_thread_pointer(hart_id());
+    polyhal::acpi::init();
+
     parse_system_info();
     mboot.as_ref().inspect(|mboot| {
         if let Some(mr) = mboot.memory_regions() {
@@ -132,6 +141,7 @@ fn rust_tmp_main(magic: usize, mboot_ptr: usize) {
             "{}",
             mboot.command_line().unwrap_or("")
         );
+        display_info!("Platform HART Count", "{}", get_cpu_num())
     });
     ph_init_iter(CtorType::Cpu).for_each(|x| (x.func)());
     // enable avx extend instruction set and sse if support avx

@@ -1,3 +1,4 @@
+pub mod acpi;
 pub mod apic;
 pub mod consts;
 pub mod gdt;

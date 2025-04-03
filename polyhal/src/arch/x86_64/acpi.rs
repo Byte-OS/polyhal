@@ -1,0 +1,45 @@
+use core::ptr::NonNull;
+
+use acpi::{AcpiHandler, AcpiTables};
+
+use crate::common::CPU_NUM;
+
+#[derive(Clone)]
+struct AcpiImpl;
+
+impl AcpiHandler for AcpiImpl {
+    unsafe fn map_physical_region<T>(
+        &self,
+        physical_address: usize,
+        size: usize,
+    ) -> acpi::PhysicalMapping<Self, T> {
+        unsafe {
+            acpi::PhysicalMapping::new(
+                physical_address,
+                NonNull::new(pa!(physical_address).get_mut_ptr()).unwrap(),
+                size,
+                size,
+                AcpiImpl,
+            )
+        }
+    }
+
+    fn unmap_physical_region<T>(_region: &acpi::PhysicalMapping<Self, T>) {}
+}
+
+pub fn init() {
+    unsafe {
+        match AcpiTables::search_for_rsdp_bios(AcpiImpl) {
+            Ok(ref acpi_table) => {
+                let madt = acpi_table.find_table::<acpi::madt::Madt>().unwrap();
+                let cpu_count = madt
+                    .get()
+                    .entries()
+                    .filter(|x| matches!(x, acpi::madt::MadtEntry::LocalApic(_)))
+                    .count();
+                CPU_NUM.init_once(cpu_count);
+            }
+            Err(err) => println!("acpi error: {:#x?}", err),
+        }
+    }
+}

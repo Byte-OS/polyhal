@@ -28,9 +28,13 @@ static DTB_INFO: LazyInit<(PhysAddr, usize)> = LazyInit::new();
 pub fn init_dtb_once(dtb_ptr: *mut u8) -> Result<(), FdtError<'static>> {
     // Validate Device Tree
     let ptr = unsafe { NonNull::new(dtb_ptr.add(VIRT_ADDR_START)) };
-    let dtb = Fdt::from_ptr(ptr.unwrap())?;
-    DTB_INFO.init_once((pa!(dtb_ptr), dtb.total_size()));
-    parse_system_info();
+    let fdt = Fdt::from_ptr(ptr.unwrap())?;
+    DTB_INFO.init_once((pa!(dtb_ptr), fdt.total_size()));
+    fdt.memory()
+        .flat_map(|x| x.regions())
+        .for_each(|mm| unsafe {
+            add_memory_region(mm.address as _, mm.address as usize + mm.size)
+        });
     Ok(())
 }
 
@@ -47,7 +51,7 @@ pub fn get_fdt() -> Result<Fdt<'static>, FdtError<'static>> {
 /// # Safety
 ///
 /// - Ensure call this function in the primary core when booting
-pub unsafe fn alloc(layout: Layout) -> usize {
+pub unsafe fn alloc(layout: Layout) -> *mut u8 {
     todo!()
 }
 
@@ -59,6 +63,7 @@ pub unsafe fn alloc(layout: Layout) -> usize {
 pub fn parse_system_info() {
     display_info!();
     println!(include_str!("./banner.txt"));
+    display_info!("Platform Arch", "{}", env!("HAL_ENV_ARCH"));
     if let Ok(fdt) = get_fdt() {
         display_info!("Boot HART ID", "{}", fdt.boot_cpuid_phys());
         display_info!("Boot HART Count", "{}", fdt.find_nodes("/cpus/cpu").count());
@@ -72,11 +77,16 @@ pub fn parse_system_info() {
                 mm.address,
                 mm.address as usize + mm.size
             );
-            unsafe { add_memory_region(mm.address as _, mm.address as usize + mm.size) }
         });
-        display_info!()
     }
-    display_info!("Platform Arch", "{}", env!("HAL_ENV_ARCH"));
+    get_mem_areas().for_each(|(address, size)| {
+        display_info!(
+            "Platform Memory Available",
+            "{:#018x} - {:#018x}",
+            address,
+            address + size
+        );
+    });
 }
 
 /// Retrieves an iterator over the registered memory areas.

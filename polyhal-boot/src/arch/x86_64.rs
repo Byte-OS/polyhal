@@ -101,8 +101,8 @@ fn rust_tmp_main(magic: usize, mboot_ptr: usize) {
     super::clear_bss();
     set_local_thread_pointer(hart_id());
 
-    parse_system_info();
-    if let Some(mboot) = use_multiboot(mboot_ptr as _) {
+    let mboot = use_multiboot(mboot_ptr as _);
+    mboot.as_ref().inspect(|mboot| {
         if let Some(mr) = mboot.memory_regions() {
             mr.for_each(|mm| unsafe {
                 let mm_end = mm.base_address() + mm.length();
@@ -112,13 +112,27 @@ fn rust_tmp_main(magic: usize, mboot_ptr: usize) {
                 add_memory_region(mm.base_address() as _, mm_end as _);
             });
         }
+    });
+    parse_system_info();
+    mboot.as_ref().inspect(|mboot| {
+        if let Some(mr) = mboot.memory_regions() {
+            mr.for_each(|mm| {
+                let mm_end = mm.base_address() + mm.length();
+                display_info!(
+                    "Platform Memory Region",
+                    "{:#018x} - {:#018x}  {:?}",
+                    mm.base_address(),
+                    mm_end,
+                    mm.memory_type()
+                );
+            });
+        }
         display_info!(
             "Platform Boot Args",
             "{}",
             mboot.command_line().unwrap_or("")
         );
-    }
-
+    });
     ph_init_iter(CtorType::Cpu).for_each(|x| (x.func)());
     // enable avx extend instruction set and sse if support avx
     // TIPS: QEMU not support avx, so we can't enable avx here

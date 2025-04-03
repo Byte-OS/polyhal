@@ -1,7 +1,7 @@
 use aarch64_cpu::{asm::barrier, registers::*};
 use polyhal::{
     ctor::{ph_init_iter, CtorType},
-    mem::init_dtb_once,
+    mem::{init_dtb_once, parse_system_info},
     pa,
     pagetable::{PTEFlags, PAGE_SIZE, PTE, TLB},
     PageTable,
@@ -120,10 +120,12 @@ pub(crate) unsafe extern "C" fn _secondary_boot() -> ! {
 
 pub fn rust_tmp_main(hart_id: usize, dt: usize) {
     super::clear_bss();
+    let _ = init_dtb_once(dt as _);
 
     init_cpu();
     ph_init_iter(CtorType::Cpu).for_each(|x| (x.func)());
-    let _ = init_dtb_once(dt as _);
+
+    parse_system_info();
     ph_init_iter(CtorType::Platform).for_each(|x| (x.func)());
     ph_init_iter(CtorType::HALDriver).for_each(|x| (x.func)());
 

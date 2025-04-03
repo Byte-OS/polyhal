@@ -33,6 +33,7 @@ pub(crate) fn clear_bss() {
 }
 
 fn call_real_main(hartid: usize) {
+    polyhal::println!();
     // Run Kernel's Contructors Before Droping Into Kernel.
     ph_init_iter(CtorType::KernelService).for_each(|x| (x.func)());
     ph_init_iter(CtorType::Normal).for_each(|x| (x.func)());

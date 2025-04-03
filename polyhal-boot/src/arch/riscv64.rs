@@ -2,8 +2,9 @@ use core::ptr::addr_of_mut;
 use polyhal::{
     consts::VIRT_ADDR_START,
     ctor::{ph_init_iter, CtorType},
-    mem::init_dtb_once,
+    mem::{init_dtb_once, parse_system_info},
     pagetable::{PTEFlags, PTE, TLB},
+    percpu::set_local_thread_pointer,
     PageTable,
 };
 use riscv::register::{satp, sie, sstatus};
@@ -96,12 +97,14 @@ unsafe extern "C" fn secondary_start() -> ! {
 
 unsafe extern "C" fn rust_main(hartid: usize, dt: usize) {
     super::clear_bss();
+    let _ = init_dtb_once(dt as _);
 
     // Initialize CPU Configuration.
+    set_local_thread_pointer(hartid);
     init_cpu();
     ph_init_iter(CtorType::Cpu).for_each(|x| (x.func)());
 
-    let _ = init_dtb_once(dt as _);
+    parse_system_info();
 
     // Init contructor functions
     ph_init_iter(CtorType::Platform).for_each(|x| (x.func)());

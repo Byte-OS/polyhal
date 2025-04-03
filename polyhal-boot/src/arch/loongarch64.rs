@@ -3,7 +3,7 @@ use polyhal::{
     consts::QEMU_DTB_ADDR,
     ctor::{ph_init_iter, CtorType},
     hart_id,
-    mem::init_dtb_once,
+    mem::{init_dtb_once, parse_system_info},
 };
 
 macro_rules! init_dwm {
@@ -75,11 +75,13 @@ pub(crate) unsafe extern "C" fn _start_secondary() -> ! {
 /// This function will be called after assembly boot stage.
 pub fn rust_tmp_main(hart_id: usize) {
     super::clear_bss();
+    let _ = init_dtb_once(QEMU_DTB_ADDR as _);
+
     // Initialize CPU Configuration.
     init_cpu();
     ph_init_iter(CtorType::Cpu).for_each(|x| (x.func)());
-    let _ = init_dtb_once(QEMU_DTB_ADDR as _);
 
+    parse_system_info();
     ph_init_iter(CtorType::Platform).for_each(|x| (x.func)());
     ph_init_iter(CtorType::HALDriver).for_each(|x| (x.func)());
 

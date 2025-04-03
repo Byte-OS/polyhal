@@ -4,7 +4,7 @@
 
 super::define_arch_mods!();
 
-use alloc::alloc::alloc;
+// use alloc::alloc::alloc;
 use core::{alloc::Layout, mem::size_of, ptr::copy_nonoverlapping};
 
 use crate::pagetable::PAGE_SIZE;
@@ -14,7 +14,7 @@ pub use polyhal_macro::def_percpu;
 #[repr(align(8))]
 struct PerCPUDATA([u8; PAGE_SIZE]);
 
-static BOOT_PERCPU_DATA_AREA: PerCPUDATA = PerCPUDATA([0; PAGE_SIZE]);
+static mut BOOT_PERCPU_DATA_AREA: PerCPUDATA = PerCPUDATA([0; PAGE_SIZE]);
 
 /// This is a empty seat for percpu section.
 /// Force the linker to create the percpu section.
@@ -43,11 +43,11 @@ pub fn percpu_area_init(cpu_id: usize) -> usize {
     // If cpu_id is boot,core then use BOOT_PERCPU_DATA_AREA.
     // else alloc area.
     let dst = if cpu_id == 0 {
-        &BOOT_PERCPU_DATA_AREA as *const _ as usize as *mut u8
+        unsafe { BOOT_PERCPU_DATA_AREA.0.as_mut_ptr() }
     } else {
         let layout =
             Layout::from_size_align(size, size_of::<usize>()).expect("percpu area align failed");
-        unsafe { alloc(layout) }
+        unsafe { crate::mem::alloc(layout) }
     };
 
     // Init the area with original data.
@@ -93,11 +93,12 @@ pub fn set_local_thread_pointer(cpu_id: usize) {
                 percpu_reserved.self_ptr = tp;
                 percpu_reserved.valid_ptr = tp + PERCPU_RESERVED;
             } else if #[cfg(any(target_arch = "riscv32", target_arch = "riscv64"))] {
-                core::arch::asm!("mv gp, {}", in(reg) tp)
+                core::arch::asm!("mv gp, {}", in(reg) tp);
+                crate::arch::CPU_ID.write_current(cpu_id);
             } else if #[cfg(target_arch = "aarch64")] {
-                core::arch::asm!("msr TPIDR_EL1, {}", in(reg) tp)
+                core::arch::asm!("msr TPIDR_EL1, {}", in(reg) tp);
             } else if #[cfg(target_arch = "loongarch64")] {
-                core::arch::asm!("move $r21, {}", in(reg) tp)
+                core::arch::asm!("move $r21, {}", in(reg) tp);
             }
         }
     }

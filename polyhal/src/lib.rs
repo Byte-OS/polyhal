@@ -11,7 +11,7 @@
 #![cfg_attr(target_arch = "aarch64", feature(const_option))]
 #![cfg_attr(target_arch = "x86_64", feature(abi_x86_interrupt))]
 
-extern crate alloc;
+// extern crate alloc;
 extern crate log;
 
 #[macro_use]

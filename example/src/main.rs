@@ -102,19 +102,24 @@ fn main(hartid: usize) {
     shutdown();
 }
 
-define_entry!(main);
+fn secondary(hartid: usize) {
+    println!("Secondary Hart ID: {}", hartid);
+    loop {}
+}
+
+define_entry!(main, secondary);
 
 #[panic_handler]
 fn panic(info: &PanicInfo) -> ! {
     if let Some(location) = info.location() {
-        log::error!(
-            "[kernel] Panicked at {}:{} \n\t{}",
+        println!(
+            "[panic] Panicked at {}:{} \n\t{}",
             location.file(),
             location.line(),
             info.message()
         );
     } else {
-        log::error!("[kernel] Panicked: {}", info.message());
+        println!("[panic] Panicked: {}", info.message());
     }
     shutdown()
 }

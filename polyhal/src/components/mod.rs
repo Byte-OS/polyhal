@@ -7,6 +7,7 @@ pub mod instruction;
 pub mod irq;
 pub mod kcontext;
 pub mod mem;
+pub mod multicore;
 pub mod percpu;
 pub mod timer;
 

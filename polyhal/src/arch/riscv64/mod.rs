@@ -1,5 +1,7 @@
 pub mod consts;
-use crate::components::common::CPU_ID;
+
+#[polyhal_macro::def_percpu]
+pub(crate) static CPU_ID: usize = 0;
 
 #[inline]
 pub fn wfi() {

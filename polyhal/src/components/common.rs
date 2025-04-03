@@ -2,9 +2,6 @@ use lazyinit::LazyInit;
 
 use crate::PhysAddr;
 
-#[polyhal_macro::def_percpu]
-pub(crate) static CPU_ID: usize = 0;
-
 /// Page Allocation trait for privoids that page allocation
 pub trait PageAlloc: Sync {
     /// Allocate a physical page

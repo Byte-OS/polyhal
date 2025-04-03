@@ -3,7 +3,7 @@ use core::{
     fmt::Debug,
     ops::{Index, IndexMut},
 };
-use polyhal::arch::gdt::GdtStruct;
+use polyhal::gdt::GdtStruct;
 use x86_64::registers::rflags::RFlags;
 
 #[repr(C, align(16))]

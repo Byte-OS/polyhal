@@ -1,13 +1,12 @@
 use core::cmp;
 
+use self::vectors::*;
+use super::consts::{PIC_VECTOR_OFFSET, VIRT_ADDR_START};
+use crate::utils::MutexNoIrq;
 use spin::Once;
 use x2apic::ioapic::{IoApic, RedirectionTableEntry};
 use x2apic::lapic::{xapic_base, LocalApic, LocalApicBuilder};
 use x86_64::instructions::port::Port;
-
-use self::vectors::*;
-use crate::components::consts::{PIC_VECTOR_OFFSET, VIRT_ADDR_START};
-use crate::utils::MutexNoIrq;
 
 pub mod vectors {
     pub const APIC_TIMER_VECTOR: u8 = 0xf0;

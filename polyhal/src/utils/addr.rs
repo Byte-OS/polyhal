@@ -3,7 +3,7 @@ use core::{
     fmt::{Debug, Display},
 };
 
-use crate::{components::consts::VIRT_ADDR_START, PageTable};
+use crate::{arch::consts::VIRT_ADDR_START, PageTable};
 
 #[macro_export]
 macro_rules! pa {
@@ -27,6 +27,7 @@ impl PhysAddr {
     pub const fn new(addr: usize) -> Self {
         Self(addr)
     }
+
     pub const fn raw(&self) -> usize {
         self.0
     }

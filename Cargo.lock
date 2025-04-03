@@ -189,6 +189,7 @@ dependencies = [
  "arm_gicv2",
  "arm_pl011",
  "arrayvec",
+ "autocfg",
  "bitflags 2.9.0",
  "cfg-if",
  "fdt-parser",

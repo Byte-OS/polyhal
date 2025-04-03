@@ -4,13 +4,12 @@ use multiboot::{
     information::{MemoryManagement, MemoryType, Multiboot, PAddr},
 };
 use polyhal::{
-    arch::hart_id,
+    bits,
     consts::VIRT_ADDR_START,
     ctor::{ph_init_iter, CtorType},
-    display_info,
+    display_info, hart_id,
     mem::{add_memory_region, parse_system_info},
     percpu::set_local_thread_pointer,
-    utils::bit,
 };
 use raw_cpuid::CpuId;
 use x86_64::registers::{
@@ -23,7 +22,7 @@ use x86_64::registers::{
 ///
 /// (bits 1, 16: memory information, address fields in header)
 /// bits 2 graphic information
-const MULTIBOOT_HEADER_FLAGS: usize = bit!(1) | bit!(16) | bit!(2);
+const MULTIBOOT_HEADER_FLAGS: usize = bits!(1, 16, 2);
 
 /// CR0 Registers introduction: https://wiki.osdev.org/CPU_Registers_x86-64#CR0
 const CR0: u64 = Cr0Flags::PROTECTED_MODE_ENABLE.bits()

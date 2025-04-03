@@ -1,4 +1,5 @@
 pub mod apic;
+pub mod consts;
 pub mod gdt;
 pub mod idt;
 

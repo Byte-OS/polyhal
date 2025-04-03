@@ -1,6 +1,7 @@
-use aarch64_cpu::registers::{Readable, MPIDR_EL1};
+pub mod consts;
+pub mod psci;
 
-pub(crate) mod psci;
+use aarch64_cpu::registers::{Readable, MPIDR_EL1};
 
 #[inline]
 pub fn hart_id() -> usize {

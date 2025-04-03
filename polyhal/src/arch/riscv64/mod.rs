@@ -1,3 +1,4 @@
+pub mod consts;
 use crate::components::common::CPU_ID;
 
 #[inline]

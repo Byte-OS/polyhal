@@ -19,7 +19,7 @@ cfg_if::cfg_if! {
 
 use core::ops::Deref;
 
-use crate::{components::common::frame_alloc, utils::bit, PhysAddr, VirtAddr};
+use crate::{components::common::frame_alloc, PhysAddr, VirtAddr};
 
 use super::common::frame_dealloc;
 

@@ -5,7 +5,7 @@ use fdt_parser::{Fdt, FdtError};
 use lazyinit::LazyInit;
 
 use crate::{
-    consts::{MEM_VECTOR_CAPACITY, VIRT_ADDR_START},
+    arch::{consts::VIRT_ADDR_START, MEM_VECTOR_CAPACITY},
     pa, PhysAddr,
 };
 
@@ -59,10 +59,12 @@ pub unsafe fn alloc(layout: Layout) -> usize {
 pub fn parse_system_info() {
     display_info!();
     println!(include_str!("./banner.txt"));
-
     if let Ok(fdt) = get_fdt() {
         display_info!("Boot HART ID", "{}", fdt.boot_cpuid_phys());
         display_info!("Boot HART Count", "{}", fdt.find_nodes("/cpus/cpu").count());
+        fdt.chosen().inspect(|chosen| {
+            display_info!("Boot Args", "{}", chosen.bootargs().unwrap_or(""));
+        });
         fdt.memory().flat_map(|x| x.regions()).for_each(|mm| {
             display_info!(
                 "Platform Memory Region",
@@ -72,11 +74,9 @@ pub fn parse_system_info() {
             );
             unsafe { add_memory_region(mm.address as _, mm.address as usize + mm.size) }
         });
-        fdt.chosen().inspect(|chosen| {
-            display_info!("Boot Args", "{}", chosen.bootargs().unwrap_or(""));
-        });
         display_info!()
     }
+    display_info!("Platform Arch", "{}", env!("HAL_ENV_ARCH"));
 }
 
 /// Retrieves an iterator over the registered memory areas.

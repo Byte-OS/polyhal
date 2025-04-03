@@ -1,8 +1,8 @@
 use loongArch64::register::euen;
 use polyhal::{
-    arch::hart_id,
     consts::QEMU_DTB_ADDR,
     ctor::{ph_init_iter, CtorType},
+    hart_id,
     mem::init_dtb_once,
 };
 

@@ -4,7 +4,6 @@ use bitflags::bitflags;
 use riscv::register::satp::{self, Satp};
 
 use super::{MappingFlags, PageTable, PTE, TLB};
-use crate::utils::bit;
 use crate::{PhysAddr, VirtAddr};
 
 impl PTE {

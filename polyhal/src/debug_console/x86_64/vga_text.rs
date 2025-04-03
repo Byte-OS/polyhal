@@ -24,7 +24,8 @@ impl VGAPos {
     /// How many rows in the screen.
     const COL_C_MAX: usize = 25;
     /// Buffer pointer of the vga buffer.
-    const VGA_BUFFER_PTR: *mut FChar = (0xb8000 | crate::consts::VIRT_ADDR_START) as *mut FChar;
+    const VGA_BUFFER_PTR: *mut FChar =
+        (0xb8000 | crate::arch::consts::VIRT_ADDR_START) as *mut FChar;
 
     /// Create a new VGA Buffer include the position information.
     pub const fn new() -> Self {

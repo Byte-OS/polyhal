@@ -1,4 +1,4 @@
-use crate::{consts::VIRT_ADDR_START, utils::MutexNoIrq};
+use crate::{arch::consts::VIRT_ADDR_START, utils::MutexNoIrq};
 
 use super::font::BIT_FONTS;
 

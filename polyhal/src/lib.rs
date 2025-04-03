@@ -18,14 +18,16 @@ extern crate log;
 pub mod ctor;
 #[macro_use]
 pub mod debug_console;
+#[macro_use]
+pub mod utils;
 
-pub mod arch;
+mod arch;
+pub use arch::*;
 mod components;
 pub mod mem;
 pub use components::*;
 pub mod pagetable;
 pub mod time;
-pub mod utils;
 
 pub use utils::addr::{PhysAddr, VirtAddr};
 

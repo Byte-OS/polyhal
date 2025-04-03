@@ -1,6 +1,8 @@
-pub mod addr;
+#[macro_use]
 mod macros;
+#[macro_use]
+pub mod addr;
+
 mod mutex_no_irq;
 
-pub use macros::bit;
 pub use mutex_no_irq::{MutexNoIrq, MutexNoIrqGuard};

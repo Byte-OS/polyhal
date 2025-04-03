@@ -1,4 +1,4 @@
-use crate::{consts::VIRT_ADDR_START, va};
+use crate::{arch::consts::VIRT_ADDR_START, va};
 
 #[inline]
 pub fn ebreak() {

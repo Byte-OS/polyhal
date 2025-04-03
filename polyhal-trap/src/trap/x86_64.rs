@@ -3,9 +3,9 @@ use crate::trapframe::{FxsaveArea, TrapFrame, TRAPFRAME_SIZE};
 use bitflags::bitflags;
 use core::arch::{asm, global_asm};
 use core::mem::{offset_of, size_of};
-use polyhal::arch::apic::{local_apic, vectors::*};
-use polyhal::arch::gdt::{set_tss_kernel_sp, GdtStruct};
+use polyhal::apic::{local_apic, vectors::*};
 use polyhal::consts::{PIC_VECTOR_OFFSET, SYSCALL_VECTOR};
+use polyhal::gdt::{set_tss_kernel_sp, GdtStruct};
 use polyhal::irq;
 use polyhal::percpu::PerCPUReserved;
 use x86::{controlregs::cr2, irq::*};
@@ -306,10 +306,10 @@ pub fn init_syscall() {
 
 pub fn init() {
     // Init PerCPU Information.
-    polyhal::arch::idt::init();
-    polyhal::arch::apic::init();
+    polyhal::idt::init();
+    polyhal::apic::init();
     // Init allocator
-    polyhal::arch::gdt::init();
+    polyhal::gdt::init();
     init_syscall();
 }
 

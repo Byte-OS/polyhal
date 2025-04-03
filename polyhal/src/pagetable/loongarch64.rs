@@ -1,7 +1,6 @@
 use loongArch64::register::pgdl;
 
 use super::{MappingFlags, PageTable, PTE, TLB};
-use crate::utils::bit;
 use crate::{PhysAddr, VirtAddr};
 
 impl PTE {

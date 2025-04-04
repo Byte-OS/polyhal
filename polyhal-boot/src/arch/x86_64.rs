@@ -1,4 +1,4 @@
-use core::{arch::global_asm, mem, ptr::addr_of_mut, slice};
+use core::{arch::global_asm, ptr::addr_of_mut, slice};
 use multiboot::{
     header::MULTIBOOT_HEADER_MAGIC,
     information::{MemoryManagement, MemoryType, Multiboot, PAddr},
@@ -60,8 +60,7 @@ struct Mem;
 
 impl MemoryManagement for Mem {
     unsafe fn paddr_to_slice(&self, addr: PAddr, size: usize) -> Option<&'static [u8]> {
-        let ptr = mem::transmute(addr | VIRT_ADDR_START as u64);
-        Some(slice::from_raw_parts(ptr, size))
+        Some(slice::from_raw_parts(pa!(addr).get_mut_ptr(), size))
     }
 
     // If you only want to read fields, you can simply return `None`.

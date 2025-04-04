@@ -16,7 +16,7 @@ pub struct PerCPUReserved {
 }
 
 impl PerCPUReserved {
-    pub fn mut_from_ptr(ptr: *mut Self) -> &'static mut Self {
-        unsafe { &mut (*ptr) }
+    pub(crate) fn mut_from_ptr(ptr: *mut Self) -> &'static mut Self {
+        unsafe { ptr.as_mut().unwrap() }
     }
 }

@@ -6,9 +6,11 @@
 //!
 //!
 
-mod arch;
-
+#[allow(unused_imports)]
+#[macro_use]
 extern crate polyhal;
+
+mod arch;
 
 /// Define the entry point.
 ///

@@ -87,7 +87,7 @@ pub fn ph_init_iter<'a>(priority: CtorType) -> impl Iterator<Item = &'a PHInitWr
 /// ```
 #[macro_export]
 macro_rules! ph_ctor {
-    ($name:ident, $f:expr, $ty: expr) => {
+    ($name:ident, $ty: expr, $f:expr) => {
         #[used(linker)]
         #[unsafe(no_mangle)]
         #[unsafe(link_section = "ph_init")]

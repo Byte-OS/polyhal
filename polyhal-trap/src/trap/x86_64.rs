@@ -85,7 +85,7 @@ fn kernel_callback(context: &mut TrapFrame) {
         }
         // PIC IRQS
         0x20..=0x2f => TrapType::Irq(irq::IRQVector::new(
-            context.vector as usize - PIC_VECTOR_OFFSET as usize,
+            context.vector - PIC_VECTOR_OFFSET as usize,
         )),
         _ => {
             panic!(
@@ -97,6 +97,13 @@ fn kernel_callback(context: &mut TrapFrame) {
     unsafe { super::_interrupt_for_arch(context, trap_type, 0) };
 }
 
+/// Kernel Trap Entry
+///
+/// This function is called when a kernel process is interrupted.
+///
+/// # Safety
+///
+/// This function is unsafe because it performs low-level operations
 #[naked]
 #[no_mangle]
 pub unsafe extern "C" fn kernelvec() {
@@ -147,6 +154,15 @@ pub unsafe extern "C" fn kernelvec() {
     )
 }
 
+/// User Trap Entry
+///
+/// This function is called when a user process is interrupted.
+/// It saves the user context and switches to kernel mode.
+///
+/// # Safety
+///
+/// This function is unsafe because it performs low-level operations
+/// that can lead to undefined behavior if not used correctly.
 #[naked]
 #[no_mangle]
 pub unsafe extern "C" fn uservec() {

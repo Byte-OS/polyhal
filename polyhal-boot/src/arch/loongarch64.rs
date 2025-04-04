@@ -74,7 +74,7 @@ unsafe extern "C" fn _secondary_start() -> ! {
 /// This function will be called after assembly boot stage.
 pub fn rust_tmp_main(hart_id: usize) {
     super::clear_bss();
-    let _ = init_dtb_once(QEMU_DTB_ADDR as _);
+    let _ = init_dtb_once(QEMU_DTB_ADDR);
 
     // Initialize CPU Configuration.
     init_cpu();

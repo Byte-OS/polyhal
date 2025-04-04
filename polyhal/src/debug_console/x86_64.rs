@@ -9,13 +9,13 @@ mod vga_text;
 #[cfg(feature = "graphic")]
 mod keyboard;
 
-pub(crate) use com::init as init_com;
-
 #[cfg(feature = "graphic")]
 pub(crate) use graphic::init as init_fb;
 
 #[cfg(feature = "graphic")]
 pub(crate) use vga_text::init as init_vga;
+
+use crate::ctor::CtorType;
 
 use super::DebugConsole;
 
@@ -55,3 +55,5 @@ impl DebugConsole {
         graphic::set_color(color)
     }
 }
+
+ph_ctor!(X86_INIT_COM, CtorType::Platform, com::init);

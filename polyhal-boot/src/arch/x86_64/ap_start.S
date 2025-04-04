@@ -9,9 +9,9 @@
 # Because this code sets DS to zero, it must sit
 # at an address in the low 2^16 bytes.
 
-.equ pa_ap_start32, ap_start32 - ap_start + {start_page_paddr}
-.equ pa_ap_gdt, .Lap_tmp_gdt - ap_start + {start_page_paddr}
-.equ pa_ap_gdt_desc, .Lap_tmp_gdt_desc - ap_start + {start_page_paddr}
+.equ pa_ap_start32, ap_start32 - _secondary_start + {start_page_paddr}
+.equ pa_ap_gdt, .Lap_tmp_gdt - _secondary_start + {start_page_paddr}
+.equ pa_ap_gdt_desc, .Lap_tmp_gdt_desc - _secondary_start + {start_page_paddr}
 
 .equ stack_ptr, {start_page_paddr} + 0xff0
 .equ entry_ptr, {start_page_paddr} + 0xff8
@@ -20,8 +20,8 @@
 .section .text
 .code16
 .p2align 12
-.global ap_start
-ap_start:
+.global _secondary_start
+_secondary_start:
     cli
     wbinvd
 

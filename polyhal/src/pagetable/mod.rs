@@ -78,11 +78,6 @@ impl PageTable {
         flags: MappingFlags,
         _size: MappingSize,
     ) {
-        assert!(
-            vaddr.raw() <= Self::USER_VADDR_END,
-            "You only should use the address limited by user"
-        );
-        assert!(Self::PAGE_LEVEL >= 3, "Just level >= 3 supported currently");
         let mut pte_list = Self::get_pte_list(self.0);
         if Self::PAGE_LEVEL == 4 {
             let pte = &mut pte_list[vaddr.pn_index(3)];
@@ -131,11 +126,6 @@ impl PageTable {
         flags: MappingFlags,
         _size: MappingSize,
     ) {
-        assert!(
-            vaddr.raw() >= Self::KERNEL_VADDR_START,
-            "Virt page should greater than Self::KERNEL_VADDR_START"
-        );
-        assert!(Self::PAGE_LEVEL >= 3, "Just level >= 3 supported currently");
         let mut pte_list = Self::get_pte_list(self.0);
         if Self::PAGE_LEVEL == 4 {
             let pte = &mut pte_list[vaddr.pn_index(3)];

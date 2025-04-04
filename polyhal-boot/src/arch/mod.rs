@@ -44,6 +44,7 @@ fn call_real_main(hartid: usize) {
     static IS_BOOT: AtomicBool = AtomicBool::new(true);
     static INIT_DONE: AtomicBool = AtomicBool::new(false);
     extern "Rust" {
+        fn _secondary_start();
         pub(crate) fn _main_for_arch(hartid: usize);
         pub(crate) fn _secondary_for_arch(hartid: usize);
     }
@@ -57,15 +58,7 @@ fn call_real_main(hartid: usize) {
             }
             let stack_top = polyhal::mem::alloc(SP_SIZE).add(SP_SIZE);
             println!("Boot Core: {}   {:#p}", x, stack_top);
-            #[cfg(not(target_arch = "x86_64"))]
-            {
-                extern "Rust" {
-                    fn _secondary_start();
-                }
-                polyhal::multicore::boot_core(x, _secondary_start as usize, stack_top as usize);
-            }
-            #[cfg(target_arch = "x86_64")]
-            polyhal::multicore::boot_core(x, 0x6000, stack_top as usize);
+            polyhal::multicore::boot_core(x, _secondary_start as usize, stack_top as usize);
         });
         polyhal::println!();
         // Run Kernel's Contructors Before Droping Into Kernel.

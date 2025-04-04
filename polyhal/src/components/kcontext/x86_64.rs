@@ -145,6 +145,10 @@ impl IndexMut<KContextArgs> for KContext {
 /// Context Switch
 ///
 /// Save the context of current task and switch to new task.
+///
+/// # Safety
+///
+/// This function is unsafe because it performs a context switch, which can lead to undefined behavior if not used correctly.
 #[naked]
 pub unsafe extern "C" fn context_switch(from: *mut KContext, to: *const KContext) {
     core::arch::asm!(
@@ -166,6 +170,12 @@ pub unsafe extern "C" fn context_switch(from: *mut KContext, to: *const KContext
 /// Context Switch With Page Table
 ///
 /// Save the context of current task and switch to new task.
+///
+/// # Safety
+///
+/// This function is unsafe because it performs a context switch, which can lead to undefined behavior if not used correctly.
+/// It also requires a valid page table token.
+/// The page table token is used to switch the page table for the new task.
 #[inline]
 pub unsafe extern "C" fn context_switch_pt(
     from: *mut KContext,

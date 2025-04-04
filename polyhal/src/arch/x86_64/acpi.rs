@@ -2,7 +2,7 @@ use core::ptr::NonNull;
 
 use acpi::{AcpiHandler, AcpiTables};
 
-use crate::common::CPU_NUM;
+use crate::{common::CPU_NUM, PhysAddr};
 
 #[derive(Clone)]
 struct AcpiImpl;
@@ -41,5 +41,21 @@ pub fn init() {
             }
             Err(err) => println!("acpi error: {:#x?}", err),
         }
+    }
+}
+
+/// Get The Base Address Of The PCI
+///
+/// Return [Option::None] if the pci is not exists or error
+pub fn get_pci_base() -> Option<PhysAddr> {
+    unsafe {
+        AcpiTables::search_for_rsdp_bios(AcpiImpl)
+            .ok()?
+            .find_table::<acpi::mcfg::Mcfg>()
+            .ok()?
+            .entries()
+            .iter()
+            .next()
+            .map(|x| pa!(x.base_address))
     }
 }

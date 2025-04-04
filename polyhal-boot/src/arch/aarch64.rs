@@ -2,9 +2,8 @@ use aarch64_cpu::{asm::barrier, registers::*};
 use polyhal::{
     ctor::{ph_init_iter, CtorType},
     mem::{init_dtb_once, parse_system_info},
-    pa,
     pagetable::{PTEFlags, PAGE_SIZE, PTE, TLB},
-    PageTable,
+    PageTable, PhysAddr,
 };
 use tock_registers::interfaces::{ReadWriteable, Writeable};
 
@@ -118,9 +117,9 @@ unsafe extern "C" fn _secondary_start() -> ! {
     )
 }
 
-pub fn rust_tmp_main(hart_id: usize, dt: usize) {
+pub fn rust_tmp_main(hart_id: usize, dt: PhysAddr) {
     super::clear_bss();
-    let _ = init_dtb_once(dt as _);
+    let _ = init_dtb_once(dt);
 
     init_cpu();
     ph_init_iter(CtorType::Cpu).for_each(|x| (x.func)());

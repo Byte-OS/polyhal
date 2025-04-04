@@ -56,6 +56,11 @@ impl<T: ?Sized> MutexNoIrq<T> {
         self.lock.is_locked()
     }
 
+    /// Force unlock the mutex.
+    ///
+    /// # Safety
+    ///
+    /// Ensures that the mutex is not locked by any thread.
     pub unsafe fn force_unlock(&self) {
         self.lock.force_unlock()
     }

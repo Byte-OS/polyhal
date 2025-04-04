@@ -5,7 +5,7 @@ use polyhal::{
     mem::{init_dtb_once, parse_system_info},
     pagetable::{PTEFlags, PTE, TLB},
     percpu::set_local_thread_pointer,
-    PageTable,
+    PageTable, PhysAddr,
 };
 use riscv::register::{satp, sie, sstatus};
 
@@ -95,9 +95,9 @@ unsafe extern "C" fn _secondary_start() -> ! {
     );
 }
 
-unsafe extern "C" fn rust_main(hartid: usize, dt: usize) {
+unsafe extern "C" fn rust_main(hartid: usize, dt: PhysAddr) {
     super::clear_bss();
-    let _ = init_dtb_once(dt as _);
+    let _ = init_dtb_once(dt);
     // Initialize CPU Configuration.
     set_local_thread_pointer(hartid);
     init_cpu();

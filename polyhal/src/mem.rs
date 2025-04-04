@@ -7,7 +7,7 @@ use lazyinit::LazyInit;
 use crate::{
     arch::{consts::VIRT_ADDR_START, MEM_VECTOR_CAPACITY},
     common::CPU_NUM,
-    pa, PhysAddr,
+    PhysAddr,
 };
 
 /// Memory Area
@@ -26,11 +26,11 @@ static DTB_INFO: LazyInit<(PhysAddr, usize)> = LazyInit::new();
 ///
 /// - `dtb_ptr` is the pointer to the device tree binary.
 ///
-pub fn init_dtb_once(dtb_ptr: *mut u8) -> Result<(), FdtError<'static>> {
+pub fn init_dtb_once(dtb_ptr: PhysAddr) -> Result<(), FdtError<'static>> {
     // Validate Device Tree
-    let ptr = unsafe { NonNull::new(dtb_ptr.add(VIRT_ADDR_START)) };
+    let ptr = NonNull::new(dtb_ptr.get_mut_ptr());
     let fdt = Fdt::from_ptr(ptr.unwrap())?;
-    DTB_INFO.init_once((pa!(dtb_ptr), fdt.total_size()));
+    DTB_INFO.init_once((dtb_ptr, fdt.total_size()));
     fdt.memory()
         .flat_map(|x| x.regions())
         .for_each(|mm| unsafe {

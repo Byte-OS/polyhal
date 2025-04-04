@@ -16,7 +16,11 @@ pub fn init() {
         }
     }
     #[cfg(target_arch = "x86_64")]
-    enumerate_pci((0xb000_0000 | VIRT_ADDR_START) as *mut u8);
+    {
+        if let Some(addr) = polyhal::acpi::get_pci_base() {
+            enumerate_pci(addr.get_mut_ptr());
+        }
+    }
 }
 
 /// Enumerate the PCI devices

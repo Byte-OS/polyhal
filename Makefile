@@ -2,9 +2,12 @@
 
 all:
 
-.PHONY: example
+.PHONY: example boot-iso
 example:
 	make -C example run
+
+boot-iso:
+	make -C example boot-iso
 
 clean:
 	rm -rf target/

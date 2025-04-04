@@ -3,17 +3,12 @@ mod com;
 mod font;
 #[cfg(feature = "graphic")]
 mod graphic;
-#[cfg(feature = "graphic")]
-mod vga_text;
 
 #[cfg(feature = "graphic")]
 mod keyboard;
 
 #[cfg(feature = "graphic")]
-pub(crate) use graphic::init as init_fb;
-
-#[cfg(feature = "graphic")]
-pub(crate) use vga_text::init as init_vga;
+pub use graphic::init as init_fb;
 
 use crate::ctor::CtorType;
 
@@ -30,10 +25,7 @@ impl DebugConsole {
         com::putchar(c);
 
         #[cfg(feature = "graphic")]
-        match graphic::is_graphic() {
-            true => graphic::putchar(c),
-            false => vga_text::putchar(c),
-        }
+        graphic::putchar(c);
     }
 
     #[inline]

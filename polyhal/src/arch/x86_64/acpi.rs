@@ -59,3 +59,15 @@ pub fn get_pci_base() -> Option<PhysAddr> {
             .map(|x| pa!(x.base_address))
     }
 }
+
+pub fn get_pm1a_addr() -> Option<usize> {
+    unsafe {
+        AcpiTables::search_for_rsdp_bios(AcpiImpl)
+            .ok()?
+            .find_table::<acpi::fadt::Fadt>()
+            .ok()?
+            .pm1a_control_block()
+            .ok()
+            .map(|x| x.address as usize)
+    }
+}

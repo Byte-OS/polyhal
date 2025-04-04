@@ -3,7 +3,9 @@ ARCH := riscv64
 TEST := false
 GUI  := false
 SMP  := 1
+FEATURES := 
 BOOT_ARGS := 
+GRUB_MKRESCUE := $(shell which grub-mkrescue || which grub2-mkrescue)
 
 export RUSTFLAGS := 
 QEMU_EXEC += qemu-system-$(ARCH)
@@ -38,6 +40,7 @@ OBJCOPY := rust-objcopy --binary-architecture=riscv64
 ifneq ($(GUI), true)
 QEMU_EXEC += -nographic
 else
+FEATURES += polyhal-boot/graphic polyhal/graphic
 QEMU_EXEC += -serial stdio -vga std
 endif 
 QEMU_EXEC += -smp $(SMP)
@@ -55,7 +58,7 @@ $(KERNEL_BIN): kernel
 
 kernel:
 	@echo Platform: $(BOARD)
-	@cargo build $(BUILD_ARGS) --release --target $(TARGET)
+	@cargo build $(BUILD_ARGS) --release --features "$(FEATURES)" --target $(TARGET)
 
 clean:
 	@cargo clean
@@ -77,10 +80,10 @@ test:
 
 iso: build
 	cp $(KERNEL_ELF) iso/example
-	grub2-mkrescue -o bootable.iso iso
+	$(GRUB_MKRESCUE) -o bootable.iso iso
 
 boot-iso: iso
-	qemu-system-x86_64 -cdrom bootable.iso -serial stdio
+	qemu-system-x86_64 -cdrom bootable.iso -serial stdio -vga vmware
 
 gdb:
 	gdb \

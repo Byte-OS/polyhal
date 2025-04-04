@@ -8,5 +8,5 @@ pub fn boot_core(cpu_id: usize, _addr: usize, _sp_top: usize) {
         lapic.send_init_ipi(apic_id);
     }
 
-    log::error!("Boot Core is not implemented yet for aarch64");
+    log::error!("Boot Core is not implemented yet for x86_64");
 }

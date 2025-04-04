@@ -7,7 +7,7 @@ edition = "2021"
 
 [dependencies]
 virtio-drivers = "0.7.5"
-polyhal = { workspace = true, features = ["logger", "trap", "graphic"] }
+polyhal = { workspace = true, features = ["logger", "trap"] }
 polyhal-boot = { workspace = true }
 polyhal-trap = { workspace = true }
 log = "0.4"

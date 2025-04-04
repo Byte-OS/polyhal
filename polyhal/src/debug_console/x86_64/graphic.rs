@@ -228,15 +228,8 @@ pub(super) fn set_color(color: u32) {
     GRAPHIC_CONSOLE.lock().color = color;
 }
 
-static mut GRAPHIC: bool = false;
-/// Check graphic support.
-#[inline]
-pub(super) fn is_graphic() -> bool {
-    unsafe { GRAPHIC }
-}
-
 /// Init the graphics console's information, includes frame buffer addresse, width and height.
-pub(crate) fn init(addr: usize, width: usize, height: usize, pitch: usize) {
+pub fn init(addr: usize, width: usize, height: usize, pitch: usize) {
     let mut g_console = GRAPHIC_CONSOLE.lock();
     g_console.ptr = addr | VIRT_ADDR_START;
     g_console.width = width;
@@ -244,7 +237,4 @@ pub(crate) fn init(addr: usize, width: usize, height: usize, pitch: usize) {
     g_console.pitch = pitch;
     g_console.clear();
     drop(g_console);
-    unsafe {
-        GRAPHIC = true;
-    }
 }

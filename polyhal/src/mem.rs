@@ -146,7 +146,7 @@ pub unsafe fn add_memory_region(start: usize, end: usize) {
         return;
     }
     extern "C" {
-        fn _start();
+        fn _skernel();
         fn _end();
     }
     let (dtb_s, dtb_e) = DTB_INFO
@@ -154,7 +154,7 @@ pub unsafe fn add_memory_region(start: usize, end: usize) {
         .map(|x| (x.0.raw(), x.0.raw() + x.1))
         .unwrap_or((0, 0));
     let (self_s, self_e) = (
-        _start as usize - VIRT_ADDR_START,
+        _skernel as usize - VIRT_ADDR_START,
         _end as usize - VIRT_ADDR_START,
     );
     unsafe {

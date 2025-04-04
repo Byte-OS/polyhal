@@ -23,7 +23,7 @@
     .endr
 .endm
 
-.section .text.entry
+.section .multiboot
 .balign 4
 .type multiboot_header, STT_OBJECT
 multiboot_header:
@@ -35,7 +35,7 @@ multiboot_header:
     .int    _load_end - {kernel_offset}         # load_end
     .int    _end - {kernel_offset}              # bss_end_addr
     .int    _start - {kernel_offset}            # entry_addr
-    .int    0                                   # graphic mode
+    .int    {graphic}                           # graphic mode
     .int    0                                   # graphic pixel width
     .int    0                                   # graphic pixel height
     .int    32                                  # graphic pixel color bits

@@ -6,7 +6,7 @@ use x86_64::instructions::port::{Port, PortReadOnly, PortWriteOnly};
 const UART_CLOCK_FACTOR: usize = 16;
 const OSC_FREQ: usize = 1_843_200;
 
-static COM1: MutexNoIrq<Uart16550> = MutexNoIrq::new(Uart16550::new(0x3f8));
+static COM1: MutexNoIrq<Uart16550> = MutexNoIrq::new(Uart16550::new(0x2f8));
 
 bitflags::bitflags! {
     /// Line status flags
@@ -77,7 +77,6 @@ impl Uart16550 {
         unsafe { self.data.write(c) };
     }
 
-    #[cfg(not(feature = "graphic"))]
     fn getchar(&mut self) -> Option<u8> {
         if self.line_sts().contains(LineStsFlags::INPUT_FULL) {
             unsafe { Some(self.data.read()) }
@@ -99,12 +98,11 @@ pub(crate) fn init() {
 }
 
 #[inline]
-pub(super) fn putchar(c: u8) {
+pub fn putchar(c: u8) {
     COM1.lock().putchar(c);
 }
 
-#[cfg(not(feature = "graphic"))]
 #[inline]
-pub(super) fn getchar() -> Option<u8> {
+pub fn getchar() -> Option<u8> {
     COM1.lock().getchar()
 }

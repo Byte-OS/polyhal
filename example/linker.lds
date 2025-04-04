@@ -9,6 +9,7 @@ SECTIONS
     _skernel = .;
 
     .text ALIGN(4K): {
+        *(.multiboot .multiboot.*)
         stext = .;
         *(.text.entry)
         *(.text .text.*)

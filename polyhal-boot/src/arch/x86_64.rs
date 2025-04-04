@@ -77,6 +77,11 @@ pub fn use_multiboot(mboot_ptr: PAddr) -> Option<Multiboot<'static, 'static>> {
     unsafe { Multiboot::from_ptr(mboot_ptr, addr_of_mut!(MEM).as_mut().unwrap()) }
 }
 
+#[cfg(feature = "graphic")]
+const GRAPHIC: usize = 0;
+#[cfg(not(feature = "graphic"))]
+const GRAPHIC: usize = 1;
+
 global_asm!(
     include_str!("x86_64/multiboot.S"),
     mb_hdr_magic = const MULTIBOOT_HEADER_MAGIC,
@@ -84,6 +89,7 @@ global_asm!(
     entry = sym rust_tmp_main,
 
     kernel_offset = const VIRT_ADDR_START,
+    graphic = const GRAPHIC,
 
     cr0 = const CR0,
     cr4 = const CR4,
@@ -98,6 +104,7 @@ core::arch::global_asm!(
 
 fn rust_tmp_main(magic: usize, mboot_ptr: usize) {
     super::clear_bss();
+    ph_init_iter(CtorType::Primary).for_each(|x| (x.func)());
 
     let mboot = use_multiboot(mboot_ptr as _);
     mboot.as_ref().inspect(|mboot| {

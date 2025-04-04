@@ -23,6 +23,8 @@ extern "Rust" {
 #[repr(u8)]
 #[derive(PartialEq)]
 pub enum CtorType {
+    /// Init function for the primary CPU, executed only once.
+    Primary,
     /// CPU-related constructor, runs on all CPUs.    
     Cpu,
     /// Platform-level constructor, executed only once on the primary CPU.

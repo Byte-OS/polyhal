@@ -87,7 +87,6 @@ fn main(_hartid: usize) {
     ebreak();
 
     crate::pci::init();
-    loop {}
     log::info!("Run END. Shutdown successfully.");
     shutdown();
 }

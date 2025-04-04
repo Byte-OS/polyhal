@@ -3,6 +3,7 @@ mod com;
 mod font;
 #[cfg(feature = "graphic")]
 mod graphic;
+mod vga_text;
 
 #[cfg(feature = "graphic")]
 mod keyboard;
@@ -19,10 +20,12 @@ impl DebugConsole {
     pub fn putchar(c: u8) {
         if c == b'\n' {
             com::putchar(b'\r');
+            vga_text::putchar(c);
             #[cfg(feature = "graphic")]
             graphic::putchar(b'\r');
         }
         com::putchar(c);
+        vga_text::putchar(c);
 
         #[cfg(feature = "graphic")]
         graphic::putchar(c);
@@ -48,4 +51,7 @@ impl DebugConsole {
     }
 }
 
-ph_ctor!(X86_INIT_COM, CtorType::Platform, com::init);
+ph_ctor!(X86_INIT_COM, CtorType::Primary, || {
+    com::init();
+    vga_text::init();
+});

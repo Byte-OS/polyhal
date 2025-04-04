@@ -19,7 +19,7 @@ riscv = "0.13.0"
 
 [target.'cfg(target_arch = "x86_64")'.dependencies]
 x86 = "0.52"
-x86_64 = "0.14"
+x86_64 = "=0.14.12"
 multiboot = "0.8.0"
 raw-cpuid = "11.0"
 

@@ -4,7 +4,7 @@ use core::{
     ops::{Index, IndexMut},
 };
 use polyhal::gdt::GdtStruct;
-use x86_64::registers::rflags::RFlags;
+use x86::bits64::rflags::RFlags;
 
 #[repr(C, align(16))]
 #[derive(Clone)]
@@ -97,7 +97,7 @@ impl TrapFrame {
         Self {
             cs: GdtStruct::UCODE64_SELECTOR.0 as _,
             ss: GdtStruct::UDATA_SELECTOR.0 as _,
-            rflags: RFlags::INTERRUPT_FLAG.bits() as _,
+            rflags: RFlags::FLAGS_IF.bits() as _,
             ..Default::default()
         }
     }

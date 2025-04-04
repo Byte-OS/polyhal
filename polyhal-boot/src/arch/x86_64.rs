@@ -87,6 +87,7 @@ global_asm!(
     mb_hdr_magic = const MULTIBOOT_HEADER_MAGIC,
     mb_hdr_flags = const MULTIBOOT_HEADER_FLAGS,
     entry = sym rust_tmp_main,
+    entry_secondary = sym _rust_secondary_main,
 
     kernel_offset = const VIRT_ADDR_START,
     graphic = const GRAPHIC,
@@ -104,7 +105,10 @@ core::arch::global_asm!(
 
 fn rust_tmp_main(magic: usize, mboot_ptr: usize) {
     super::clear_bss();
+
     ph_init_iter(CtorType::Primary).for_each(|x| (x.func)());
+    // Check Multiboot Magic Number.
+    assert_eq!(magic, multiboot::information::SIGNATURE_EAX as usize);
 
     let mboot = use_multiboot(mboot_ptr as _);
     mboot.as_ref().inspect(|mboot| {
@@ -154,6 +158,26 @@ fn rust_tmp_main(magic: usize, mboot_ptr: usize) {
         display_info!("Platform HART Count", "{}", get_cpu_num())
     });
     ph_init_iter(CtorType::Cpu).for_each(|x| (x.func)());
+    init_cpu();
+
+    // Init contructor functions
+    ph_init_iter(CtorType::Platform).for_each(|x| (x.func)());
+    ph_init_iter(CtorType::HALDriver).for_each(|x| (x.func)());
+
+    super::call_real_main(hart_id());
+}
+
+fn _rust_secondary_main() {
+    set_local_thread_pointer(hart_id());
+
+    ph_init_iter(CtorType::Cpu).for_each(|x| (x.func)());
+
+    init_cpu();
+
+    super::call_real_main(hart_id());
+}
+
+fn init_cpu() {
     // enable avx extend instruction set and sse if support avx
     // TIPS: QEMU not support avx, so we can't enable avx here
     // IF you want to use avx in the qemu, you can use -cpu IvyBridge-v2 to
@@ -169,12 +193,4 @@ fn rust_tmp_main(magic: usize, mboot_ptr: usize) {
             XCr0::write(XCr0::read() | XCr0Flags::AVX | XCr0Flags::SSE | XCr0Flags::X87);
         }
     });
-    // Init contructor functions
-    ph_init_iter(CtorType::Platform).for_each(|x| (x.func)());
-    ph_init_iter(CtorType::HALDriver).for_each(|x| (x.func)());
-
-    // Check Multiboot Magic Number.
-    assert_eq!(magic, multiboot::information::SIGNATURE_EAX as usize);
-
-    super::call_real_main(hart_id());
 }

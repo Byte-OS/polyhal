@@ -1,9 +1,18 @@
-use raw_cpuid::CpuId;
-use x86_64::structures::port::{self, PortRead};
+use core::{arch::x86_64::_rdtsc, hint::spin_loop, time::Duration};
 
-use crate::{arch::apic::local_apic, time::Time};
+use raw_cpuid::CpuId;
+use x2apic::lapic::{TimerDivide, TimerMode};
+use x86_64::instructions::port::Port;
+
+use crate::{arch::apic::local_apic, ctor::CtorType, time::Time};
 
 static mut CPU_FREQ_MHZ: usize = 4_000_000_000;
+static mut PIT_CMD: Port<u8> = Port::new(0x43);
+static mut PIT_CH2: Port<u8> = Port::new(0x42);
+static mut PC_SPEAKER: Port<u8> = Port::new(0x61);
+
+/// PIT(Programmable Interval Timer) frequency, 1ms
+const PIT_FREQ: u16 = (1193182 / 1000) as u16;
 
 impl Time {
     #[inline]
@@ -27,74 +36,70 @@ pub(crate) fn init_early() {
             unsafe { CPU_FREQ_MHZ = freq as _ }
         }
     }
-
     unsafe {
-        use x2apic::lapic::{TimerDivide, TimerMode};
         let lapic = local_apic();
         lapic.set_timer_mode(TimerMode::Periodic);
-        lapic.set_timer_divide(TimerDivide::Div2); // indeed it is Div1, the name is confusing.
+        lapic.set_timer_divide(TimerDivide::Div256); // indeed it is Div1, the name is confusing.
         lapic.enable_timer();
 
-        // PIT(Programmable Interval Timer)
-        // https://wiki.osdev.org/Pit
-        // Bits         Usage
-        // 6 and 7      Select channel :
-        //                 0 0 = Channel 0
-        //                 0 1 = Channel 1
-        //                 1 0 = Channel 2
-        //                 1 1 = Read-back command (8254 only)
-        // 4 and 5      Access mode :
-        //                 0 0 = Latch count value command
-        //                 0 1 = Access mode: lobyte only
-        //                 1 0 = Access mode: hibyte only
-        //                 1 1 = Access mode: lobyte/hibyte
-        // 1 to 3       Operating mode :
-        //                 0 0 0 = Mode 0 (interrupt on terminal count)
-        //                 0 0 1 = Mode 1 (hardware re-triggerable one-shot)
-        //                 0 1 0 = Mode 2 (rate generator)
-        //                 0 1 1 = Mode 3 (square wave generator)
-        //                 1 0 0 = Mode 4 (software triggered strobe)
-        //                 1 0 1 = Mode 5 (hardware triggered strobe)
-        //                 1 1 0 = Mode 2 (rate generator, same as 010b)
-        //                 1 1 1 = Mode 3 (square wave generator, same as 011b)
-        // 0            BCD/Binary mode: 0 = 16-bit binary, 1 = four-digit BCD
-        // open PIT2
-        let pcspeaker = u8::read_from_port(0x61);
-        u8::write_to_port(0x61, pcspeaker | 1);
+        let pcspeaker = PC_SPEAKER.read();
+        PC_SPEAKER.write(pcspeaker & 0xfd); // clear bit 1
 
-        const PIT_FREQ: u16 = 11931;
-        use port::PortWrite;
-        // Set PIT2 one-shott mode
-        u8::write_to_port(0x43, 0b10110010);
-
-        // Write frequency to port
-        u16::write_to_port(0x42, PIT_FREQ & 0xff);
-        u16::write_to_port(0x42, (PIT_FREQ >> 8) & 0xff);
-
-        // Reset PIT2 counter
-        let pcspeaker = u8::read_from_port(0x61);
-        u8::write_to_port(0x61, pcspeaker & 0xfd);
-        u8::write_to_port(0x61, pcspeaker | 1);
-
-        // Reset loapic counter
+        // Reset lapic counter
         lapic.set_timer_initial(0xFFFF_FFFF);
 
-        // Read count
-        loop {
-            let mut count = u16::read_from_port(0x42);
-            count |= u16::read_from_port(0x42) << 8;
-            if count == 0 || count >= 60000 {
-                break;
-            }
-        }
-        let end = lapic.timer_current();
-
-        let ticks10ms = 0xFFFF_FFFF - end;
-        // lapic.set_timer_initial(0x20_000);
-        // Set ticks 1s
-        // lapic.set_timer_initial(ticks10ms * 0x100);
-        // Set 500us ticks
-        lapic.set_timer_initial(ticks10ms / 20);
-        // set_oneshot_timer(2000);
+        // Get CPU Frequency: (end - start) / 10ms
+        let _start = _rdtsc();
+        timer_wait(Duration::from_millis(10));
+        let _end = _rdtsc();
     }
 }
+
+/// Wait for the timer to expire
+#[inline]
+pub(crate) fn timer_wait(duration: Duration) {
+    // PIT(Programmable Interval Timer)
+    // https://wiki.osdev.org/Pit
+    // Bits         Usage
+    // 6 and 7      Select channel :
+    //                 0 0 = Channel 0
+    //                 0 1 = Channel 1
+    //                 1 0 = Channel 2
+    //                 1 1 = Read-back command (8254 only)
+    // 4 and 5      Access mode :
+    //                 0 0 = Latch count value command
+    //                 0 1 = Access mode: lobyte only
+    //                 1 0 = Access mode: hibyte only
+    //                 1 1 = Access mode: lobyte/hibyte
+    // 1 to 3       Operating mode :
+    //                 0 0 0 = Mode 0 (interrupt on terminal count)
+    //                 0 0 1 = Mode 1 (hardware re-triggerable one-shot)
+    //                 0 1 0 = Mode 2 (rate generator)
+    //                 0 1 1 = Mode 3 (square wave generator)
+    //                 1 0 0 = Mode 4 (software triggered strobe)
+    //                 1 0 1 = Mode 5 (hardware triggered strobe)
+    //                 1 1 0 = Mode 2 (rate generator, same as 010b)
+    //                 1 1 1 = Mode 3 (square wave generator, same as 011b)
+    // 0            BCD/Binary mode: 0 = 16-bit binary, 1 = four-digit BCD
+
+    // Reset PIT2 counter
+    unsafe {
+        PC_SPEAKER.write(PC_SPEAKER.read() & !0x2);
+        PC_SPEAKER.write(PC_SPEAKER.read() | 1);
+    }
+    for _ in 0..duration.as_millis() {
+        unsafe {
+            // Set PIT2 one-shot mode
+            PIT_CMD.write(0b10110010);
+
+            // Write frequency to port
+            PIT_CH2.write(PIT_FREQ as u8);
+            PIT_CH2.write((PIT_FREQ >> 8) as u8);
+            while PC_SPEAKER.read() & 0x20 == 0 {
+                spin_loop();
+            }
+        }
+    }
+}
+
+ph_ctor!(X86_INIT_TIMER, CtorType::Platform, init_early);

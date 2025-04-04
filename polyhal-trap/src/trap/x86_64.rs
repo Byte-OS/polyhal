@@ -1,17 +1,26 @@
 use super::{EscapeReason, TrapType};
 use crate::trapframe::{FxsaveArea, TrapFrame, TRAPFRAME_SIZE};
 use bitflags::bitflags;
-use core::arch::{asm, global_asm};
-use core::mem::{offset_of, size_of};
-use polyhal::apic::{local_apic, vectors::*};
-use polyhal::consts::{PIC_VECTOR_OFFSET, SYSCALL_VECTOR};
-use polyhal::gdt::{set_tss_kernel_sp, GdtStruct};
-use polyhal::irq;
-use polyhal::percpu::PerCPUReserved;
-use x86::{controlregs::cr2, irq::*};
-use x86_64::registers::model_specific::{Efer, EferFlags, KernelGsBase, LStar, SFMask, Star};
-use x86_64::registers::rflags::RFlags;
-use x86_64::VirtAddr;
+use core::{
+    arch::{asm, global_asm},
+    mem::{offset_of, size_of},
+};
+use polyhal::{
+    apic::{local_apic, vectors::*},
+    consts::{PIC_VECTOR_OFFSET, SYSCALL_VECTOR},
+    gdt::{set_tss_kernel_sp, GdtStruct},
+    irq,
+    percpu::PerCPUReserved,
+};
+use x86::irq::*;
+use x86_64::{
+    registers::{
+        control::Cr2,
+        model_specific::{Efer, EferFlags, KernelGsBase, LStar, SFMask, Star},
+        rflags::RFlags,
+    },
+    VirtAddr,
+};
 
 global_asm!(
     r"
@@ -62,11 +71,11 @@ fn kernel_callback(context: &mut TrapFrame) {
         PAGE_FAULT_VECTOR => {
             let pflags = PageFaultFlags::from_bits_truncate(context.rflags as _);
             if pflags.contains(PageFaultFlags::I) {
-                TrapType::InstructionPageFault(unsafe { cr2() })
+                TrapType::InstructionPageFault(Cr2::read_raw() as _)
             } else if pflags.contains(PageFaultFlags::W) {
-                TrapType::StorePageFault(unsafe { cr2() })
+                TrapType::StorePageFault(Cr2::read_raw() as _)
             } else {
-                TrapType::LoadPageFault(unsafe { cr2() })
+                TrapType::LoadPageFault(Cr2::read_raw() as _)
             }
         }
         BREAKPOINT_VECTOR => TrapType::Breakpoint,
@@ -74,7 +83,7 @@ fn kernel_callback(context: &mut TrapFrame) {
             panic!(
                 "#GP @ {:#x}, fault_vaddr={:#x} error_code={:#x}:\n{:#x?}",
                 context.rip,
-                unsafe { cr2() },
+                Cr2::read_raw(),
                 context.error_code,
                 context
             );
@@ -322,10 +331,10 @@ pub fn init_syscall() {
 
 pub fn init() {
     // Init PerCPU Information.
+    polyhal::gdt::init();
     polyhal::idt::init();
     polyhal::apic::init();
     // Init allocator
-    polyhal::gdt::init();
     init_syscall();
 }
 

@@ -49,6 +49,6 @@ impl IdtStruct {
 }
 
 pub fn init() {
-    IDT.init_once(IdtStruct::new());
+    IDT.call_once(IdtStruct::new);
     unsafe { IDT.get().unwrap().load() }
 }

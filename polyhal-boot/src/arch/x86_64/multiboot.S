@@ -43,6 +43,7 @@ multiboot_header:
 # Common code in 32-bit, prepare states to enter 64-bit.
 .code32
 .global _start
+.global _secondary_start
 _start:
     mov     edi, eax                            # arg1: magic: 0x2BADB002
     mov     esi, ebx                            # arg2: multiboot info
@@ -78,6 +79,34 @@ _start:
 
     ljmp    0x10, offset bsp_entry64 - {kernel_offset}    # 0x10 is code64 segment
 
+_secondary_start:
+     # set data segment selectors
+    mov     ax, 0x18
+    mov     ss, ax
+    mov     ds, ax
+    mov     es, ax
+    mov     fs, ax
+    mov     gs, ax
+
+    # set PAE, PGE bit in CR4
+    mov     eax, {cr4}
+    mov     cr4, eax
+
+    # load the temporary page table
+    lea     eax, [_boot_page_table - {kernel_offset}]
+    mov     cr3, eax
+
+    # set LME, NXE bit in IA32_EFER
+    mov     ecx, {efer_msr}
+    mov     edx, 0
+    mov     eax, {efer}
+    wrmsr
+
+    # set protected mode, write protect, paging bit in CR0
+    mov     eax, {cr0}
+    mov     cr0, eax
+    ljmp    0x10, offset ap_entry64 - {kernel_offset}     # 0x10 is code64 segment
+
 .code64
 bsp_entry64:
     # clear segment selectors
@@ -96,6 +125,22 @@ bsp_entry64:
     call    rax
     jmp     .Lhlt
 
+ap_entry64:
+    xor     ax, ax
+    mov     ss, ax
+    mov     ds, ax
+    mov     es, ax
+    mov     fs, ax
+    mov     gs, ax
+
+    # set RSP to high address (already set in ap_start.S)
+    mov     rax, {kernel_offset}
+    add     rsp, rax
+
+    # call rust_entry_secondary(magic)
+    movabs  rax, offset {entry_secondary}
+    call    rax
+    jmp     .Lhlt
 .Lhlt:
     hlt
     jmp     .Lhlt

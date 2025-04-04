@@ -61,6 +61,7 @@ fn call_real_main(hartid: usize) {
             polyhal::multicore::boot_core(x, _secondary_start as usize, stack_top as usize);
         });
         polyhal::println!();
+
         // Run Kernel's Contructors Before Droping Into Kernel.
         ph_init_iter(CtorType::KernelService).for_each(|x| (x.func)());
         ph_init_iter(CtorType::Normal).for_each(|x| (x.func)());
@@ -70,7 +71,7 @@ fn call_real_main(hartid: usize) {
             _main_for_arch(hartid);
         }
     } else {
-        while INIT_DONE.load(Ordering::SeqCst) {
+        while !INIT_DONE.load(Ordering::SeqCst) {
             spin_loop();
         }
         unsafe {

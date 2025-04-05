@@ -1,6 +1,7 @@
 use core::{
     ffi::CStr,
     fmt::{Debug, Display},
+    ops::Add,
 };
 
 use crate::{arch::consts::VIRT_ADDR_START, PageTable};
@@ -53,8 +54,13 @@ impl PhysAddr {
     }
 
     #[inline]
-    pub fn slice_mut_with_len<T>(&self, len: usize) -> &'static mut [T] {
+    pub fn slice_mut_with_len<T: Sized>(&self, len: usize) -> &'static mut [T] {
         unsafe { core::slice::from_raw_parts_mut(self.get_mut_ptr(), len) }
+    }
+
+    #[inline]
+    pub fn clear_len(&self, len: usize) {
+        self.slice_mut_with_len::<u8>(len).fill(0);
     }
 
     #[inline]
@@ -145,7 +151,23 @@ impl VirtAddr {
 
     #[inline]
     pub fn ceil(&self) -> Self {
-        Self((self.0 + PageTable::PAGE_SIZE - 1) / PageTable::PAGE_SIZE * PageTable::PAGE_SIZE)
+        Self(self.0.div_ceil(PageTable::PAGE_SIZE) * PageTable::PAGE_SIZE)
+    }
+}
+
+impl Add<usize> for PhysAddr {
+    type Output = Self;
+
+    fn add(self, rhs: usize) -> Self::Output {
+        PhysAddr::new(self.0 + rhs)
+    }
+}
+
+impl Add<usize> for VirtAddr {
+    type Output = Self;
+
+    fn add(self, rhs: usize) -> Self::Output {
+        Self::new(self.0 + rhs)
     }
 }
 

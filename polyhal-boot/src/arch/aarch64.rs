@@ -1,5 +1,6 @@
 use aarch64_cpu::{asm::barrier, registers::*};
 use polyhal::{
+    consts::VIRT_ADDR_START,
     ctor::{ph_init_iter, CtorType},
     mem::{init_dtb_once, parse_system_info},
     pagetable::{PTEFlags, PAGE_SIZE, PTE, TLB},
@@ -79,11 +80,14 @@ unsafe extern "C" fn _start() -> ! {
         and     x19, x19, #0xffffff     // get current CPU id
         mov     x20, x0                 // save DTB pointer
         ldr     x0, =bstack_top
+        and     x0, x0, #~{kernel_offset}
         mov     sp, x0
 
         bl      {init_boot_page_table}
         bl      {init_mmu}              // setup MMU
 
+        ldr     x0, =bstack_top
+        mov     sp, x0
         mov     x0, x19                 // call rust_entry(cpu_id, dtb)
         mov     x1, x20
         ldr     x8, ={entry}
@@ -92,6 +96,7 @@ unsafe extern "C" fn _start() -> ! {
         init_boot_page_table = sym init_boot_page_table,
         init_mmu = sym init_mmu,
         entry = sym rust_tmp_main,
+        kernel_offset = const VIRT_ADDR_START,
         options(noreturn),
     )
 }

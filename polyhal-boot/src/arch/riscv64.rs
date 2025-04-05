@@ -44,6 +44,9 @@ unsafe extern "C" fn _start() -> ! {
         "   mv      s0, a0
             mv      s1, a1
             la      sp, bstack_top
+            li      t0, {virt_addr_start}
+            not     t0, t0
+            and     sp, sp, t0
 
             call    {init_boot_page_table}
             call    {init_mmu}

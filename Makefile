@@ -23,3 +23,9 @@ test-clippy:
 	cargo clippy --all-features --target aarch64-unknown-none-softfloat
 	cargo clippy --all-features --target x86_64-unknown-none
 	cargo clippy --all-features --target loongarch64-unknown-none
+
+publish:
+	cargo publish -p polyhal-macro
+	cargo publish -p polyhal
+	cargo publish -p polyhal-boot
+	cargo publish -p polyhal-trap

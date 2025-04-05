@@ -25,8 +25,6 @@ use super::common::frame_dealloc;
 
 /// The size of the page table.
 pub const PAGE_SIZE: usize = PageTable::PAGE_SIZE;
-/// The max address of the user virtual address.
-pub const USER_VADDR_END: usize = PageTable::USER_VADDR_END;
 
 /// Page table entry structure
 ///

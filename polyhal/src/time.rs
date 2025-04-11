@@ -59,12 +59,12 @@ impl Time {
     }
 
     #[inline]
-    pub fn raw(&self) -> usize {
+    pub const fn raw(&self) -> usize {
         self.0
     }
 
     #[inline]
-    pub fn from_raw(raw: usize) -> Self {
+    pub const fn new(raw: usize) -> Self {
         Self(raw)
     }
 }

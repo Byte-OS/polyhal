@@ -28,6 +28,14 @@ macro_rules! println {
     };
 }
 
+/// Print macro to print polyhal information with newline
+#[macro_export]
+macro_rules! print {
+    ($fmt: expr $(, $($arg: tt)+)?) => {
+        $crate::debug_console::_print(format_args!($fmt $(, $($arg)+)?))
+    };
+}
+
 /// Display Platform Information with specified format
 /// display_info!("item name", "{}", "format");
 /// The output format like below:

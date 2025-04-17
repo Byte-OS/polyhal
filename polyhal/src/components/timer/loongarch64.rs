@@ -20,7 +20,7 @@ impl crate::time::Time {
     }
 }
 
-pub fn init_timer() {
+pub fn init() {
     let ticks = ((*FREQ / 1000) + 3) & !3;
     tcfg::set_periodic(true); // set timer to one-shot mode
     tcfg::set_init_val(ticks); // set timer initial value

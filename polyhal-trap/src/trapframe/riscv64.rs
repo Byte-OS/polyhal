@@ -120,17 +120,3 @@ impl IndexMut<TrapFrameArgs> for TrapFrame {
         }
     }
 }
-
-/// Kernel Token
-///
-/// Store the kernel runtime info before
-#[repr(C)]
-pub struct KernelToken {
-    _reserved: usize,
-    pub sp: usize,
-    pub gp: usize,
-    pub tp: usize,
-    _s: [usize; 12],
-    pub a0: usize,
-    pub ra: usize,
-}

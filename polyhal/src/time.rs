@@ -55,7 +55,8 @@ impl Time {
     /// Converts hardware ticks to nanoseconds.
     #[inline]
     pub fn to_nsec(&self) -> usize {
-        self.0 * 1_000_000_000 / Self::get_freq()
+        let freq = Self::get_freq();
+        (self.0 / freq * 1_000_000_000) + (self.0 % freq) * 1_000_000_000 / freq
     }
 
     #[inline]

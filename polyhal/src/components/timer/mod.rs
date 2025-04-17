@@ -4,7 +4,7 @@
 
 use core::time::Duration;
 
-use crate::Time;
+use crate::{ctor::CtorType, Time};
 
 super::define_arch_mods!();
 
@@ -17,3 +17,5 @@ super::define_arch_mods!();
 pub fn current_time() -> Duration {
     Duration::from_nanos(Time::now().raw() as _)
 }
+
+ph_ctor!(ARCH_INIT_TIMER, CtorType::Platform, init);

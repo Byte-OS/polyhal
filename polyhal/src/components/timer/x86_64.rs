@@ -4,7 +4,7 @@ use raw_cpuid::CpuId;
 use x2apic::lapic::{TimerDivide, TimerMode};
 use x86_64::instructions::port::Port;
 
-use crate::{arch::apic::local_apic, ctor::CtorType, time::Time};
+use crate::{arch::apic::local_apic, time::Time};
 
 static mut CPU_FREQ_MHZ: usize = 4_000_000_000;
 static mut PIT_CMD: Port<u8> = Port::new(0x43);
@@ -26,7 +26,7 @@ impl Time {
     }
 }
 
-pub(crate) fn init_early() {
+pub(crate) fn init() {
     if let Some(freq) = CpuId::new()
         .get_processor_frequency_info()
         .map(|info| info.processor_base_frequency())
@@ -101,5 +101,3 @@ pub(crate) fn timer_wait(duration: Duration) {
         }
     }
 }
-
-ph_ctor!(X86_INIT_TIMER, CtorType::Platform, init_early);

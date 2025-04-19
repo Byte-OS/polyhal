@@ -1,0 +1,31 @@
+[package]
+name = "polyhal-boot"
+version = { workspace = true }
+edition = { workspace = true }
+description = { workspace = true }
+authors = { workspace = true }
+license = { workspace = true }
+repository = { workspace = true }
+
+[features]
+graphic = ["polyhal/graphic"]
+
+[dependencies]
+polyhal = { workspace = true }
+cfg-if = { workspace = true }
+
+[target.'cfg(target_arch = "riscv64")'.dependencies]
+riscv = "0.13.0"
+
+[target.'cfg(target_arch = "x86_64")'.dependencies]
+x86 = "0.52"
+x86_64 = "=0.14.12"
+multiboot = "0.8.0"
+raw-cpuid = "11.0"
+
+[target.'cfg(target_arch = "aarch64")'.dependencies]
+aarch64-cpu = "9.3"
+tock-registers = "0.8"
+
+[target.'cfg(target_arch = "loongarch64")'.dependencies]
+loongArch64 = "0.2.4"

@@ -2,6 +2,16 @@
 
 all:
 
+.PHONY: example boot-iso
+example:
+	make -C example run
+
+boot-iso:
+	make -C example boot-iso
+
+clean:
+	rm -rf target/
+
 test-build:
 	cargo build --all-features --target riscv64gc-unknown-none-elf
 	cargo build --all-features --target aarch64-unknown-none-softfloat
@@ -14,5 +24,8 @@ test-clippy:
 	cargo clippy --all-features --target x86_64-unknown-none
 	cargo clippy --all-features --target loongarch64-unknown-none
 
-
-.PHONY: test
+publish:
+	cargo publish -p polyhal-macro
+	cargo publish -p polyhal
+	cargo publish -p polyhal-boot
+	cargo publish -p polyhal-trap

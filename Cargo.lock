@@ -194,7 +194,7 @@ checksum = "57c0d7b74b563b49d38dae00a0c37d4d6de9b432382b2892f0574ddcae73fd0a"
 
 [[package]]
 name = "polyhal"
-version = "0.2.3"
+version = "0.2.4"
 dependencies = [
  "aarch64-cpu",
  "acpi",
@@ -216,6 +216,7 @@ dependencies = [
  "sbi-rt",
  "spin 0.10.0",
  "tock-registers",
+ "uart_16550",
  "x2apic",
  "x86",
  "x86_64",
@@ -223,7 +224,7 @@ dependencies = [
 
 [[package]]
 name = "polyhal-boot"
-version = "0.2.3"
+version = "0.2.4"
 dependencies = [
  "aarch64-cpu",
  "cfg-if",
@@ -239,7 +240,7 @@ dependencies = [
 
 [[package]]
 name = "polyhal-macro"
-version = "0.2.3"
+version = "0.2.4"
 dependencies = [
  "proc-macro2",
  "quote",
@@ -248,7 +249,7 @@ dependencies = [
 
 [[package]]
 name = "polyhal-trap"
-version = "0.2.3"
+version = "0.2.4"
 dependencies = [
  "aarch64-cpu",
  "bitflags 2.9.0",
@@ -400,6 +401,17 @@ name = "tock-registers"
 version = "0.8.1"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "696941a0aee7e276a165a978b37918fd5d22c55c3d6bda197813070ca9c0f21c"
+
+[[package]]
+name = "uart_16550"
+version = "0.3.2"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "e492212ac378a5e00da953718dafb1340d9fbaf4f27d6f3c5cab03d931d1c049"
+dependencies = [
+ "bitflags 2.9.0",
+ "rustversion",
+ "x86",
+]
 
 [[package]]
 name = "unicode-ident"

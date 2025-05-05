@@ -1,14 +1,10 @@
 #![no_std]
 #![no_main]
 #![feature(naked_functions)]
-#![feature(asm_const)]
 #![feature(cfg_version)]
 #![feature(decl_macro)]
 #![feature(used_with_arg)]
-#![feature(unsafe_attributes)]
-#![cfg_attr(not(version("1.79")), feature(stdsimd))]
 #![cfg_attr(target_arch = "riscv64", feature(riscv_ext_intrinsics))]
-#![cfg_attr(target_arch = "aarch64", feature(const_option))]
 #![cfg_attr(target_arch = "x86_64", feature(abi_x86_interrupt))]
 
 // extern crate alloc;

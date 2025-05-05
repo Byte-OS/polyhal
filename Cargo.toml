@@ -9,7 +9,7 @@ members = [
 ]
 
 [workspace.package]
-version = "0.3.0"
+version = "0.3.1"
 edition = "2021"
 description = "This crate provides the interface for multiple platforms."
 authors = ["yfblock@321353225@qq.com"]
@@ -17,12 +17,12 @@ license = "MIT"
 repository = "https://github.com/Byte-OS/polyhal"
 
 [workspace.dependencies]
-polyhal = { version = "0.3.0" }
-polyhal-boot = { version = "0.3.0" }
-polyhal-macro = { version = "0.3.0" }
-polyhal-trap = { version = "0.3.0" }
+polyhal = { version = "0.3.1" }
+polyhal-boot = { version = "0.3.1" }
+polyhal-macro = { version = "0.3.1" }
+polyhal-trap = { version = "0.3.1" }
 
-bitflags = "2.0.2"
+bitflags = "2.9.0"
 cfg-if = "1.0.0"
 
 [patch.crates-io]

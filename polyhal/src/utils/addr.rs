@@ -1,5 +1,5 @@
 use core::{
-    ffi::CStr,
+    ffi::{c_char, CStr},
     fmt::{Debug, Display},
     ops::Add,
 };
@@ -65,7 +65,7 @@ impl PhysAddr {
 
     #[inline]
     pub fn get_cstr(&self) -> &CStr {
-        unsafe { CStr::from_ptr(self.get_ptr::<i8>()) }
+        unsafe { CStr::from_ptr(self.get_ptr::<c_char>()) }
     }
 }
 
@@ -141,7 +141,7 @@ impl VirtAddr {
 
     #[inline]
     pub fn get_cstr(&self) -> &CStr {
-        unsafe { CStr::from_ptr(self.get_ptr::<i8>()) }
+        unsafe { CStr::from_ptr(self.get_ptr::<c_char>()) }
     }
 
     #[inline]

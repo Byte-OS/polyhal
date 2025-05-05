@@ -1,10 +1,8 @@
-use core::ops::{Index, IndexMut};
-
-use x86_64::registers::model_specific::FsBase;
-
-use crate::PageTable;
-
 use crate::components::kcontext::KContextArgs;
+use crate::PageTable;
+use core::arch::naked_asm;
+use core::ops::{Index, IndexMut};
+use x86_64::registers::model_specific::FsBase;
 
 /// Save the task context registers.
 macro_rules! save_callee_regs {
@@ -151,7 +149,7 @@ impl IndexMut<KContextArgs> for KContext {
 /// This function is unsafe because it performs a context switch, which can lead to undefined behavior if not used correctly.
 #[naked]
 pub unsafe extern "C" fn context_switch(from: *mut KContext, to: *const KContext) {
-    core::arch::asm!(
+    naked_asm!(
         // Save Kernel Context.
         "
         pop     r8 
@@ -163,7 +161,6 @@ pub unsafe extern "C" fn context_switch(from: *mut KContext, to: *const KContext
         push    r8
         ret
         ",
-        options(noreturn)
     )
 }
 
@@ -194,7 +191,7 @@ unsafe extern "C" fn context_switch_pt_impl(
     to: *const KContext,
     pt_token: usize,
 ) {
-    core::arch::asm!(
+    naked_asm!(
         // consume the return address(rip) in the stack
         // for consistency with context_switch.
         // and save page table to r9
@@ -214,7 +211,6 @@ unsafe extern "C" fn context_switch_pt_impl(
             push    r8
             ret
         ",
-        options(noreturn)
     )
 }
 

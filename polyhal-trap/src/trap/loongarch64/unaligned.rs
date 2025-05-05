@@ -1,9 +1,7 @@
 #![allow(dead_code)]
-use core::arch::global_asm;
-
-use loongArch64::register::badv;
-
 use crate::trapframe::TrapFrame;
+use core::arch::naked_asm;
+use loongArch64::register::badv;
 
 pub const LDH_OP: u32 = 0xa1;
 pub const LDHU_OP: u32 = 0xa9;
@@ -38,28 +36,11 @@ pub const FSTXD_OP: u32 = 0x7078;
 pub const FLDXS_OP: u32 = 0x7060;
 pub const FLDXD_OP: u32 = 0x7068;
 
-global_asm!(
-    r#"
-    // 2, 4, 1
-    .macro fixup_ex from, to, fix
-    .if \fix
-        .section .fixup, "ax"
-    \to: 
-        li.w	$a0, -1
-        jr	$ra
-        .previous
-    .endif
-        .section __ex_table, "a"
-        .word	\from\()b, \to\()b
-        .previous
-    .endm
-"#
-);
-
 #[allow(binary_asm_labels)]
 #[naked]
 unsafe extern "C" fn unaligned_read(addr: u64, value: &mut u64, n: u64, symbol: u32) -> i32 {
-    core::arch::asm!(
+    naked_asm!(
+        includes_trap_macros!(),
         "
             beqz	$a2, 5f
 
@@ -89,18 +70,18 @@ unsafe extern "C" fn unaligned_read(addr: u64, value: &mut u64, n: u64, symbol: 
         5:	li.w    $a0, -1
             jr	    $ra
 
-            fixup_ex 1, 6, 1
-            fixup_ex 2, 6, 0
-            fixup_ex 4, 6, 0
+            FIXUP_EX 1, 6, 1
+            FIXUP_EX 2, 6, 0
+            FIXUP_EX 4, 6, 0
         ",
-        options(noreturn)
     )
 }
 
 #[allow(binary_asm_labels)]
 #[naked]
 unsafe extern "C" fn unaligned_write(_addr: u64, _value: u64, _n: u64) -> i32 {
-    core::arch::asm!(
+    naked_asm!(
+        includes_trap_macros!(),
         "
         beqz	$a2, 3f
 
@@ -118,9 +99,8 @@ unsafe extern "C" fn unaligned_write(_addr: u64, _value: u64, _n: u64) -> i32 {
     3:	li.w    $a0, -1
         jr	    $ra
     
-        fixup_ex 2, 4, 1
+        FIXUP_EX 2, 4, 1
         ",
-        options(noreturn)
     )
 }
 

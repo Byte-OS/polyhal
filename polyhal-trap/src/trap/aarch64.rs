@@ -1,4 +1,4 @@
-use core::arch::{asm, global_asm};
+use core::arch::{global_asm, naked_asm};
 
 use aarch64_cpu::registers::{Writeable, ESR_EL1, FAR_EL1, VBAR_EL1};
 use tock_registers::interfaces::Readable;
@@ -106,10 +106,10 @@ pub fn init() {
 #[naked]
 extern "C" fn user_restore(context: *mut TrapFrame) -> TrapKind {
     unsafe {
-        asm!(
+        naked_asm!(
             r"
             sub     sp, sp, 18 * 8
-            stp     x8, x16, [sp]
+            stp     x8,  x16, [sp]
             stp     x17, x18, [sp, 2 * 8]
             stp     x19, x20, [sp, 4 * 8]
             stp     x21, x22, [sp, 6 * 8]
@@ -137,14 +137,13 @@ extern "C" fn user_restore(context: *mut TrapFrame) -> TrapKind {
             ldp     x14, x15, [x0, 14 * 8]
             ldp     x12, x13, [x0, 12 * 8]
             ldp     x10, x11, [x0, 10 * 8]
-            ldp     x8, x9,   [x0, 8 * 8]
-            ldp     x6, x7,   [x0, 6 * 8]
-            ldp     x4, x5,   [x0, 4 * 8]
-            ldp     x2, x3,   [x0, 2 * 8]
-            ldp     x0, x1,   [x0]
+            ldp     x8,  x9,  [x0, 8 * 8]
+            ldp     x6,  x7,  [x0, 6 * 8]
+            ldp     x4,  x5,  [x0, 4 * 8]
+            ldp     x2,  x3,  [x0, 2 * 8]
+            ldp     x0,  x1,  [x0]
             eret
         ",
-            options(noreturn)
         )
     }
 }

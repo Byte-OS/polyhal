@@ -1,4 +1,4 @@
-use core::ptr::addr_of_mut;
+use core::{arch::naked_asm, ptr::addr_of_mut};
 use polyhal::{
     consts::VIRT_ADDR_START,
     ctor::{ph_init_iter, CtorType},
@@ -26,7 +26,7 @@ unsafe extern "C" fn init_boot_page_table() {
 }
 
 unsafe extern "C" fn init_mmu() {
-    let ptr = BOOT_PT.as_ptr() as usize;
+    let ptr = (&raw mut BOOT_PT) as usize;
     satp::set(satp::Mode::Sv39, 0, ptr >> 12);
     TLB::flush_all();
 }
@@ -38,7 +38,7 @@ unsafe extern "C" fn init_mmu() {
 #[no_mangle]
 #[link_section = ".text.entry"]
 unsafe extern "C" fn _start() -> ! {
-    core::arch::asm!(
+    naked_asm!(
         // 1. Set Stack Pointer.
         // sp = bootstack + (hartid + 1) * 0x10000
         "   mv      s0, a0
@@ -64,7 +64,6 @@ unsafe extern "C" fn _start() -> ! {
         init_mmu = sym init_mmu,
         entry = sym rust_main,
         virt_addr_start = const VIRT_ADDR_START,
-        options(noreturn),
     )
 }
 
@@ -74,7 +73,7 @@ unsafe extern "C" fn _start() -> ! {
 #[naked]
 #[no_mangle]
 unsafe extern "C" fn _secondary_start() -> ! {
-    core::arch::asm!(
+    naked_asm!(
         // 1. Set Stack Pointer.
         // sp = a1(given Stack Pointer.)
         "
@@ -94,7 +93,6 @@ unsafe extern "C" fn _secondary_start() -> ! {
         init_mmu = sym init_mmu,
         entry = sym rust_secondary_main,
         virt_addr_start = const VIRT_ADDR_START,
-        options(noreturn)
     );
 }
 

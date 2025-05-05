@@ -1,6 +1,9 @@
+#[macro_use]
+mod macros;
+
 use super::{EscapeReason, TrapType};
 use crate::trapframe::TrapFrame;
-use core::arch::{asm, global_asm};
+use core::arch::naked_asm;
 use polyhal::{consts::VIRT_ADDR_START, timer};
 use riscv::{
     interrupt::{Exception, Interrupt},
@@ -10,70 +13,6 @@ use riscv::{
         stvec::{self, Stvec},
     },
 };
-
-global_asm!(
-    r"
-    .altmacro
-    .macro LOAD reg, offset
-        ld  \reg, \offset*8(sp)
-    .endm
-
-    .macro SAVE reg, offset
-        sd  \reg, \offset*8(sp)
-    .endm
-
-    .macro LOAD_N n
-        ld  x\n, \n*8(sp)
-    .endm
-
-    .macro SAVE_N n
-        sd  x\n, \n*8(sp)
-    .endm
-
-    .macro SAVE_GENERAL_REGS
-        SAVE    x1, 1
-        csrr    x1, sscratch
-        SAVE    x1, 2
-        .set    n, 3
-        .rept   29 
-            SAVE_N  %n
-        .set    n, n + 1
-        .endr
-
-        csrr    t0, sstatus
-        csrr    t1, sepc
-        SAVE    t0, 32
-        SAVE    t1, 33
-    .endm
-
-    .macro LOAD_GENERAL_REGS
-        LOAD    t0, 32
-        LOAD    t1, 33
-        csrw    sstatus, t0
-        csrw    sepc, t1
-
-        LOAD    x1, 1
-        .set    n, 3
-        .rept   29
-            LOAD_N  %n
-        .set    n, n + 1
-        .endr
-        LOAD    x2, 2
-    .endm
-
-    .macro LOAD_PERCPU dst, sym
-        lui  \dst, %hi(__PERCPU_\sym)
-        add  \dst, \dst, gp
-        ld   \dst, %lo(__PERCPU_\sym)(\dst)
-    .endm
-
-    .macro SAVE_PERCPU sym, temp, src
-        lui  \temp, %hi(__PERCPU_\sym)
-        add  \temp, \temp, gp
-        sd   \src,  %lo(__PERCPU_\sym)(\temp)
-    .endm
-"
-);
 
 #[no_mangle]
 #[polyhal_macro::def_percpu]
@@ -143,7 +82,8 @@ fn kernel_callback(context: &mut TrapFrame) -> TrapType {
 
 #[naked]
 pub unsafe extern "C" fn kernelvec() {
-    asm!(
+    naked_asm!(
+        includes_trap_macros!(),
         // 宏定义
         r"
             .align 4
@@ -166,7 +106,6 @@ pub unsafe extern "C" fn kernelvec() {
             sret
         ",
         cx_size = const crate::trapframe::TRAPFRAME_SIZE,
-        options(noreturn)
     )
 }
 
@@ -174,47 +113,44 @@ pub unsafe extern "C" fn kernelvec() {
 #[no_mangle]
 extern "C" fn user_restore(context: *mut TrapFrame) {
     unsafe {
-        asm!(
-            r"
-                .align 4
-                .altmacro
-            ",
+        naked_asm!(
+            includes_trap_macros!(),
             // 在内核态栈中开一个空间来存储内核态信息
             // 下次发生中断必然会进入中断入口然后恢复这个上下文.
             // 仅保存 Callee-saved regs、gp、tp、ra.
-            "   addi    sp, sp, -18*8
-                
-                sd      sp, 8*1(sp)
-                sd      gp, 8*2(sp)
-                sd      tp, 8*3(sp)
-                sd      s0, 8*4(sp)
-                sd      s1, 8*5(sp)
-                sd      s2, 8*6(sp)
-                sd      s3, 8*7(sp)
-                sd      s4, 8*8(sp)
-                sd      s5, 8*9(sp)
-                sd      s6, 8*10(sp)
-                sd      s7, 8*11(sp)
-                sd      s8, 8*12(sp)
-                sd      s9, 8*13(sp)
-                sd      s10, 8*14(sp)
-                sd      s11, 8*15(sp)
-                sd      a0,  8*16(sp)
-                sd      ra,  8*17(sp)
+            ".align 4
+                addi    sp, sp, -18*8
+
+                STR      sp,  1
+                STR      gp,  2
+                STR      tp,  3
+                STR      s0,  4
+                STR      s1,  5
+                STR      s2,  6
+                STR      s3,  7
+                STR      s4,  8
+                STR      s5,  9
+                STR      s6,  10
+                STR      s7,  11
+                STR      s8,  12
+                STR      s9,  13
+                STR      s10, 14
+                STR      s11, 15
+                STR      a0,  16
+                STR      ra,  17
             ",
             // 将栈信息保存到用户栈.
             // a0 是传入的Context, 然后下面会再次恢复 sp 地址.
-            "   sd      sp, 8*0(a0)
-                csrw    sscratch, a0
-                mv      sp, a0
-            
-                .short  0x2452      # fld  fs0, 272(sp)
-                .short  0x24f2      # fld  fs1, 280(sp)
+            "   sd       sp, 8*0(a0)
+                csrw     sscratch, a0
+                mv       sp, a0
+
+                .short   0x2452      # fld  fs0, 272(sp)
+                .short   0x24f2      # fld  fs1, 280(sp)
 
                 LOAD_GENERAL_REGS
                 sret
             ",
-            options(noreturn)
         )
     }
 }
@@ -223,10 +159,8 @@ extern "C" fn user_restore(context: *mut TrapFrame) {
 #[no_mangle]
 #[allow(named_asm_labels)]
 pub unsafe extern "C" fn uservec() {
-    asm!(
-        r"
-        .altmacro
-    ",
+    naked_asm!(
+        includes_trap_macros!(),
         // 保存 general registers, 除了 sp
         "
         SAVE_GENERAL_REGS
@@ -241,29 +175,28 @@ pub unsafe extern "C" fn uservec() {
     ",
         // 恢复内核上下文信息, 仅恢复 callee-saved 寄存器和 ra、gp、tp
         "  
-        ld      gp, 8*2(sp)
-        ld      tp, 8*3(sp)
-        ld      s0, 8*4(sp)
-        ld      s1, 8*5(sp)
-        ld      s2, 8*6(sp)
-        ld      s3, 8*7(sp)
-        ld      s4, 8*8(sp)
-        ld      s5, 8*9(sp)
-        ld      s6, 8*10(sp)
-        ld      s7, 8*11(sp)
-        ld      s8, 8*12(sp)
-        ld      s9, 8*13(sp)
-        ld      s10, 8*14(sp)
-        ld      s11, 8*15(sp)
-        ld      ra,  8*17(sp)
+        LDR      gp,  2
+        LDR      tp,  3
+        LDR      s0,  4
+        LDR      s1,  5
+        LDR      s2,  6
+        LDR      s3,  7
+        LDR      s4,  8
+        LDR      s5,  9
+        LDR      s6,  10
+        LDR      s7,  11
+        LDR      s8,  12
+        LDR      s9,  13
+        LDR      s10, 14
+        LDR      s11, 15
+        LDR      ra,  17
         
-        ld      sp, 8(sp)
+        LDR      sp,  1
     ",
         // 回收栈
         "addi sp, sp, 18*8
         ret
     ",
-        options(noreturn)
     );
 }
 

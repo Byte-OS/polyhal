@@ -39,7 +39,7 @@ pub(crate) fn init() {
     unsafe {
         let lapic = local_apic();
         lapic.set_timer_mode(TimerMode::Periodic);
-        lapic.set_timer_divide(TimerDivide::Div256); // indeed it is Div1, the name is confusing.
+        lapic.set_timer_divide(TimerDivide::Div1); // indeed it is Div1, the name is confusing.
         lapic.enable_timer();
 
         let pcspeaker = PC_SPEAKER.read();

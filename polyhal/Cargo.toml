@@ -35,9 +35,9 @@ sbi-rt = { version = "0.0.2", features = ["legacy"] }
 
 [target.'cfg(target_arch = "x86_64")'.dependencies]
 x86 = "0.52"
-x86_64 = "=0.14.12"
+x86_64 = "=0.15.2"
 multiboot = "0.8.0"
-x2apic = "0.4"
+x2apic = "0.5"
 raw-cpuid = "11.0"
 acpi = { version = "5.2.0", default-features = false }
 uart_16550 = "0.3.2"

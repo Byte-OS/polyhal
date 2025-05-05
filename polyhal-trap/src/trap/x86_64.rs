@@ -1,8 +1,11 @@
+#[macro_use]
+mod macros;
+
 use super::{EscapeReason, TrapType};
 use crate::trapframe::{FxsaveArea, TrapFrame, TRAPFRAME_SIZE};
 use bitflags::bitflags;
 use core::{
-    arch::{asm, global_asm},
+    arch::{global_asm, naked_asm},
     mem::{offset_of, size_of},
 };
 use polyhal::{
@@ -21,31 +24,6 @@ use x86_64::{
     },
     VirtAddr,
 };
-
-global_asm!(
-    r"
-    .altmacro
-    .macro LOAD reg, offset
-        ld  \reg, \offset*8(sp)
-    .endm
-
-    .macro SAVE reg, offset
-        sd  \reg, \offset*8(sp)
-    .endm
-
-    .macro LOAD_N n
-        ld  x\n, \n*8(sp)
-    .endm
-
-    .macro SAVE_N n
-        sd  x\n, \n*8(sp)
-    .endm
-
-    .macro SAVE_TP_N n
-        sd  x\n, \n*8(tp)
-    .endm
-"
-);
 
 global_asm!(include_str!("x86_64/trap.S"));
 
@@ -116,25 +94,12 @@ fn kernel_callback(context: &mut TrapFrame) {
 #[naked]
 #[no_mangle]
 pub unsafe extern "C" fn kernelvec() {
-    asm!(
+    naked_asm!(
+        includes_trap_macros!(),
         r"
             sub     rsp, 16                     # push fs_base, gs_base
 
-            push    r15
-            push    r14
-            push    r13
-            push    r12
-            push    r11
-            push    r10
-            push    r9
-            push    r8
-            push    rdi
-            push    rsi
-            push    rbp
-            push    rbx
-            push    rdx
-            push    rcx
-            push    rax
+            PUSH_GENERAL_REGS
 
             mov     rdi, rsp
             call    {trap_handler}
@@ -159,7 +124,6 @@ pub unsafe extern "C" fn kernelvec() {
             iretq
         ",
         trap_handler = sym kernel_callback,
-        options(noreturn)
     )
 }
 
@@ -175,25 +139,12 @@ pub unsafe extern "C" fn kernelvec() {
 #[naked]
 #[no_mangle]
 pub unsafe extern "C" fn uservec() {
-    asm!(
+    naked_asm!(
+        includes_trap_macros!(),
         r"
             sub     rsp, 16
 
-            push    r15
-            push    r14
-            push    r13
-            push    r12
-            push    r11
-            push    r10
-            push    r9
-            push    r8
-            push    rdi
-            push    rsi
-            push    rbp
-            push    rbx
-            push    rdx
-            push    rcx
-            push    rax
+            PUSH_GENERAL_REGS
 
             swapgs
 
@@ -217,7 +168,6 @@ pub unsafe extern "C" fn uservec() {
         ",
         // PERCPU_KERNEL_RSP_OFFSET = const PERCPU_KERNEL_RSP_OFFSET,
         PERCPU_KERNEL_RSP_OFFSET = const offset_of!(PerCPUReserved, kernel_rsp),
-        options(noreturn)
     );
 }
 
@@ -225,7 +175,7 @@ pub unsafe extern "C" fn uservec() {
 #[no_mangle]
 pub extern "C" fn user_restore(context: *mut TrapFrame) {
     unsafe {
-        asm!(
+        naked_asm!(
             // Save callee saved registers and cs and others.
             r"
                 mov ecx, 0xC0000100
@@ -284,14 +234,13 @@ pub extern "C" fn user_restore(context: *mut TrapFrame) {
             sysretq = sym sysretq,
             // PERCPU_KERNEL_RSP_OFFSET = const PERCPU_KERNEL_RSP_OFFSET,
             PERCPU_KERNEL_RSP_OFFSET = const offset_of!(PerCPUReserved, kernel_rsp),
-            options(noreturn)
         )
     }
 }
 
 #[naked]
 unsafe extern "C" fn sysretq() {
-    asm!(
+    naked_asm!(
         "
             pop rcx
             add rsp, 8
@@ -301,7 +250,6 @@ unsafe extern "C" fn sysretq() {
 
             sysretq
         ",
-        options(noreturn)
     )
 }
 
@@ -340,7 +288,8 @@ pub fn init() {
 
 #[naked]
 unsafe extern "C" fn syscall_entry() {
-    asm!(
+    naked_asm!(
+        includes_trap_macros!(),
         r"
             swapgs
             mov     gs:{PERCPU_USER_RSP_OFFSET}, rsp
@@ -354,21 +303,7 @@ unsafe extern "C" fn syscall_entry() {
             mov     [rsp - 4 * 8], r11              // vector
             sub     rsp, 6 * 8                      // skip until general registers
 
-            push    r15
-            push    r14
-            push    r13
-            push    r12
-            push    r11
-            push    r10
-            push    r9
-            push    r8
-            push    rdi
-            push    rsi
-            push    rbp
-            push    rbx
-            push    rdx
-            push    rcx
-            push    rax
+            PUSH_GENERAL_REGS
 
             mov ecx, 0xC0000100
             rdmsr
@@ -402,7 +337,6 @@ unsafe extern "C" fn syscall_entry() {
         PERCPU_USER_CONTEXT_OFFSET = const offset_of!(PerCPUReserved, user_context),
         PERCPU_USER_RSP_OFFSET = const offset_of!(PerCPUReserved, user_rsp),
         PERCPU_KERNEL_RSP_OFFSET = const offset_of!(PerCPUReserved, kernel_rsp),
-        options(noreturn)
     )
 }
 

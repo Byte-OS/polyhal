@@ -1,4 +1,5 @@
 use aarch64_cpu::{asm::barrier, registers::*};
+use core::arch::naked_asm;
 use polyhal::{
     consts::VIRT_ADDR_START,
     ctor::{ph_init_iter, CtorType},
@@ -46,7 +47,7 @@ unsafe extern "C" fn init_mmu() {
     barrier::isb(barrier::SY);
 
     // Set both TTBR0 and TTBR1
-    let root_paddr = (BOOT_PT.as_ptr() as usize & 0xFFFF_F000) as _;
+    let root_paddr = ((&raw const BOOT_PT) as usize & 0xFFFF_F000) as _;
     TTBR0_EL1.set(root_paddr);
     TTBR1_EL1.set(root_paddr);
 
@@ -59,7 +60,7 @@ unsafe extern "C" fn init_mmu() {
 }
 
 unsafe extern "C" fn init_boot_page_table() {
-    BOOT_PT[0] = PTE::new_table(pa!(BOOT_PT.as_ptr() as usize + PAGE_SIZE));
+    BOOT_PT[0] = PTE::new_table(pa!((&raw const BOOT_PT) as usize + PAGE_SIZE));
     // Level 1 Entry for Huge Page
     for i in 0..0x200 {
         BOOT_PT[0x200 + i] = PTE::new_page(
@@ -75,7 +76,7 @@ unsafe extern "C" fn init_boot_page_table() {
 unsafe extern "C" fn _start() -> ! {
     // PC = 0x8_0000
     // X0 = dtb
-    core::arch::asm!("
+    naked_asm!("
         mrs     x19, mpidr_el1
         and     x19, x19, #0xffffff     // get current CPU id
         mov     x20, x0                 // save DTB pointer
@@ -97,7 +98,6 @@ unsafe extern "C" fn _start() -> ! {
         init_mmu = sym init_mmu,
         entry = sym rust_tmp_main,
         kernel_offset = const VIRT_ADDR_START,
-        options(noreturn),
     )
 }
 
@@ -105,7 +105,7 @@ unsafe extern "C" fn _start() -> ! {
 #[naked]
 #[no_mangle]
 unsafe extern "C" fn _secondary_start() -> ! {
-    core::arch::asm!("
+    naked_asm!("
         mrs     x19, mpidr_el1
         and     x19, x19, #0xffffff     // get current CPU id
 
@@ -118,7 +118,6 @@ unsafe extern "C" fn _secondary_start() -> ! {
         b      .",
         init_mmu = sym init_mmu,
         entry = sym rust_secondary_main,
-        options(noreturn),
     )
 }
 

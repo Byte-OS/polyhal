@@ -1,112 +1,21 @@
+#[macro_use]
+mod macros;
 mod unaligned;
 
-use core::arch::{asm, global_asm};
-
+use super::{EscapeReason, TrapType};
+use crate::trapframe::TrapFrame;
+use core::arch::naked_asm;
 use loongArch64::register::estat::{self, Exception, Trap};
 use loongArch64::register::{
     badv, ecfg, eentry, prmd, pwch, pwcl, stlbps, ticlr, tlbidx, tlbrehi, tlbrentry,
 };
-use unaligned::emulate_load_store_insn;
-
-use crate::trapframe::TrapFrame;
-
-use super::{EscapeReason, TrapType};
 use polyhal::irq::TIMER_IRQ;
-
-global_asm!(
-    r"
-        .altmacro
-        .equ KSAVE_KSP,  0x30
-        .equ KSAVE_CTX,  0x31
-        .equ KSAVE_USP,  0x32
-        .macro SAVE_REGS
-            st.d    $ra, $sp,  1*8
-            st.d    $tp, $sp,  2*8
-            st.d    $a0, $sp,  4*8
-            st.d    $a1, $sp,  5*8
-            st.d    $a2, $sp,  6*8
-            st.d    $a3, $sp,  7*8
-            st.d    $a4, $sp,  8*8
-            st.d    $a5, $sp,  9*8
-            st.d    $a6, $sp, 10*8
-            st.d    $a7, $sp, 11*8
-            st.d    $t0, $sp, 12*8
-            st.d    $t1, $sp, 13*8
-            st.d    $t2, $sp, 14*8
-            st.d    $t3, $sp, 15*8
-            st.d    $t4, $sp, 16*8
-            st.d    $t5, $sp, 17*8
-            st.d    $t6, $sp, 18*8
-            st.d    $t7, $sp, 19*8
-            st.d    $t8, $sp, 20*8
-            st.d    $r21,$sp, 21*8
-            st.d    $fp, $sp, 22*8
-            st.d    $s0, $sp, 23*8
-            st.d    $s1, $sp, 24*8
-            st.d    $s2, $sp, 25*8
-            st.d    $s3, $sp, 26*8
-            st.d    $s4, $sp, 27*8
-            st.d    $s5, $sp, 28*8
-            st.d    $s6, $sp, 29*8
-            st.d    $s7, $sp, 30*8
-            st.d    $s8, $sp, 31*8
-            csrrd   $t0, KSAVE_USP
-            st.d    $t0, $sp,  3*8
-
-            csrrd	$t0, 0x1
-            st.d	$t0, $sp, 8*32  // prmd
-
-            csrrd   $t0, 0x6        
-            st.d    $t0, $sp, 8*33  // era
-        .endm
-
-        .macro LOAD_REGS
-            ld.d    $t0, $sp, 32*8
-            csrwr   $t0, 0x1        // Write PRMD(PLV PIE PWE) to prmd
-
-            ld.d    $t0, $sp, 33*8
-            csrwr   $t0, 0x6        // Write Exception Address to ERA
-
-            ld.d    $ra, $sp, 1*8
-            ld.d    $tp, $sp, 2*8
-            ld.d    $a0, $sp, 4*8
-            ld.d    $a1, $sp, 5*8
-            ld.d    $a2, $sp, 6*8
-            ld.d    $a3, $sp, 7*8
-            ld.d    $a4, $sp, 8*8
-            ld.d    $a5, $sp, 9*8
-            ld.d    $a6, $sp, 10*8
-            ld.d    $a7, $sp, 11*8
-            ld.d    $t0, $sp, 12*8
-            ld.d    $t1, $sp, 13*8
-            ld.d    $t2, $sp, 14*8
-            ld.d    $t3, $sp, 15*8
-            ld.d    $t4, $sp, 16*8
-            ld.d    $t5, $sp, 17*8
-            ld.d    $t6, $sp, 18*8
-            ld.d    $t7, $sp, 19*8
-            ld.d    $t8, $sp, 20*8
-            ld.d    $r21,$sp, 21*8
-            ld.d    $fp, $sp, 22*8
-            ld.d    $s0, $sp, 23*8
-            ld.d    $s1, $sp, 24*8
-            ld.d    $s2, $sp, 25*8
-            ld.d    $s3, $sp, 26*8
-            ld.d    $s4, $sp, 27*8
-            ld.d    $s5, $sp, 28*8
-            ld.d    $s6, $sp, 29*8
-            ld.d    $s7, $sp, 30*8
-            ld.d    $s8, $sp, 31*8
-            
-            // restore sp
-            ld.d    $sp, $sp, 3*8
-        .endm
-    "
-);
+use unaligned::emulate_load_store_insn;
 
 #[naked]
 pub unsafe extern "C" fn user_vec() {
-    core::arch::asm!(
+    naked_asm!(
+        includes_trap_macros!(),
         "
             csrrd   $sp,  KSAVE_CTX
             SAVE_REGS
@@ -129,7 +38,6 @@ pub unsafe extern "C" fn user_vec() {
             ret
 
         ",
-        options(noreturn)
     );
 }
 
@@ -137,7 +45,8 @@ pub unsafe extern "C" fn user_vec() {
 #[no_mangle]
 pub extern "C" fn user_restore(context: *mut TrapFrame) {
     unsafe {
-        asm!(
+        naked_asm!(
+            includes_trap_macros!(),
             r"
                 addi.d  $sp,  $sp, -13*8
                 st.d    $ra,  $sp, 0*8
@@ -162,7 +71,6 @@ pub extern "C" fn user_restore(context: *mut TrapFrame) {
 
                 ertn
             ",
-            options(noreturn)
         )
     }
 }
@@ -187,50 +95,40 @@ pub fn run_user_task(cx: &mut TrapFrame) -> EscapeReason {
 
 #[naked]
 pub unsafe extern "C" fn trap_vector_base() {
-    core::arch::asm!(
+    naked_asm!(
+        includes_trap_macros!(),
         "
             .balign 4096
-                // Check whether it was from user privilege.
-                csrwr   $sp, KSAVE_USP
-                csrrd   $sp, 0x1
-                andi    $sp, $sp, 0x3
-                bnez    $sp, {user_vec} 
-            
-                csrrd   $sp, KSAVE_USP
-                addi.d  $sp, $sp, -{trapframe_size} // allocate space
-            
-                // save the registers.
+            // Check whether it was from user privilege.
+            csrwr   $sp, KSAVE_USP
+            csrrd   $sp, 0x1
+            andi    $sp, $sp, 0x3
+            bnez    $sp, {user_vec} 
+        
+            csrrd   $sp, KSAVE_USP
+            addi.d  $sp, $sp, -{trapframe_size} // allocate space
+        
+            // save the registers.
 
-                SAVE_REGS
-            
-                move    $a0, $sp
-                bl      {trap_handler}
-            
-                // Load registers from sp, include new sp
-                LOAD_REGS
-                ertn
+            SAVE_REGS
+        
+            move    $a0, $sp
+            bl      {trap_handler}
+        
+            // Load registers from sp, include new sp
+            LOAD_REGS
+            ertn
         ",
         trapframe_size = const crate::trapframe::TRAPFRAME_SIZE,
         user_vec = sym user_vec,
         trap_handler = sym loongarch64_trap_handler,
-        options(noreturn)
     );
 }
 
 #[naked]
 pub unsafe extern "C" fn tlb_fill() {
-    core::arch::asm!(
+    naked_asm!(
         "
-        .equ LA_CSR_PGDL,          0x19    /* Page table base address when VA[47] = 0 */
-        .equ LA_CSR_PGDH,          0x1a    /* Page table base address when VA[47] = 1 */
-        .equ LA_CSR_PGD,           0x1b    /* Page table base */
-        .equ LA_CSR_TLBRENTRY,     0x88    /* TLB refill exception entry */
-        .equ LA_CSR_TLBRBADV,      0x89    /* TLB refill badvaddr */
-        .equ LA_CSR_TLBRERA,       0x8a    /* TLB refill ERA */
-        .equ LA_CSR_TLBRSAVE,      0x8b    /* KScratch for TLB refill exception */
-        .equ LA_CSR_TLBRELO0,      0x8c    /* TLB refill entrylo0 */
-        .equ LA_CSR_TLBRELO1,      0x8d    /* TLB refill entrylo1 */
-        .equ LA_CSR_TLBREHI,       0x8e    /* TLB refill entryhi */
         .balign 4096
             csrwr   $t0, LA_CSR_TLBRSAVE
             csrrd   $t0, LA_CSR_PGD
@@ -242,7 +140,6 @@ pub unsafe extern "C" fn tlb_fill() {
             csrrd   $t0, LA_CSR_TLBRSAVE
             ertn
         ",
-        options(noreturn)
     );
 }
 

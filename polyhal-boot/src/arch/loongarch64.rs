@@ -1,3 +1,4 @@
+use core::arch::naked_asm;
 use loongArch64::register::euen;
 use polyhal::{
     consts::QEMU_DTB_ADDR,
@@ -26,7 +27,7 @@ macro_rules! init_dwm {
 #[no_mangle]
 #[link_section = ".text.entry"]
 unsafe extern "C" fn _start() -> ! {
-    core::arch::asm!(
+    naked_asm!(
         init_dwm!(),
         "# Enable PG
         li.w        $t0, 0xb0       # PLV=0, IE=0, PG=1
@@ -42,7 +43,6 @@ unsafe extern "C" fn _start() -> ! {
         jirl        $zero,$t0,0
         ",
         entry = sym rust_tmp_main,
-        options(noreturn),
     )
 }
 
@@ -52,7 +52,7 @@ unsafe extern "C" fn _start() -> ! {
 #[naked]
 #[no_mangle]
 unsafe extern "C" fn _secondary_start() -> ! {
-    core::arch::asm!(
+    naked_asm!(
         init_dwm!(),
         "# Load Stack Pointer From Message Buffer
         li.w         $t0, {MBUF1}
@@ -63,7 +63,6 @@ unsafe extern "C" fn _secondary_start() -> ! {
 
         jirl         $zero, $t0, 0
         ",
-        options(noreturn),
         MBUF1 = const loongArch64::consts::LOONGARCH_CSR_MAIL_BUF1,
         entry = sym _rust_secondary_main,
     )

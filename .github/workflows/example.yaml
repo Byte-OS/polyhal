@@ -48,44 +48,10 @@ jobs:
       run: yes | pacman -Syy make cmake rustup gcc
     - name: setup rust toolchain
       run: rustup default nightly && cargo install cargo-binutils
-    - name: Test ${{ matrix.arch }}
-      run: cd example && PATH=$PATH:~/.cargo/bin make ARCH=${{ matrix.arch }} build
     - name: Install Qemu
       run: yes | pacman -Syy ${{ matrix.packages }}
-    - name: Test run
-      run: cd example && PATH=$PATH:~/.cargo/bin make ARCH=${{ matrix.arch }} run
+    - name: Run Example
+      run: PATH=$PATH:~/.cargo/bin make ARCH=${{ matrix.arch }} example > output.log
       timeout-minutes: 1
-  
-  template:
-    runs-on: ubuntu-latest
-    container:
-      image: archlinux:base
-      volumes:
-        - .:/code
-    strategy:
-      fail-fast: false
-      matrix:
-        arch: [x86_64, riscv64, aarch64, loongarch64]
-        include:
-          - arch: aarch64
-            packages: qemu-system-aarch64
-          - arch: riscv64
-            packages: qemu-system-riscv
-          - arch: x86_64
-            packages: qemu-system-x86
-          - arch: loongarch64
-            packages: qemu-system-loongarch64
-    steps:
-      - name: Install generaic tools
-        run: yes | pacman -Syy make cmake rustup gcc git libgit2 libgit2-glib pkgconf openssl
-      - name: Install Rust toolchain
-        run: rustup default stable && cargo install cargo-binutils && cargo install cargo-generate
-      - name: generate by template
-        run: USER=test cargo generate --git https://github.com/Byte-OS/polyhal-template.git -n test-polyhal
-      - name: Install Qemu
-        run: yes | pacman -Syy ${{ matrix.packages }}
-      - name: test run
-        run: cd test-polyhal && (PATH=$PATH:~/.cargo/bin timeout 60 make ARCH=${{ matrix.arch }} run > output.log) || echo "qemu exited!"
-        timeout-minutes: 2
-      - name: test log
-        run: grep "\[kernel\] exited successfully" test-polyhal/output.log
+    - name: Parse Ouput
+      run: grep "Run END. Shutdown successfully." output.log

@@ -1,0 +1,1 @@
+window.SIDEBAR_ITEMS = {"enum":["CtorType"],"fn":["__start_ph_init","__stop_ph_init","ph_init_iter"],"struct":["PHInitWrap"]};

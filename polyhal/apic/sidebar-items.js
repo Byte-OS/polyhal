@@ -1,0 +1,1 @@
+window.SIDEBAR_ITEMS = {"constant":["MAX_IRQ_COUNT","TIMER_IRQ_NUM"],"fn":["init","io_apic","local_apic","pic_eoi","raw_apic_id"],"mod":["vectors"]};

@@ -8,12 +8,13 @@ use core::panic::PanicInfo;
 
 use frame::frame_alloc;
 use polyhal::mem::{get_fdt, get_mem_areas};
-use polyhal::println;
+use polyhal::percpu::get_local_thread_pointer;
 use polyhal::{
     common::PageAlloc,
     instruction::{ebreak, shutdown},
     PhysAddr,
 };
+use polyhal::{percpu, println};
 use polyhal_boot::define_entry;
 use polyhal_trap::trap::TrapType::{self, *};
 use polyhal_trap::trapframe::{TrapFrame, TrapFrameArgs};
@@ -59,7 +60,8 @@ fn kernel_interrupt(ctx: &mut TrapFrame, trap_type: TrapType) {
 }
 
 /// kernel main function, entry point.
-fn main(_hartid: usize) {
+fn main(hartid: usize) {
+    check_percpu(hartid);
     println!("[kernel] Hello, world!");
     allocator::init_allocator();
     log::debug!("Test Logger DEBUG!");
@@ -91,7 +93,22 @@ fn main(_hartid: usize) {
     shutdown();
 }
 
+#[percpu]
+static mut TEST_PERCPU: usize = 0;
+
+fn check_percpu(hartid: usize) {
+    log::debug!(
+        "hart {} percpu base: {:#x}",
+        hartid,
+        get_local_thread_pointer()
+    );
+    assert_eq!(*TEST_PERCPU, 0);
+    *TEST_PERCPU.ref_mut() = hartid;
+    assert_eq!(*TEST_PERCPU, hartid);
+}
+
 fn secondary(hartid: usize) {
+    check_percpu(hartid);
     println!("Secondary Hart ID: {}", hartid);
     loop {}
 }

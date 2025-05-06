@@ -7,10 +7,10 @@ use x86_64::structures::gdt::{Descriptor, DescriptorFlags};
 use x86_64::structures::{tss::TaskStateSegment, DescriptorTablePointer};
 use x86_64::{addr::VirtAddr, PrivilegeLevel};
 
-#[polyhal_macro::def_percpu]
+#[polyhal_macro::percpu]
 pub(super) static GDT: LazyInit<GdtStruct> = LazyInit::new();
 
-#[polyhal_macro::def_percpu]
+#[polyhal_macro::percpu]
 pub(super) static TSS: LazyInit<TaskStateSegment> = LazyInit::new();
 
 /// A wrapper of the Global Descriptor Table (GDT) with maximum 16 entries.
@@ -97,20 +97,16 @@ impl fmt::Debug for GdtStruct {
 
 pub fn init() {
     unsafe {
-        let tss = TSS.current_ref_raw();
-        let gdt = GDT.current_ref_mut_raw();
-        tss.init_once(TaskStateSegment::new());
-        gdt.init_once(GdtStruct::new(tss));
-        gdt.load();
-        gdt.load_tss();
+        TSS.init_once(TaskStateSegment::new());
+        GDT.init_once(GdtStruct::new(TSS.ref_mut()));
+        GDT.load();
+        GDT.load_tss();
     }
 }
 
 #[inline]
 pub fn set_tss_kernel_sp(addr: usize) {
     unsafe {
-        TSS.with_current(|tss| {
-            tss.get_mut_unchecked().privilege_stack_table[0] = VirtAddr::new(addr as _);
-        });
+        TSS.ref_mut().get_mut_unchecked().privilege_stack_table[0] = VirtAddr::new(addr as _);
     }
 }

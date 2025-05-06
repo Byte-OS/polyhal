@@ -69,3 +69,6 @@ impl Time {
         Self(raw)
     }
 }
+
+#[polyhal_macro::percpu]
+static TEST_MACRO: usize = 1;

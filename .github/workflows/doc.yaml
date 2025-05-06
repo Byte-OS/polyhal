@@ -5,7 +5,6 @@ on:
   push:
     branches:
       - main
-    
 
 jobs:
   test:
@@ -15,8 +14,6 @@ jobs:
     steps:
     - uses: actions/checkout@v4
     - uses: dtolnay/rust-toolchain@nightly
-    - name: add target
-      run: rustup target add riscv64gc-unknown-none-elf
     - name: generate doc
       run: cargo doc --no-deps --all-features
     - name: Deploy to Github Pages
@@ -24,4 +21,4 @@ jobs:
       with:
         single-commit: true
         branch: gh-pages
-        folder: target/riscv64gc-unknown-none-elf/doc
+        folder: target/doc

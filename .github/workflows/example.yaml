@@ -51,7 +51,7 @@ jobs:
     - name: Install Qemu
       run: yes | pacman -Syy ${{ matrix.packages }}
     - name: Run Example
-      run: PATH=$PATH:~/.cargo/bin make ARCH=${{ matrix.arch }} example
+      run: PATH=$PATH:~/.cargo/bin make ARCH=${{ matrix.arch }} example > output.log
       timeout-minutes: 1
     - name: Parse Ouput
       run: grep "Run END. Shutdown successfully." output.log

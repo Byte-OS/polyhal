@@ -1,5 +1,6 @@
 use core::arch::naked_asm;
 use loongArch64::register::euen;
+use polyhal::percpu::set_local_thread_pointer;
 use polyhal::{
     consts::QEMU_DTB_ADDR,
     ctor::{ph_init_iter, CtorType},
@@ -74,6 +75,7 @@ unsafe extern "C" fn _secondary_start() -> ! {
 pub fn rust_tmp_main(hart_id: usize) {
     super::clear_bss();
     let _ = init_dtb_once(QEMU_DTB_ADDR);
+    set_local_thread_pointer(hart_id);
 
     // Initialize CPU Configuration.
     init_cpu();
@@ -97,6 +99,7 @@ fn init_cpu() {
 
 /// The entry point for the second core.
 pub(crate) extern "C" fn _rust_secondary_main() {
+    set_local_thread_pointer(hart_id());
     // Initialize CPU Configuration.
     init_cpu();
 

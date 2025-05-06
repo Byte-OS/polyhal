@@ -1,5 +1,6 @@
 use aarch64_cpu::{asm::barrier, registers::*};
 use core::arch::naked_asm;
+use polyhal::percpu::set_local_thread_pointer;
 use polyhal::{
     consts::VIRT_ADDR_START,
     ctor::{ph_init_iter, CtorType},
@@ -121,10 +122,10 @@ unsafe extern "C" fn _secondary_start() -> ! {
     )
 }
 
-pub fn rust_tmp_main(hart_id: usize, dt: PhysAddr) {
+pub fn rust_tmp_main(hartid: usize, dt: PhysAddr) {
     super::clear_bss();
     let _ = init_dtb_once(dt);
-
+    set_local_thread_pointer(hartid);
     init_cpu();
     ph_init_iter(CtorType::Cpu).for_each(|x| (x.func)());
 
@@ -132,15 +133,16 @@ pub fn rust_tmp_main(hart_id: usize, dt: PhysAddr) {
     ph_init_iter(CtorType::Platform).for_each(|x| (x.func)());
     ph_init_iter(CtorType::HALDriver).for_each(|x| (x.func)());
 
-    super::call_real_main(hart_id);
+    super::call_real_main(hartid);
 }
 
 /// Rust secondary entry for core except Boot Core.
-fn rust_secondary_main(hart_id: usize) {
+fn rust_secondary_main(hartid: usize) {
+    set_local_thread_pointer(hartid);
     // Initialize the cpu configuration.
     init_cpu();
 
-    super::call_real_main(hart_id);
+    super::call_real_main(hartid);
 }
 
 /// Initialize the CPU configuration.

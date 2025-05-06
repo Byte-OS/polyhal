@@ -31,6 +31,7 @@ pub use utils::addr::{PhysAddr, VirtAddr};
 pub use polyhal_macro::arch_entry;
 #[cfg(feature = "trap")]
 pub use polyhal_macro::arch_interrupt;
+pub use polyhal_macro::percpu;
 
 // Re export the Module like Structure.
 pub use pagetable::{MappingFlags, MappingSize, PageTable, PageTableWrapper};

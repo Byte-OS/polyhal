@@ -42,6 +42,10 @@ bitflags! {
     }
 }
 
+#[polyhal_macro::percpu]
+#[no_mangle]
+static KERNEL_SP: usize = 0;
+
 // 内核中断回调
 #[no_mangle]
 fn kernel_callback(context: &mut TrapFrame) {
@@ -314,7 +318,7 @@ unsafe extern "C" fn syscall_entry() {
             rdmsr
             mov [rsp + 16*8+4], edx
             mov [rsp + 16*8], eax   # push gs_base
-        
+
             mov    rsp, gs:{PERCPU_KERNEL_RSP_OFFSET}  // kernel rsp
             pop r15
             pop r14

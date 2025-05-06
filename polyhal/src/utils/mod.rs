@@ -2,6 +2,7 @@
 mod macros;
 #[macro_use]
 pub mod addr;
+pub mod percpu;
 
 mod mutex_no_irq;
 

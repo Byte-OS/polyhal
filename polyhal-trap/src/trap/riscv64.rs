@@ -14,14 +14,6 @@ use riscv::{
     },
 };
 
-#[no_mangle]
-#[polyhal_macro::def_percpu]
-static KERNEL_RSP: usize = 0;
-
-#[no_mangle]
-#[polyhal_macro::def_percpu]
-static USER_RSP: usize = 0;
-
 // Initialize the trap handler.
 pub(crate) fn init() {
     unsafe {

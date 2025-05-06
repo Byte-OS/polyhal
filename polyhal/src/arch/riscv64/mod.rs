@@ -1,6 +1,6 @@
 pub mod consts;
 
-#[polyhal_macro::def_percpu]
+#[polyhal_macro::percpu]
 pub(crate) static CPU_ID: usize = 0;
 
 #[inline]
@@ -13,5 +13,5 @@ pub fn wfi() {
 }
 
 pub fn hart_id() -> usize {
-    CPU_ID.read_current()
+    *CPU_ID
 }

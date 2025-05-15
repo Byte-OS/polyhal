@@ -20,3 +20,7 @@ pub enum KContextArgs {
 }
 
 pub_use_arch!(context_switch, context_switch_pt);
+
+#[cfg(feature = "fp_simd")]
+#[cfg(target_arch = "loongarch64")]
+pub_use_arch!(save_fp_regs, restore_fp_regs);

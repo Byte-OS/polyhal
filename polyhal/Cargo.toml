@@ -13,6 +13,7 @@ repository = { workspace = true }
 trap = []
 boot = []
 logger = []
+fp_simd = []
 
 graphic = []
 

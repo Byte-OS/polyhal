@@ -1,0 +1,1 @@
+window.SIDEBAR_ITEMS = {"fn":["add_memory_region","alloc","get_fdt","get_mem_areas","init_dtb_once","parse_system_info"]};

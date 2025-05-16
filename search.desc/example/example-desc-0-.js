@@ -1,0 +1,1 @@
+searchState.loadedDescShard("example", 0, "Returns the argument unchanged.\nCalls <code>U::from(self)</code>.\nkernel interrupt\nkernel main function, entry point.\nDump bar Contents.\nEnumerate the PCI devices\nInitialize PCI Configuration.")

@@ -340,9 +340,7 @@ unsafe extern "C" fn context_switch_pt_impl(
 pub unsafe extern "C" fn save_fp_regs(from: *mut KContext) {
     naked_asm!(
         // Save floating point registers.
-        "
-            addi.d    $a0, $a0, {fp_offset}
-        ",
+        "addi.d    $a0, $a0, {fp_offset}",
         save_fp_regs!(),
         "ret",
         fp_offset = const offset_of!(KContext, fp_status)
@@ -353,9 +351,7 @@ pub unsafe extern "C" fn save_fp_regs(from: *mut KContext) {
 #[naked]
 pub unsafe extern "C" fn restore_fp_regs(to: *const KContext) {
     naked_asm!(
-        "
-            addi.d    $a0, $a0, {fp_offset}
-        ",
+        "addi.d    $a0, $a0, {fp_offset}",
         restore_fp_regs!(),
         "ret",
         fp_offset = const offset_of!(KContext, fp_status)

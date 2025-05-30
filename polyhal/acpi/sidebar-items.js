@@ -1,0 +1,1 @@
+window.SIDEBAR_ITEMS = {"fn":["get_pci_base","get_pm1a_addr","init"]};

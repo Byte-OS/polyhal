@@ -1,0 +1,1 @@
+window.SIDEBAR_ITEMS = {"fn":["_polyhal_defined_main","_polyhal_defined_secondary","check_percpu","kernel_interrupt","main","panic","secondary"],"mod":["allocator","frame","pci"],"static":["TEST_PERCPU","TIMER_TICKS","__PERCPU_TEST_PERCPU","__PERCPU_TIMER_TICKS"],"struct":["PageAllocImpl"]};

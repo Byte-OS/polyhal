@@ -1,0 +1,1 @@
+window.SIDEBAR_ITEMS = {"attr":["arch_entry","arch_interrupt","percpu"],"constant":["MEM_VECTOR_CAPACITY"],"fn":["hart_id"],"macro":["bit","bits","display_info","pa","ph_ctor","print","println","pub_use_arch","va"],"mod":["acpi","apic","common","consts","ctor","debug_console","gdt","idt","instruction","irq","kcontext","mem","multicore","pagetable","percpu","timer","utils"]};

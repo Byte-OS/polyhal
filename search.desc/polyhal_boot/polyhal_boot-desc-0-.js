@@ -1,0 +1,1 @@
+searchState.loadedDescShard("polyhal_boot", 0, "Boot Components.\nDefine the entry point.")

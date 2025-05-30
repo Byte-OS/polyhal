@@ -26,24 +26,6 @@ static mut LOCAL_APIC: Option<LocalApic> = None;
 static mut IS_X2APIC: bool = false;
 static IO_APIC: Once<MutexNoIrq<IoApic>> = Once::new();
 
-/// Registers an IRQ handler for the given IRQ.
-///
-/// It also enables the IRQ if the registration succeeds. It returns `false` if
-/// the registration failed.
-// pub fn register_handler(vector: usize, handler: crate::irq::IrqHandler) -> bool {
-//     crate::irq::register_handler_common(vector, handler)
-// }
-
-/// Dispatches the IRQ.
-///
-/// This function is called by the common interrupt handler. It looks
-/// up in the IRQ handler table and calls the corresponding handler. If
-/// necessary, it also acknowledges the interrupt controller after handling.
-// pub fn dispatch_irq(vector: usize) {
-//     crate::irq::dispatch_irq_common(vector);
-//     unsafe { local_apic().end_of_interrupt() };
-// }
-
 pub fn local_apic<'a>() -> &'a mut LocalApic {
     // It's safe as LAPIC is per-cpu.
     unsafe { LOCAL_APIC.as_mut().unwrap() }

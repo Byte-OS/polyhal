@@ -4,11 +4,15 @@
 mod allocator;
 mod frame;
 mod pci;
+use core::hint::spin_loop;
 use core::panic::PanicInfo;
+use core::time::Duration;
 
 use frame::frame_alloc;
+use polyhal::irq::IRQ;
 use polyhal::mem::{get_fdt, get_mem_areas};
 use polyhal::percpu::get_local_thread_pointer;
+use polyhal::timer::{self, current_time};
 use polyhal::{
     common::PageAlloc,
     instruction::{ebreak, shutdown},
@@ -31,6 +35,9 @@ impl PageAlloc for PageAllocImpl {
     }
 }
 
+#[percpu]
+static mut TIMER_TICKS: usize = 0;
+
 /// kernel interrupt
 #[polyhal::arch_interrupt]
 fn kernel_interrupt(ctx: &mut TrapFrame, trap_type: TrapType) {
@@ -51,7 +58,10 @@ fn kernel_interrupt(ctx: &mut TrapFrame, trap_type: TrapType) {
             log::info!("illegal instruction");
         }
         Timer => {
-            log::info!("Timer");
+            TIMER_TICKS.with_mut(|ticks| *ticks += 1);
+            let next = current_time() + Duration::from_millis(100);
+            timer::set_next_timer(next);
+            log::info!("Timer: {:#x?}  next: {:#x?}", TIMER_TICKS.read(), next);
         }
         _ => {
             log::warn!("unsuspended trap type: {:?}", trap_type);
@@ -87,8 +97,18 @@ fn main(hartid: usize) {
 
     // Test BreakPoint Interrupt
     ebreak();
-
     crate::pci::init();
+
+    log::info!("Waiting for TIMER_TICKS greater than 5");
+    IRQ::int_enable();
+    let target = current_time() + Duration::from_millis(1);
+    timer::set_next_timer(target);
+    log::info!("current: {:#x?} target: {:#x?}", current_time(), target);
+
+    while *TIMER_TICKS <= 5 {
+        spin_loop();
+    }
+
     log::info!("Run END. Shutdown successfully.");
     shutdown();
 }

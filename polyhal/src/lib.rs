@@ -23,7 +23,6 @@ mod components;
 pub mod mem;
 pub use components::*;
 pub mod pagetable;
-pub mod time;
 
 pub use utils::addr::{PhysAddr, VirtAddr};
 
@@ -35,4 +34,3 @@ pub use polyhal_macro::percpu;
 
 // Re export the Module like Structure.
 pub use pagetable::{MappingFlags, MappingSize, PageTable, PageTableWrapper};
-pub use time::Time;

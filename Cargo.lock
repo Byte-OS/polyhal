@@ -222,7 +222,7 @@ checksum = "57c0d7b74b563b49d38dae00a0c37d4d6de9b432382b2892f0574ddcae73fd0a"
 
 [[package]]
 name = "polyhal"
-version = "0.3.2"
+version = "0.4.0"
 dependencies = [
  "aarch64-cpu",
  "acpi",
@@ -252,7 +252,7 @@ dependencies = [
 
 [[package]]
 name = "polyhal-boot"
-version = "0.3.2"
+version = "0.4.0"
 dependencies = [
  "aarch64-cpu",
  "cfg-if",
@@ -268,7 +268,7 @@ dependencies = [
 
 [[package]]
 name = "polyhal-macro"
-version = "0.3.2"
+version = "0.4.0"
 dependencies = [
  "proc-macro-crate",
  "proc-macro2",
@@ -278,7 +278,7 @@ dependencies = [
 
 [[package]]
 name = "polyhal-trap"
-version = "0.3.2"
+version = "0.4.0"
 dependencies = [
  "aarch64-cpu",
  "bitflags 2.9.0",

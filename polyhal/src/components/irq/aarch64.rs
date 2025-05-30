@@ -3,6 +3,7 @@ use arm_gicv2::{translate_irq, InterruptType};
 use arm_gicv2::{GicCpuInterface, GicDistributor};
 
 use crate::components::irq::{IRQVector, IRQ};
+use crate::ctor::CtorType;
 use crate::utils::MutexNoIrq;
 use crate::PhysAddr;
 
@@ -87,3 +88,5 @@ impl IRQ {
         DAIF.read(DAIF::I) == 0
     }
 }
+
+ph_ctor!(AARCH64_INIT_GIC, CtorType::Cpu, init);

@@ -86,7 +86,7 @@ pub struct MutexNoIrqGuard<'a, T: ?Sized + 'a> {
     _irq_status: IrqStatus,
 }
 
-impl<'a, T: ?Sized> Deref for MutexNoIrqGuard<'a, T> {
+impl<T: ?Sized> Deref for MutexNoIrqGuard<'_, T> {
     type Target = T;
 
     fn deref(&self) -> &T {
@@ -94,7 +94,7 @@ impl<'a, T: ?Sized> Deref for MutexNoIrqGuard<'a, T> {
     }
 }
 
-impl<'a, T: ?Sized> DerefMut for MutexNoIrqGuard<'a, T> {
+impl<T: ?Sized> DerefMut for MutexNoIrqGuard<'_, T> {
     fn deref_mut(&mut self) -> &mut T {
         &mut (self.guard)
     }

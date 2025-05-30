@@ -5,7 +5,6 @@ use tock_registers::interfaces::Readable;
 
 use crate::trapframe::TrapFrame;
 use polyhal::irq::{get_irq, TIMER_IRQ_NUM};
-use polyhal::timer::set_next_timer;
 
 use super::{EscapeReason, TrapType};
 
@@ -38,7 +37,6 @@ fn handle_exception(tf: &mut TrapFrame, kind: TrapKind, source: TrapSource) -> T
         let trap_type = match irq.irq_num() {
             TIMER_IRQ_NUM => {
                 irq.ack();
-                set_next_timer();
                 TrapType::Timer
             }
             _ => TrapType::Irq(irq),

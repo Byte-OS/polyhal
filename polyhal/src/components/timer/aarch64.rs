@@ -1,26 +1,48 @@
+use core::time::Duration;
+
 use aarch64_cpu::registers::{CNTFRQ_EL0, CNTPCT_EL0, CNTP_CTL_EL0, CNTP_TVAL_EL0};
 use tock_registers::interfaces::{Readable, Writeable};
 
-use crate::{
-    components::irq::{IRQ, TIMER_IRQ_NUM},
-    time::Time,
-};
+use crate::components::irq::{IRQ, TIMER_IRQ_NUM};
 
-impl Time {
-    #[inline]
-    pub fn get_freq() -> usize {
-        CNTFRQ_EL0.get() as _
-    }
+use super::current_time;
 
-    /// Returns the current clock time in hardware ticks.
-    #[inline]
-    pub fn now() -> Self {
-        Self(CNTPCT_EL0.get() as _)
-    }
+/// Get ticks from system clock
+///
+/// # Return
+///
+/// - [u64] clock ticks
+#[inline]
+pub fn get_ticks() -> u64 {
+    CNTPCT_EL0.get()
 }
 
-pub fn set_next_timer() {
-    CNTP_TVAL_EL0.set(CNTFRQ_EL0.get() / 1000);
+/// Get frequency of the system clock
+///
+/// # Return
+///
+/// - [u64] n ticks per second
+#[inline]
+pub fn get_freq() -> u64 {
+    CNTFRQ_EL0.get()
+}
+
+/// Set the next timer
+///
+/// # parameters
+///
+/// - next [Duration] next time from system boot
+#[inline]
+pub fn set_next_timer(next: Duration) {
+    let curr = current_time();
+    if next < curr {
+        return;
+    }
+    let interval = next - curr;
+    CNTP_TVAL_EL0.set(
+        interval.as_secs() * get_freq()
+            + interval.subsec_nanos() as u64 * get_freq() / 1_000_000_000,
+    );
 }
 
 pub fn init() {
@@ -30,5 +52,5 @@ pub fn init() {
     CNTP_TVAL_EL0.set(0);
     // Enable the timer irq.
     IRQ::irq_enable(TIMER_IRQ_NUM);
-    set_next_timer();
+    set_next_timer(Duration::ZERO);
 }

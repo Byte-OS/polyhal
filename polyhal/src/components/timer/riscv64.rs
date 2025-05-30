@@ -1,33 +1,46 @@
+use core::time::Duration;
+
 // TODO: Get CLOCK_FREQUENCY CLOCK_FREQ
-use crate::time::Time;
 use riscv::register::{sie, time};
 
-const CLOCK_FREQ: usize = 12500000;
+const CLOCK_FREQ: u64 = 12500000;
 
-impl Time {
-    #[inline]
-    pub fn get_freq() -> usize {
-        CLOCK_FREQ
-    }
-
-    #[inline]
-    pub fn now() -> Self {
-        Self(time::read())
-    }
-}
-
-// Setting the time interval for then next time
+/// Get ticks from system clock
+///
+/// # Return
+///
+/// - [u64] clock ticks
 #[inline]
-pub fn set_next_timeout() {
-    // Setting the timer through calling SBI.
-    sbi_rt::set_timer((time::read() + CLOCK_FREQ / 100) as _);
+pub fn get_ticks() -> u64 {
+    time::read64()
 }
 
-// Initialize the Timer 
+/// Get frequency of the system clock
+///
+/// # Return
+///
+/// - [u64] n ticks per second
+#[inline]
+pub fn get_freq() -> u64 {
+    CLOCK_FREQ
+}
+
+/// Set the next timer
+///
+/// # parameters
+///
+/// - next [Duration] next time from system boot#[inline]
+pub fn set_next_timer(next: Duration) {
+    sbi_rt::set_timer(
+        next.as_secs() * CLOCK_FREQ + next.subsec_nanos() as u64 * CLOCK_FREQ / 1_000_000_000,
+    );
+}
+
+// Initialize the Timer
 pub fn init() {
     unsafe {
         sie::set_stimer();
     }
-    set_next_timeout();
+    set_next_timer(Duration::ZERO);
     log::info!("initialize timer interrupt");
 }

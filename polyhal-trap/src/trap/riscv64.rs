@@ -4,7 +4,7 @@ mod macros;
 use super::{EscapeReason, TrapType};
 use crate::trapframe::TrapFrame;
 use core::arch::naked_asm;
-use polyhal::{consts::VIRT_ADDR_START, timer};
+use polyhal::consts::VIRT_ADDR_START;
 use riscv::{
     interrupt::{Exception, Interrupt},
     register::{
@@ -47,10 +47,7 @@ fn kernel_callback(context: &mut TrapFrame) -> TrapType {
         }
         Trap::Exception(Exception::UserEnvCall) => TrapType::SysCall,
         // 时钟中断
-        Trap::Interrupt(Interrupt::SupervisorTimer) => {
-            timer::set_next_timeout();
-            TrapType::Timer
-        }
+        Trap::Interrupt(Interrupt::SupervisorTimer) => TrapType::Timer,
         Trap::Exception(Exception::StorePageFault) => TrapType::StorePageFault(stval),
         Trap::Exception(Exception::StoreFault) => TrapType::StorePageFault(stval),
         Trap::Exception(Exception::InstructionPageFault) => TrapType::InstructionPageFault(stval),

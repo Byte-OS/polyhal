@@ -4,25 +4,55 @@ use raw_cpuid::CpuId;
 use x2apic::lapic::{TimerDivide, TimerMode};
 use x86_64::instructions::port::Port;
 
-use crate::{arch::apic::local_apic, time::Time};
+use crate::arch::apic::local_apic;
 
-static mut CPU_FREQ_MHZ: usize = 4_000_000_000;
-static mut PIT_CMD: Port<u8> = Port::new(0x43);
-static mut PIT_CH2: Port<u8> = Port::new(0x42);
-static mut PC_SPEAKER: Port<u8> = Port::new(0x61);
+use super::current_time;
+
+static mut CPU_FREQ_MHZ: u64 = 4_000_000_000;
+const PIT_CH2_PORT: u16 = 0x42;
+const PIT_CMD_PORT: u16 = 0x43;
+const PC_SPEAKER_PORT: u16 = 0x61;
 
 /// PIT(Programmable Interval Timer) frequency, 1ms
 const PIT_FREQ: u16 = (1193182 / 1000) as u16;
 
-impl Time {
-    #[inline]
-    pub fn get_freq() -> usize {
-        unsafe { CPU_FREQ_MHZ }
-    }
+/// Get ticks from system clock
+///
+/// # Return
+///
+/// - [u64] clock ticks
+#[inline]
+pub fn get_ticks() -> u64 {
+    unsafe { core::arch::x86_64::_rdtsc() as _ }
+}
 
-    #[inline]
-    pub fn now() -> Self {
-        Self(unsafe { core::arch::x86_64::_rdtsc() as _ })
+/// Get frequency of the system clock
+///
+/// # Return
+///
+/// - [u64] n ticks per second
+#[inline]
+pub fn get_freq() -> u64 {
+    unsafe { CPU_FREQ_MHZ }
+}
+
+/// Set the next timer
+///
+/// # parameters
+///
+/// - next [Duration] next time from system boot#[inline]
+pub fn set_next_timer(next: Duration) {
+    let curr = current_time();
+    if next < curr {
+        return;
+    }
+    let interval = next - curr;
+    let lapic = local_apic();
+    unsafe {
+        lapic.set_timer_initial(
+            (interval.as_secs() * get_freq()
+                + interval.subsec_nanos() as u64 * get_freq() / 1_000_000_000) as _,
+        );
     }
 }
 
@@ -39,11 +69,12 @@ pub(crate) fn init() {
     unsafe {
         let lapic = local_apic();
         lapic.set_timer_mode(TimerMode::Periodic);
-        lapic.set_timer_divide(TimerDivide::Div1); // indeed it is Div1, the name is confusing.
+        lapic.set_timer_divide(TimerDivide::Div1);
         lapic.enable_timer();
 
-        let pcspeaker = PC_SPEAKER.read();
-        PC_SPEAKER.write(pcspeaker & 0xfd); // clear bit 1
+        let mut pc_speaker: Port<u8> = Port::new(PC_SPEAKER_PORT);
+        let value = pc_speaker.read();
+        pc_speaker.write(value & 0xfd); // clear bit 1
 
         // Reset lapic counter
         lapic.set_timer_initial(0xFFFF_FFFF);
@@ -52,6 +83,8 @@ pub(crate) fn init() {
         let _start = _rdtsc();
         timer_wait(Duration::from_millis(10));
         let _end = _rdtsc();
+        lapic.set_timer_mode(TimerMode::TscDeadline);
+        lapic.set_timer_initial(0);
     }
 }
 
@@ -83,19 +116,24 @@ pub(crate) fn timer_wait(duration: Duration) {
     // 0            BCD/Binary mode: 0 = 16-bit binary, 1 = four-digit BCD
 
     // Reset PIT2 counter
+    let mut pc_speaker: Port<u8> = Port::new(PC_SPEAKER_PORT);
+    let mut pit_ch2: Port<u8> = Port::new(PIT_CH2_PORT);
+    let mut pit_cmd: Port<u8> = Port::new(PIT_CMD_PORT);
     unsafe {
-        PC_SPEAKER.write(PC_SPEAKER.read() & !0x2);
-        PC_SPEAKER.write(PC_SPEAKER.read() | 1);
+        let mut value = pc_speaker.read();
+        pc_speaker.write(value & !0x2);
+        value = pc_speaker.read();
+        pc_speaker.write(value | 1);
     }
     for _ in 0..duration.as_millis() {
         unsafe {
             // Set PIT2 one-shot mode
-            PIT_CMD.write(0b10110010);
+            pit_cmd.write(0b10110010);
 
             // Write frequency to port
-            PIT_CH2.write(PIT_FREQ as u8);
-            PIT_CH2.write((PIT_FREQ >> 8) as u8);
-            while PC_SPEAKER.read() & 0x20 == 0 {
+            pit_ch2.write(PIT_FREQ as u8);
+            pit_ch2.write((PIT_FREQ >> 8) as u8);
+            while pc_speaker.read() & 0x20 == 0 {
                 spin_loop();
             }
         }
